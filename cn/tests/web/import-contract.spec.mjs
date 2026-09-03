@@ -5,7 +5,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const require = createRequire(import.meta.url);
-const ts = require('../../web/node_modules/typescript');
+const ts = require('typescript');
 const contractPath = new URL('../../web/src/stores/importContract.ts', import.meta.url);
 
 async function loadContract() {

@@ -7,7 +7,7 @@ import vm from 'node:vm';
 const modulePath = new URL('../../web/src/utils/webTranslation.ts', import.meta.url);
 const testRequire = createRequire(import.meta.url);
 const moduleRequire = createRequire(modulePath);
-const ts = testRequire('../../web/node_modules/typescript');
+const ts = testRequire('typescript');
 
 async function loadLocalizer() {
   const source = await readFile(modulePath, 'utf8');

@@ -8,7 +8,7 @@ const source = relative => readFile(new URL(relative, import.meta.url), 'utf8');
 const modulePath = new URL('../../web/src/utils/webTranslation.ts', import.meta.url);
 const testRequire = createRequire(import.meta.url);
 const moduleRequire = createRequire(modulePath);
-const ts = testRequire('../../web/node_modules/typescript');
+const ts = testRequire('typescript');
 
 async function loadLocalizer() {
   const sourceText = await readFile(modulePath, 'utf8');
