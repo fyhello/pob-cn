@@ -20,6 +20,36 @@ test('Strict Data Integrity: CalcsPanel.vue contains zero fake math formulas and
   assert.ok(content.includes('popoverMaxHeight'), 'CalcsPanel.vue must enforce popoverMaxHeight viewport clamp');
 });
 
+test('Strict Data Integrity: calculation adapter compatibility projection is a passthrough', async () => {
+  const adapterPath = join(repoRoot, 'cn', 'lua', 'real-calc-adapter.lua');
+  const content = await readFile(adapterPath, 'utf8');
+  const start = content.indexOf('local function projectDpsPipeline');
+  const end = content.indexOf('local function projectConfig', start);
+  assert.ok(start >= 0 && end > start, 'adapter calculation projection boundaries must exist');
+  const projection = content.slice(start, end);
+  assert.doesNotMatch(projection, /:(?:Sum|More|Combine)\(/, 'calculation projection must not derive values through ModStore');
+  assert.doesNotMatch(projection, /or\s+(?:150|100|4\.0|1\.0)/, 'calculation projection must not insert non-zero defaults');
+  assert.doesNotMatch(projection, /提高伤害倍率|更多伤害乘区|基础范围|基础在场半径/, 'calculation projection must not invent breakdown text');
+  assert.match(projection, /combinedDPS\s*=\s*out\.CombinedDPS/, 'Combined DPS must remain a direct official output field');
+  assert.match(projection, /manaCostPerSecond\s*=\s*out\.ManaCostPerSecond/, 'mana cost per second must remain a direct official output field');
+});
+
+test('Strict Data Integrity: presentation never substitutes a different stat or an invented non-zero value', async () => {
+  const [calcs, defences, sideStats, store] = await Promise.all([
+    readFile(join(repoRoot, 'cn', 'web', 'src', 'components', 'CalcsPanel.vue'), 'utf8'),
+    readFile(join(repoRoot, 'cn', 'web', 'src', 'components', 'DefencesPanel.vue'), 'utf8'),
+    readFile(join(repoRoot, 'cn', 'web', 'src', 'components', 'SideStats.vue'), 'utf8'),
+    readFile(join(repoRoot, 'cn', 'web', 'src', 'stores', 'buildStore.ts'), 'utf8'),
+  ]);
+
+  assert.doesNotMatch(defences, /\|\|\s*(?:965|386|4246|2124\.93|1)(?!\d|\.)/, 'defence values must not use non-zero numeric fallbacks');
+  assert.doesNotMatch(defences, /return\s+(?:80|30);/, 'range display must not invent a radius when the official value is absent');
+  assert.doesNotMatch(sideStats, /\|\|\s*100\b/, 'side statistics must not use a 100% fallback');
+  assert.doesNotMatch(calcs, /hitDPS:\s*pipe\?\.hitDPS\s*\?\?\s*stats\?\.HitDPS\s*\?\?\s*stats\?\.TotalDPS/, 'hit DPS must not fall back to total DPS');
+  assert.doesNotMatch(calcs, /Enemy(?:Fire|Cold|Lightning|Chaos)Resist\s*\?\?\s*stats\?\.(?:Fire|Cold|Lightning|Chaos)Resist/, 'enemy resistance must not fall back to player resistance');
+  assert.doesNotMatch(store, /this\.stats\s*=\s*\{\s*\.\.\.this\.stats\s*,\s*\.\.\.nextOutput\s*\}/, 'a newer official output must replace, not merge with, prior statistics');
+});
+
 test('Strict Data Integrity: GEMINI.md exists in root with 5 strict rules', async () => {
   const geminiPath = join(repoRoot, 'GEMINI.md');
   const content = await readFile(geminiPath, 'utf8');

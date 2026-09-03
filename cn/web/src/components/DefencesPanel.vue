@@ -156,12 +156,12 @@
                   <span class="w-2 h-2 rounded-full bg-gray-400"></span>
                   物理
                 </td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.PhysicalEnemyDamage || 965) }}</td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.PhysicalTakenDamage || 965) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.PhysicalEnemyDamage) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.PhysicalTakenDamage) }}</td>
                 <td class="py-2.5 px-3 text-amber-300">x {{ formatNumber(output.PhysicalTakenHitMult, 2) }}</td>
                 <td class="py-2.5 px-3 text-gray-100 font-bold">{{ formatNumber(output.PhysicalTakenHit) }}</td>
                 <td class="py-2.5 px-3 text-poe-gold font-bold text-sm">{{ formatNumber(output.PhysicalMaximumHitTaken) }}</td>
-                <td class="py-2.5 px-3 text-gray-300">x {{ formatNumber(output.PhysicalBaseTakenHitMult || 1, 2) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">x {{ formatNumber(output.PhysicalBaseTakenHitMult, 2) }}</td>
                 <td class="py-2.5 px-3 text-emerald-300 font-bold">{{ formatNumber(output.PhysicalDotEHP || output.PhysicalTotalHitPool) }}</td>
               </tr>
 
@@ -174,8 +174,8 @@
                   <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                   闪电
                 </td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.LightningEnemyDamage || 965) }}</td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.LightningTakenDamage || 965) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.LightningEnemyDamage) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.LightningTakenDamage) }}</td>
                 <td class="py-2.5 px-3 text-amber-300">x {{ formatNumber(output.LightningTakenHitMult, 2) }}</td>
                 <td class="py-2.5 px-3 text-gray-100 font-bold">{{ formatNumber(output.LightningTakenHit) }}</td>
                 <td class="py-2.5 px-3 text-poe-gold font-bold text-sm">{{ formatNumber(output.LightningMaximumHitTaken) }}</td>
@@ -192,8 +192,8 @@
                   <span class="w-2 h-2 rounded-full bg-sky-400"></span>
                   冰霜
                 </td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.ColdEnemyDamage || 965) }}</td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.ColdTakenDamage || 965) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.ColdEnemyDamage) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.ColdTakenDamage) }}</td>
                 <td class="py-2.5 px-3 text-amber-300">x {{ formatNumber(output.ColdTakenHitMult, 2) }}</td>
                 <td class="py-2.5 px-3 text-gray-100 font-bold">{{ formatNumber(output.ColdTakenHit) }}</td>
                 <td class="py-2.5 px-3 text-poe-gold font-bold text-sm">{{ formatNumber(output.ColdMaximumHitTaken) }}</td>
@@ -210,8 +210,8 @@
                   <span class="w-2 h-2 rounded-full bg-red-400"></span>
                   火焰
                 </td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.FireEnemyDamage || 965) }}</td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.FireTakenDamage || 965) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.FireEnemyDamage) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.FireTakenDamage) }}</td>
                 <td class="py-2.5 px-3 text-amber-300">x {{ formatNumber(output.FireTakenHitMult, 2) }}</td>
                 <td class="py-2.5 px-3 text-gray-100 font-bold">{{ formatNumber(output.FireTakenHit) }}</td>
                 <td class="py-2.5 px-3 text-poe-gold font-bold text-sm">{{ formatNumber(output.FireMaximumHitTaken) }}</td>
@@ -228,8 +228,8 @@
                   <span class="w-2 h-2 rounded-full bg-purple-400"></span>
                   混沌
                 </td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.ChaosEnemyDamage || 386) }}</td>
-                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.ChaosTakenDamage || 386) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.ChaosEnemyDamage) }}</td>
+                <td class="py-2.5 px-3 text-gray-300">{{ formatNumber(output.ChaosTakenDamage) }}</td>
                 <td class="py-2.5 px-3 text-amber-300">x {{ formatNumber(output.ChaosTakenHitMult, 2) }}</td>
                 <td class="py-2.5 px-3 text-gray-100 font-bold">{{ formatNumber(output.ChaosTakenHit) }}</td>
                 <td class="py-2.5 px-3 text-poe-gold font-bold text-sm">{{ formatNumber(output.ChaosMaximumHitTaken) }}</td>
@@ -240,10 +240,10 @@
               <!-- 汇总行 -->
               <tr class="bg-black/60 font-bold border-t border-white/10">
                 <td class="py-2.5 px-3 font-sans text-white">总计 / 综合</td>
-                <td class="py-2.5 px-3 text-gray-200">{{ formatNumber(output.totalEnemyDamageIn || output.totalEnemyDamage || 4246) }}</td>
-                <td class="py-2.5 px-3 text-gray-200">{{ formatNumber(output.totalTakenDamage || 4246) }}</td>
+                <td class="py-2.5 px-3 text-gray-200">{{ formatNumber(output.totalEnemyDamageIn || output.totalEnemyDamage) }}</td>
+                <td class="py-2.5 px-3 text-gray-200">{{ formatNumber(output.totalTakenDamage) }}</td>
                 <td class="py-2.5 px-3 text-amber-300">-</td>
-                <td class="py-2.5 px-3 text-white">{{ formatNumber(output.totalTakenHit || 2124.93) }}</td>
+                <td class="py-2.5 px-3 text-white">{{ formatNumber(output.totalTakenHit) }}</td>
                 <td class="py-2.5 px-3 text-poe-gold text-sm">-</td>
                 <td class="py-2.5 px-3 text-gray-300">-</td>
                 <td class="py-2.5 px-3 text-emerald-400 text-sm">{{ formatNumber(output.TotalEHP) }}</td>
@@ -769,13 +769,6 @@
         <!-- 抽屉主体内容 -->
         <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar text-xs">
           
-          <!-- 0. 官方 1:1 游戏内有效作用范围透视示意图 (Range Guide) -->
-          <RangeGuideVisualizer 
-            v-if="activeDrawer.radius && activeDrawer.radius > 0" 
-            :radius="activeDrawer.radius" 
-            class="mb-2" 
-          />
-
           <!-- A. 官方推导计算步骤 (文本公式行) -->
           <div class="space-y-2">
             <h4 class="text-xs font-bold text-poe-gold flex items-center gap-1.5">
@@ -967,7 +960,6 @@ import {
   Wind, Zap, Sparkles, Flame, Layers, Activity, Target,
   ChevronRight, X
 } from 'lucide-vue-next';
-import RangeGuideVisualizer from './RangeGuideVisualizer.vue';
 import { useBuildStore } from '../stores/buildStore';
 import { 
   translateCalcFormulaLine, 
@@ -999,7 +991,6 @@ interface DrawerState {
   key: string;
   title: string;
   value?: string | number;
-  radius?: number;
   breakdownLines: string[];
   breakdownTables?: any[];
   sources: any[];
@@ -1160,27 +1151,6 @@ function openSectionBreakdown(sectionKey: string, title: string) {
   };
 }
 
-function extractRadius(row: any): number | undefined {
-  if (typeof row?.radius === 'number' && row.radius > 0) return row.radius;
-  const label = String(row?.label || '').toLowerCase();
-  const valStr = String(row?.value || '').trim();
-  if (label.includes('presence radius') || label.includes('在场范围') || label.includes('presenceradius')) {
-    const m = valStr.match(/^([\d\.]+)m?$/i);
-    if (m) return Math.round(parseFloat(m[1]) * 10);
-    return 80;
-  }
-  if (label.includes('surrounded radius') || label.includes('被包围') || label.includes('环绕') || label.includes('surroundedradius')) {
-    const m = valStr.match(/^([\d\.]+)m?$/i);
-    if (m) return Math.round(parseFloat(m[1]) * 10);
-    return 30;
-  }
-  if (label.includes('radius') || label.includes('范围')) {
-    const m = valStr.match(/^([\d\.]+)m?$/i);
-    if (m) return Math.round(parseFloat(m[1]) * 10);
-  }
-  return undefined;
-}
-
 function openRowBreakdown(sectionKey: string, row: any, title: string) {
   if (!row) return;
   const lines: string[] = Array.isArray(row.breakdownLines) && row.breakdownLines.length > 0 
@@ -1197,7 +1167,6 @@ function openRowBreakdown(sectionKey: string, row: any, title: string) {
     key: `${sectionKey}_${row.label}`,
     title,
     value: row.value,
-    radius: extractRadius(row),
     breakdownLines: lines,
     breakdownTables: tables,
     sources

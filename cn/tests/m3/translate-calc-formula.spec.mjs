@@ -161,7 +161,7 @@ describe('Strict Formula Translation Integrity', () => {
     assert.strictEqual(translateCalcFormulaLine('Source Cold'), '冰霜伤害来源');
     assert.strictEqual(translateCalcFormulaLine('Source Fire'), '火焰伤害来源');
     assert.strictEqual(translateCalcFormulaLine('Source Chaos'), '混沌伤害来源');
-    assert.strictEqual(translateCalcFormulaLine('Effective DPS Mod'), '有效秒伤修正倍率');
+    assert.strictEqual(translateCalcFormulaLine('Effective DPS Mod'), '有效DPS修正');
     assert.strictEqual(translateCalcFormulaLine('Dmg. of All Ignites'), '全部点燃总伤害');
 
     // 截图 2 & 4: 推导长句与注释

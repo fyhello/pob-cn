@@ -45,17 +45,17 @@
           </div>
           <div class="flex justify-between items-baseline">
             <span class="text-gray-400">暴击伤害加成</span>
-            <span class="font-bold text-yellow-400 font-mono">{{ store.stats.CritMultiplier || 100 }}%</span>
+            <span class="font-bold text-yellow-400 font-mono">{{ store.stats.CritMultiplier || 0 }}%</span>
           </div>
           <div class="flex justify-between items-baseline">
             <span class="text-gray-400">命中几率</span>
-            <span class="font-bold text-green-400 font-mono">{{ store.stats.HitChance || 100 }}%</span>
+            <span class="font-bold text-green-400 font-mono">{{ store.stats.HitChance || 0 }}%</span>
           </div>
 
           <div v-if="(store.stats.IgniteDPS || 0) > 0" class="pt-1.5 border-t border-white/5 space-y-1">
             <div class="flex justify-between items-baseline">
               <span class="text-blue-300">击中秒伤</span>
-              <span class="font-bold text-blue-200 font-mono">{{ formatNumber(store.stats.HitDPS || store.stats.TotalDPS) }}</span>
+              <span class="font-bold text-blue-200 font-mono">{{ formatNumber(store.stats.HitDPS) }}</span>
             </div>
             <div class="flex justify-between items-baseline">
               <span class="text-amber-300">点燃秒伤</span>
@@ -65,7 +65,7 @@
 
           <div class="pt-2 mt-2 border-t border-white/10 flex justify-between items-baseline">
             <span class="font-bold text-poe-gold">总输出秒伤</span>
-            <span class="font-bold text-poe-gold font-mono text-base tracking-wide">{{ formatNumber(store.stats.CombinedDPS || store.stats.TotalDPS) }}</span>
+            <span class="font-bold text-poe-gold font-mono text-base tracking-wide">{{ formatNumber(store.stats.TotalDPS) }}</span>
           </div>
         </div>
       </div>
@@ -135,7 +135,7 @@
           <div>
             <div class="flex justify-between text-[11px] mb-1">
               <span class="text-purple-400 font-semibold">精魂</span>
-              <span class="font-mono text-white font-bold">{{ store.stats.TotalSpirit || 100 }} / {{ store.stats.TotalSpirit || 100 }}</span>
+              <span class="font-mono text-white font-bold">{{ store.stats.TotalSpirit || 0 }} / {{ store.stats.TotalSpirit || 0 }}</span>
             </div>
             <div class="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-purple-900/50">
               <div class="h-full bg-gradient-to-r from-purple-700 to-amber-500 rounded-full w-full"></div>

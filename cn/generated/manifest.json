@@ -24,7 +24,7 @@
     {
       "id": "override.zh-CN.terms",
       "path": "cn/pipeline/overrides/zh-CN/terms.json",
-      "sha256": "4b76c8909da4f9ccc7a5a6fb074155fb3607f84106dfd9caf6732284f271af4f"
+      "sha256": "b6539c50f8b05cae59af7ef2e04cb5bdc97427918c5c2d88be268f16427bc0d4"
     },
     {
       "id": "override.zh-CN.glossary",
@@ -101,13 +101,13 @@
     {
       "id": "web.translation",
       "path": "cn/generated/web-data/translations.json",
-      "sha256": "505dde2f3a9463ada0b70f22b4595a196519bc282d8c21a923d227fd50b2c998",
+      "sha256": "77ffe5a2dd4567cba5c305305f78eea9f061ec6f76172e5052ad50d1468f56f7",
       "input_ids": [
         "dictionary.ninja-poe2.poe2-runtime-gzip",
         "override.zh-CN.terms",
         "override.zh-CN.glossary"
       ],
-      "record_count": 71092
+      "record_count": 71107
     },
     {
       "id": "web.crafting",

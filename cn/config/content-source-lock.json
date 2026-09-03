@@ -58,7 +58,7 @@
       "kind": "override",
       "stage": "M2-2",
       "path": "cn/pipeline/overrides/zh-CN/terms.json",
-      "sha256": "4b76c8909da4f9ccc7a5a6fb074155fb3607f84106dfd9caf6732284f271af4f",
+      "sha256": "b6539c50f8b05cae59af7ef2e04cb5bdc97427918c5c2d88be268f16427bc0d4",
       "format": "json",
       "language": "zh-CN",
       "provenance": {

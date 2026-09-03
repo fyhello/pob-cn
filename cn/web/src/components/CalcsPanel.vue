@@ -47,12 +47,6 @@
           </div>
         </div>
 
-        <div class="text-right space-y-0.5 pl-4 border-l border-white/10">
-          <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider font-mono">总输出秒伤</div>
-          <div class="text-3xl font-black font-mono text-poe-gold tracking-tight drop-shadow-md">
-            {{ formatNumber(dpsData.totalDPS) }}
-          </div>
-        </div>
       </div>
     </header>
 
@@ -68,64 +62,12 @@
 
       <div class="flex flex-wrap items-center justify-center gap-3 py-1">
         <!-- 综合总秒伤 -->
-        <div 
-          @mouseenter="onCardMouseEnter('totalDPS', $event)"
-          @mouseleave="onCardMouseLeave"
-          @click="onCardClick('totalDPS', $event)"
-          :class="[
-            'px-6 py-3.5 rounded-xl border transition-all cursor-pointer text-center min-w-[210px] space-y-1 relative select-none',
-            isPrimaryPinned('totalDPS') ? 'bg-amber-950/90 border-poe-gold ring-2 ring-poe-gold shadow-2xl' : 'bg-black/80 border-poe-gold/70 hover:border-poe-gold hover:bg-amber-950/30'
-          ]"
-        >
+        <div class="px-6 py-3.5 rounded-xl border bg-black/80 border-poe-gold/70 text-center min-w-[210px] space-y-1 select-none">
           <div class="text-[11px] font-semibold text-poe-gold/90 font-mono flex items-center justify-center gap-1">
             <span>综合总输出秒伤</span>
-            <span v-if="isPrimaryPinned('totalDPS')" class="text-[10px] text-poe-gold">📌</span>
           </div>
-          <div class="text-2xl font-black font-mono text-white tracking-tight">{{ formatNumber(dpsData.totalDPS) }}</div>
-          <div class="text-[10px] text-gray-400 font-mono">击中 + 持续伤害总计</div>
+          <div class="text-2xl font-black font-mono text-white tracking-tight">{{ formatOfficialNumber(dpsData.combinedDPS) }}</div>
         </div>
-
-        <span class="text-gray-400 font-bold text-lg font-mono">=</span>
-
-        <!-- 击中秒伤 -->
-        <div 
-          @mouseenter="onCardMouseEnter('hitDPS', $event)"
-          @mouseleave="onCardMouseLeave"
-          @click="onCardClick('hitDPS', $event)"
-          :class="[
-            'px-6 py-3.5 rounded-xl border transition-all cursor-pointer text-center min-w-[210px] space-y-1 relative select-none',
-            isPrimaryPinned('hitDPS') ? 'bg-blue-950/90 border-blue-400 ring-2 ring-blue-400 shadow-2xl' : 'bg-blue-950/30 border-blue-600/50 hover:border-blue-400 hover:bg-blue-950/50'
-          ]"
-        >
-          <div class="text-[11px] font-semibold text-blue-300 font-mono flex items-center justify-center gap-1">
-            <span>击中秒伤</span>
-            <span v-if="isPrimaryPinned('hitDPS')" class="text-[10px] text-blue-300">📌</span>
-          </div>
-          <div class="text-2xl font-black font-mono text-blue-200 tracking-tight">{{ formatNumber(dpsData.hitDPS) }}</div>
-          <div class="text-[10px] text-blue-300/70 font-mono">单次均伤 × 频次 × 命中</div>
-        </div>
-
-        <template v-if="dpsData.dotDPS > 0">
-          <span class="text-gray-400 font-bold text-lg font-mono">+</span>
-
-          <!-- 持续秒伤 -->
-          <div 
-            @mouseenter="onCardMouseEnter('igniteDPS', $event)"
-            @mouseleave="onCardMouseLeave"
-            @click="onCardClick('igniteDPS', $event)"
-            :class="[
-              'px-6 py-3.5 rounded-xl border transition-all cursor-pointer text-center min-w-[210px] space-y-1 relative select-none',
-              isPrimaryPinned('igniteDPS') ? 'bg-amber-950/90 border-amber-400 ring-2 ring-amber-400 shadow-2xl' : 'bg-amber-950/30 border-amber-600/50 hover:border-amber-400 hover:bg-amber-950/50'
-            ]"
-          >
-            <div class="text-[11px] font-semibold text-amber-300 font-mono flex items-center justify-center gap-1">
-              <span>持续伤害秒伤</span>
-              <span v-if="isPrimaryPinned('igniteDPS')" class="text-[10px] text-amber-300">📌</span>
-            </div>
-            <div class="text-2xl font-black font-mono text-amber-300 tracking-tight">{{ formatNumber(dpsData.dotDPS) }}</div>
-            <div class="text-[10px] text-amber-300/70 font-mono">包含点燃 {{ formatNumber(dpsData.igniteDPS) }}</div>
-          </div>
-        </template>
       </div>
     </section>
 
@@ -136,93 +78,31 @@
           <Calculator class="w-4 h-4 text-poe-gold" />
           <span>金字塔中层：击中秒伤与单次击中伤害核心拆解</span>
         </span>
-        <span class="text-[11px] text-poe-gold font-mono">击中秒伤 = 单次击中均伤 × 动作频次 · 单次击中均伤 = 非暴击均伤 × 暴击期望</span>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <!-- 区域 1 (左)：由单次击中伤害到击中秒伤的计算 -->
         <div 
-          @mouseenter="onCardMouseEnter('hitDPS', $event)"
+          @mouseenter="onCardMouseEnter('totalDPS', $event)"
           @mouseleave="onCardMouseLeave"
-          @click="onCardClick('hitDPS', $event)"
+          @click="onCardClick('totalDPS', $event)"
           :class="[
             'p-4 rounded-xl border transition-all cursor-pointer flex flex-wrap items-center justify-between gap-3 relative select-none',
-            isPrimaryPinned('hitDPS') ? 'bg-blue-950/60 border-blue-400 ring-2 ring-blue-400/60 shadow-2xl' : 'bg-black/80 border-white/10 hover:border-blue-500/60'
+            isPrimaryPinned('totalDPS') ? 'bg-blue-950/60 border-blue-400 ring-2 ring-blue-400/60 shadow-2xl' : 'bg-black/80 border-white/10 hover:border-blue-500/60'
           ]"
         >
           <div class="space-y-1">
             <div class="text-xs font-bold text-blue-300 flex items-center gap-1.5">
               <span>⚡ 击中输出秒伤</span>
-              <span class="px-1.5 py-0.5 rounded text-[10px] bg-blue-950/80 border border-blue-500/50 text-blue-300 font-mono">
-                频次: {{ dpsData.speed > 0 ? dpsData.speed.toFixed(2) + '/s' : '-' }}
-              </span>
-              <span v-if="isPrimaryPinned('hitDPS')" class="text-[10px] text-blue-300">📌</span>
+              <span v-if="isPrimaryPinned('totalDPS')" class="text-[10px] text-blue-300">📌</span>
             </div>
             <div class="text-2xl font-black font-mono text-blue-200 tracking-tight">
-              {{ formatNumber(dpsData.hitDPS) }}
-            </div>
-          </div>
-
-          <!-- 过程：单次击中均伤 × 每秒动作频次 = 最终击中秒伤 -->
-          <div class="flex items-center gap-1.5 text-xs font-mono">
-            <div class="p-1.5 rounded-lg bg-black/70 border border-emerald-500/40 text-center min-w-[80px]">
-              <div class="text-[9px] text-emerald-300">单次均伤</div>
-              <div class="font-bold text-emerald-200">{{ formatNumber(dpsData.avgHit) }}</div>
-            </div>
-            <span class="text-gray-500 font-bold">×</span>
-            <div class="p-1.5 rounded-lg bg-black/70 border border-blue-500/40 text-center min-w-[76px]">
-              <div class="text-[9px] text-blue-300">动作频次</div>
-              <div class="font-bold text-blue-200">{{ dpsData.speed > 0 ? dpsData.speed.toFixed(2) + '/s' : '-' }}</div>
-            </div>
-            <span class="text-gray-500 font-bold">=</span>
-            <div class="p-1.5 rounded-lg bg-black/70 border border-blue-400/60 text-center min-w-[84px] bg-blue-950/30">
-              <div class="text-[9px] text-blue-300">击中秒伤</div>
-              <div class="font-bold text-blue-200">{{ formatNumber(dpsData.hitDPS) }}</div>
+              {{ formatOfficialNumber(dpsData.totalDPS) }}
             </div>
           </div>
         </div>
 
-        <!-- 区域 2 (右)：单次击中伤害构成拆解 -->
-        <div 
-          @mouseenter="onCardMouseEnter('avgHit', $event)"
-          @mouseleave="onCardMouseLeave"
-          @click="onCardClick('avgHit', $event)"
-          :class="[
-            'p-4 rounded-xl border transition-all cursor-pointer flex flex-wrap items-center justify-between gap-3 relative select-none',
-            isPrimaryPinned('avgHit') ? 'bg-amber-950/60 border-amber-400 ring-2 ring-amber-400/60 shadow-2xl' : 'bg-black/80 border-white/10 hover:border-amber-500/60'
-          ]"
-        >
-          <div class="space-y-1">
-            <div class="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-              <span>🎯 单次击中伤害期望</span>
-              <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 font-mono">
-                命中: {{ dpsData.hitChance > 0 ? dpsData.hitChance + '%' : '-' }}
-              </span>
-              <span v-if="isPrimaryPinned('avgHit')" class="text-[10px] text-poe-gold">📌</span>
-            </div>
-            <div class="text-2xl font-black font-mono text-white tracking-tight">
-              {{ formatNumber(dpsData.avgHit) }}
-            </div>
-          </div>
-
-          <!-- 过程：单次击中均伤与暴击期望倍率 -->
-          <div class="flex items-center gap-1.5 text-xs font-mono">
-            <div class="p-1.5 rounded-lg bg-black/70 border border-yellow-500/40 text-center min-w-[76px]">
-              <div class="text-[9px] text-yellow-300">单次均伤</div>
-              <div class="font-bold text-yellow-200">{{ formatNumber(dpsData.avgHit) }}</div>
-            </div>
-            <span class="text-gray-500 font-bold">×</span>
-            <div class="p-1.5 rounded-lg bg-black/70 border border-amber-500/40 text-center min-w-[76px]">
-              <div class="text-[9px] text-amber-300">暴击倍率</div>
-              <div class="font-bold text-amber-200">{{ dpsData.critEffect > 0 ? dpsData.critEffect.toFixed(2) + 'x' : '-' }}</div>
-            </div>
-            <span class="text-gray-500 font-bold">=</span>
-            <div class="p-1.5 rounded-lg bg-black/70 border border-emerald-500/40 text-center min-w-[80px]">
-              <div class="text-[9px] text-emerald-300">伤害期望</div>
-              <div class="font-bold text-emerald-200">{{ formatNumber(dpsData.avgHit) }}</div>
-            </div>
-          </div>
-        </div>
+        <div class="min-h-[88px] rounded-xl border border-white/10 bg-black/30" aria-hidden="true"></div>
       </div>
     </section>
 
@@ -505,96 +385,65 @@
           </div>
 
           <!-- 核心数值胶囊 -->
-          <div class="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between mb-3 shrink-0">
+          <button
+            v-if="averageHitDetailRow?.details?.length"
+            type="button"
+            @mouseenter="onRowMouseEnter(averageHitDetailRow)"
+            @mouseleave="onRowMouseLeave"
+            @click="onRowClick(averageHitDetailRow, $event)"
+            class="w-full p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between mb-3 shrink-0 text-left transition-colors hover:bg-white/5 hover:border-poe-gold/50"
+          >
+            <span class="text-xs text-gray-400 font-semibold">PoB 官方最终计算结果:</span>
+            <span class="text-sm font-black font-mono text-poe-gold">{{ activeCard.formattedValue }} <span class="ml-1 text-[10px] text-gray-500 font-normal">{{ pinnedSecondaryRow === averageHitDetailRow ? '📌' : '▶' }}</span></span>
+          </button>
+          <div v-else class="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between mb-3 shrink-0">
             <span class="text-xs text-gray-400 font-semibold">PoB 官方最终计算结果:</span>
             <span class="text-sm font-black font-mono text-poe-gold">{{ activeCard.formattedValue }}</span>
           </div>
 
           <!-- 主浮窗内容可滚动区 -->
           <div class="flex-1 overflow-y-auto space-y-3 pr-1">
-            <!-- 模块 A：基础点伤专属【5 元素全链路放大流水线表】(100% 对齐 PoB 官方 6 大维度数据) -->
-            <div v-if="activeCardKey === 'baseDamage'" class="space-y-3">
-              <!-- A1. 全类型综合总览 -->
-              <div class="p-2.5 rounded-xl bg-black/80 border border-poe-gold/40 flex items-center justify-between font-mono text-xs shadow-inner">
-                <div class="space-y-0.5">
-                  <div class="text-[10px] text-gray-400">所有类型综合点伤</div>
-                  <div class="text-sm font-black text-poe-gold">
-                    {{ (dpsData.totalMin > 0 || dpsData.totalMax > 0) ? (formatNumber(dpsData.totalMin) + ' ~ ' + formatNumber(dpsData.totalMax)) : '-' }}
-                  </div>
+            <!-- 击中伤害按 PoB 官方列标题分组；行和值均为桥接层的原始官方投影。 -->
+            <div v-if="activeCardKey === 'baseDamage' && hitDamageSummaryGroups.length > 0" class="space-y-2">
+              <section
+                v-for="group in hitDamageSummaryGroups"
+                :key="group.key"
+                class="overflow-hidden rounded-lg border border-white/10 bg-black/60"
+              >
+                <div class="border-b border-white/10 bg-white/[0.03] px-3 py-1.5 text-center text-[11px] font-semibold text-cyan-300">
+                  {{ translateCalcFormulaLine(group.label) }}
                 </div>
-                <div class="flex items-center gap-3 text-right text-[11px]">
-                  <div>
-                    <div class="text-[9px] text-gray-400">总提高</div>
-                    <div class="font-bold text-cyan-300">{{ dpsData.incDamage > 0 ? '+' + dpsData.incDamage + '%' : '-' }}</div>
-                  </div>
-                  <div>
-                    <div class="text-[9px] text-gray-400">总更多</div>
-                    <div class="font-bold text-amber-300">{{ dpsData.moreDamage > 0 ? dpsData.moreDamage.toFixed(2) + 'x' : '-' }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- A2. 5 元素全生命周期流水线卡片列表 (物理、闪电、冰霜、火焰、混沌) -->
-              <div class="space-y-2">
-                <div class="text-[11px] font-bold text-amber-300 flex items-center justify-between border-b border-white/10 pb-1">
-                  <span>各元素击中点伤与放大流水线:</span>
-                  <span class="text-[10px] font-mono text-gray-400 font-normal">悬停行查看分步推导与来源</span>
-                </div>
-
-                <div class="space-y-1.5 font-mono text-xs">
-                  <div 
-                    v-for="eleItem in hitDamagePipelineList" 
-                    :key="eleItem.element"
-                    @mouseenter="onRowMouseEnter(eleItem.rowRef)"
-                    @mouseleave="onRowMouseLeave"
-                    @click="onRowClick(eleItem.rowRef, $event)"
-                    :class="[
-                      'p-2.5 rounded-xl border transition-all cursor-pointer space-y-1.5',
-                      eleItem.hitAvg > 0 ? 'bg-black/60 border-white/15' : 'bg-black/30 border-white/5 opacity-70',
-                      (activeRow === eleItem.rowRef || pinnedSecondaryRow === eleItem.rowRef) ? 'ring-1 ring-poe-gold bg-amber-950/40 border-poe-gold' : 'hover:bg-white/5'
-                    ]"
+                <div class="grid grid-cols-4 font-mono text-center text-[10px]">
+                  <div
+                    v-for="column in group.columns"
+                    :key="column.key"
+                    class="min-w-0 border-r border-white/10 last:border-r-0"
                   >
-                    <!-- 顶行：元素名与最终击中点伤 -->
-                    <div class="flex items-center justify-between font-sans">
-                      <div class="flex items-center gap-1.5 font-bold" :class="eleItem.color">
-                        <span class="w-2 h-2 rounded-full" :class="eleItem.dotBg"></span>
-                        <span>{{ eleItem.nameCn }}</span>
-                      </div>
-                      <div class="text-right font-mono">
-                        <span class="font-black text-sm text-white">
-                          {{ (eleItem.hitMin > 0 || eleItem.hitMax > 0) ? (formatNumber(eleItem.hitMin) + ' ~ ' + formatNumber(eleItem.hitMax)) : (eleItem.hitAvg > 0 ? formatNumber(eleItem.hitAvg) : '-') }}
-                        </span>
-                        <span v-if="eleItem.hitAvg > 0" class="text-[10px] text-gray-400 ml-1.5">(均值 {{ formatNumber(eleItem.hitAvg) }})</span>
-                      </div>
+                    <div class="flex min-h-10 items-center justify-center border-b border-white/10 px-1.5 leading-tight text-gray-400">
+                      {{ translateCalcFormulaLine(column.label) }}
                     </div>
-
-                    <!-- 底行：4 步放大乘区明细胶囊 (附加 ➔ 提高 ➔ 更多 ➔ 抗性修正) -->
-                    <div class="grid grid-cols-4 gap-1.5 text-[10px] pt-1 border-t border-white/10">
-                      <div class="p-1 rounded bg-black/50 border border-white/5 text-center">
-                        <div class="text-gray-500 scale-90">附加点伤</div>
-                        <div class="font-bold text-gray-300 truncate">
-                          {{ (eleItem.hitMin > 0 || eleItem.hitMax > 0) ? (formatNumber(eleItem.hitMin) + ' ~ ' + formatNumber(eleItem.hitMax)) : '-' }}
-                        </div>
-                      </div>
-                      <div class="p-1 rounded bg-black/50 border border-cyan-500/20 text-center">
-                        <div class="text-cyan-400 scale-90">总提高</div>
-                        <div class="font-bold text-cyan-200">{{ eleItem.inc > 0 ? '+' + eleItem.inc + '%' : '-' }}</div>
-                      </div>
-                      <div class="p-1 rounded bg-black/50 border border-amber-500/20 text-center">
-                        <div class="text-amber-400 scale-90">更多乘区</div>
-                        <div class="font-bold text-amber-200">{{ eleItem.more > 0 ? eleItem.more.toFixed(2) + 'x' : '-' }}</div>
-                      </div>
-                      <div class="p-1 rounded bg-black/50 border border-red-500/20 text-center">
-                        <div class="text-red-400 scale-90">抗性修正</div>
-                        <div class="font-bold text-red-200">{{ eleItem.effMult > 0 ? 'x' + eleItem.effMult.toFixed(2) : '-' }}</div>
-                      </div>
-                    </div>
+                    <button
+                      v-if="column.row"
+                      type="button"
+                      @mouseenter="onRowMouseEnter(column.row)"
+                      @mouseleave="onRowMouseLeave"
+                      @click="onRowClick(column.row, $event)"
+                      :class="[
+                        'min-h-9 w-full px-1.5 py-1 font-bold leading-tight transition-colors',
+                        column.key === 'Skill Hit Damage' ? 'text-poe-gold' : 'text-gray-200',
+                        (activeRow === column.row || pinnedSecondaryRow === column.row) ? 'bg-amber-950/80 text-white ring-1 ring-poe-gold' : 'hover:bg-white/10'
+                      ]"
+                    >
+                      {{ column.row.value }}
+                      <span v-if="column.row.details?.length" class="ml-0.5 text-[9px] font-normal text-gray-500">{{ pinnedSecondaryRow === column.row ? '📌' : '▶' }}</span>
+                    </button>
+                    <div v-else class="min-h-9" />
                   </div>
                 </div>
-              </div>
+              </section>
             </div>
 
-            <!-- 模块 B：PoB 官方动态属性全量表格 (暴击/速度/异常小节等) -->
+            <!-- 其他计算卡片保留官方动态属性表。 -->
             <div v-else-if="activeSubSection && activeSubSection.rows && activeSubSection.rows.length > 0" class="space-y-2">
               <div class="text-[11px] text-amber-300 font-semibold flex items-center justify-between border-b border-white/10 pb-1">
                 <div class="flex items-center gap-1">
@@ -609,7 +458,7 @@
                   <tbody class="divide-y divide-white/10 bg-black/60 text-gray-300">
                     <tr 
                       v-for="(r, rIdx) in activeSubSection.rows" 
-                      :key="rIdx" 
+                      :key="r.cellId || rIdx"
                       @mouseenter="onRowMouseEnter(r)" 
                       @mouseleave="onRowMouseLeave"
                       @click="onRowClick(r, $event)"
@@ -619,12 +468,13 @@
                       ]"
                     >
                       <td class="px-3 py-1.5 truncate max-w-[230px]">
+                        <span v-if="r.columnLabel" class="mr-1 text-[10px] text-cyan-300">{{ translateCalcFormulaLine(r.columnLabel) }}</span>
                         <span :class="(activeRow === r || pinnedSecondaryRow === r) ? 'text-amber-300' : 'text-gray-300'">{{ translateCalcFormulaLine(r.label) }}</span>
                       </td>
                       <td class="px-3 py-1.5 font-bold text-right truncate">
                         <span :class="(activeRow === r || pinnedSecondaryRow === r) ? 'text-poe-gold' : 'text-gray-200'">{{ r.value }}</span>
                         <span class="ml-1 text-[10px] text-gray-500 font-normal">
-                          {{ (r.breakdownLines || r.sources) ? (pinnedSecondaryRow === r ? '📌' : '▶') : '' }}
+                          {{ r.details?.length ? (pinnedSecondaryRow === r ? '📌' : '▶') : '' }}
                         </span>
                       </td>
                     </tr>
@@ -653,69 +503,17 @@
 
             <!-- 无官方推导或小节时的提示 -->
             <div 
-              v-else-if="activeCardKey !== 'baseDamage' && (!activeCard.sources || activeCard.sources.length === 0)" 
+              v-else-if="activeCardKey !== 'baseDamage'"
               class="p-3 text-center text-xs text-gray-500 italic bg-black/40 rounded-xl border border-white/5 font-mono"
             >
               官方核心未提供详细推导数据
-            </div>
-
-            <!-- 模块 D：加成来源大类汇总 -->
-            <div v-if="activeCard.sources && activeCard.sources.length > 0" class="space-y-1.5 pt-1 border-t border-white/10">
-              <div class="text-[10px] text-gray-400 font-semibold flex items-center justify-between">
-                <span>加成来源大类统计:</span>
-                <span class="font-mono text-amber-300">{{ activeCard.sources.length }} 处加成</span>
-              </div>
-              <div class="flex flex-wrap gap-1 text-[11px]">
-                <span 
-                  v-for="(sumVal, sumKey) in getSourceSummary(activeCard.sources)" 
-                  :key="sumKey" 
-                  class="px-2 py-0.5 rounded-md bg-black/80 border border-white/15 text-gray-300"
-                >
-                  <strong class="text-amber-400">{{ sumKey }}:</strong> {{ sumVal }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 模块 E：逐条来源清单 -->
-            <div v-if="activeCard.sources && activeCard.sources.length > 0" class="space-y-1.5 pt-1">
-              <div class="text-[10px] text-gray-400 font-semibold">
-                官方词缀来源清单 (PoB 底层 Tabulate 数据):
-              </div>
-              <div class="space-y-1 max-h-48 overflow-y-auto pr-1 font-mono">
-                <div 
-                  v-for="(src, sIdx) in activeCard.sources" 
-                  :key="sIdx" 
-                  @mouseenter="onSourceMouseEnter(src, $event)"
-                  @mousemove="onSourceMouseMove($event)"
-                  @mouseleave="onSourceMouseLeave"
-                  class="p-2 rounded-lg bg-black/50 border border-white/5 flex items-center justify-between gap-2 hover:bg-white/5 hover:border-poe-gold/40 transition-colors cursor-pointer"
-                >
-                  <div class="min-w-0 flex-1">
-                    <div class="text-gray-200 text-xs font-semibold truncate flex items-center gap-1 font-sans">
-                      <span :class="getSourceTypeColor(src.sourceType)" class="text-[10px] font-bold shrink-0">
-                        [{{ translateSourceType(src.sourceType) }}]
-                      </span>
-                      <span class="truncate">{{ translateCalcFormulaLine(src.sourceName) }}</span>
-                    </div>
-                    <div class="text-[10px] text-gray-500 truncate mt-0.5">
-                      {{ translateCalcFormulaLine(src.name) }} ({{ translateCalcFormulaLine(src.modType) }})
-                    </div>
-                  </div>
-                  <span 
-                    class="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded bg-black/60 border border-white/10"
-                    :class="Number(src.value) >= 0 ? 'text-emerald-400' : 'text-red-400'"
-                  >
-                    {{ typeof src.value === 'number' ? (src.value > 0 ? `+${src.value}` : src.value) : src.value }}
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
         <!-- 6.2 🌟 二级专属推导浮窗 (同容器并排对齐，CSS 层面 100% 杜绝任何重叠遮挡！) -->
         <div 
-          v-if="effectiveSecondaryRow && (effectiveSecondaryRow.breakdownLines || effectiveSecondaryRow.sources)"
+          v-if="effectiveSecondaryRow?.details?.length"
           @mouseenter="onSecondaryPopoverMouseEnter"
           @mouseleave="onSecondaryPopoverMouseLeave"
           :style="{ maxHeight: popoverMaxHeight }"
@@ -762,56 +560,39 @@
             </div>
           </div>
 
-          <!-- 专属分步公式 -->
-          <div v-if="effectiveSecondaryRow.breakdownLines && effectiveSecondaryRow.breakdownLines.length > 0" class="space-y-1.5">
-            <div class="text-[10px] text-gray-400 font-semibold font-mono">官方分步推导过程:</div>
-            <div class="space-y-1 font-mono text-[11px]">
-              <template v-for="(line, lIdx) in effectiveSecondaryRow.breakdownLines" :key="lIdx">
-                <p 
-                  v-if="line && line.trim() && translateCalcFormulaLine(line)" 
-                  class="p-2 rounded-lg bg-black/70 border border-white/10 text-gray-100 leading-relaxed break-words"
-                >
+          <template v-for="detail in effectiveSecondaryRow.details" :key="detail.key">
+            <div v-if="detail.label" class="text-[10px] text-cyan-300 font-semibold font-mono border-t border-white/10 pt-2">
+              {{ translateCalcFormulaLine(detail.label) }}
+            </div>
+            <div v-if="detail.breakdownLines?.length" class="space-y-1 font-mono text-[11px]">
+              <template v-for="(line, lIdx) in detail.breakdownLines" :key="lIdx">
+                <p v-if="line && line.trim() && translateCalcFormulaLine(line)" class="p-2 rounded-lg bg-black/70 border border-white/10 text-gray-100 leading-relaxed break-words">
                   {{ translateCalcFormulaLine(line) }}
                 </p>
               </template>
             </div>
-          </div>
-
-          <!-- 专属来源明细 -->
-          <div v-if="effectiveSecondaryRow.sources && effectiveSecondaryRow.sources.length > 0" class="space-y-1.5 pt-1 border-t border-white/10">
-            <div class="text-[10px] text-gray-400 font-semibold font-mono flex items-center justify-between">
-              <span>官方装备与天赋词缀来源:</span>
-              <span class="text-amber-300 font-mono">{{ effectiveSecondaryRow.sources.length }} 条</span>
-            </div>
-            <div class="space-y-1 max-h-56 overflow-y-auto pr-1 font-mono">
-              <div 
-                v-for="(src, sIdx) in effectiveSecondaryRow.sources" 
-                :key="sIdx" 
-                @mouseenter="onSourceMouseEnter(src, $event)"
-                @mousemove="onSourceMouseMove($event)"
-                @mouseleave="onSourceMouseLeave"
-                class="p-2 rounded-lg bg-black/50 border border-white/5 flex items-center justify-between gap-2 hover:bg-white/5 hover:border-poe-gold/40 transition-colors cursor-pointer"
-              >
+            <template v-for="(section, sectionIdx) in detail.breakdownTables" :key="sectionIdx">
+              <div v-if="section.type === 'table' && section.rows?.length" class="max-h-56 overflow-auto rounded-lg border border-white/10 bg-black/60">
+                <table class="w-full border-collapse font-mono text-[10px] text-gray-300">
+                  <thead class="sticky top-0 bg-[#141722] text-gray-400">
+                    <tr><th v-for="column in section.columns" :key="column.key" class="px-2 py-1.5 text-left font-semibold whitespace-nowrap">{{ translateCalcFormulaLine(column.label) }}</th></tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/10">
+                    <tr v-for="(row, rowIdx) in section.rows" :key="rowIdx"><td v-for="column in section.columns" :key="column.key" class="px-2 py-1.5 align-top whitespace-nowrap">{{ row[column.key] == null ? '' : translateCalcFormulaLine(String(row[column.key])) }}</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+            <div v-if="detail.sources?.length" class="space-y-1 max-h-56 overflow-y-auto pr-1 font-mono">
+              <div v-for="(src, sIdx) in detail.sources" :key="sIdx" @mouseenter="onSourceMouseEnter(src, $event)" @mousemove="onSourceMouseMove($event)" @mouseleave="onSourceMouseLeave" class="p-2 rounded-lg bg-black/50 border border-white/5 flex items-center justify-between gap-2 hover:bg-white/5 hover:border-poe-gold/40 transition-colors cursor-pointer">
                 <div class="min-w-0 flex-1">
-                  <div class="text-gray-200 text-xs font-semibold truncate flex items-center gap-1 font-sans">
-                    <span :class="getSourceTypeColor(src.sourceType)" class="text-[10px] font-bold shrink-0">
-                      [{{ translateSourceType(src.sourceType) }}]
-                    </span>
-                    <span class="truncate">{{ translateCalcFormulaLine(src.sourceName) }}</span>
-                  </div>
-                  <div class="text-[10px] text-gray-500 truncate mt-0.5">
-                    {{ translateCalcFormulaLine(src.name) }} ({{ translateCalcFormulaLine(src.modType) }})
-                  </div>
+                  <div class="text-gray-200 text-xs font-semibold truncate flex items-center gap-1 font-sans"><span :class="getSourceTypeColor(src.sourceType)" class="text-[10px] font-bold shrink-0">[{{ translateSourceType(src.sourceType) }}]</span><span class="truncate">{{ translateCalcFormulaLine(src.sourceName) }}</span></div>
+                  <div class="text-[10px] text-gray-500 truncate mt-0.5">{{ translateCalcFormulaLine(src.name) }} ({{ translateCalcFormulaLine(src.modType) }})</div>
                 </div>
-                <span 
-                  class="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded bg-black/60 border border-white/10"
-                  :class="Number(src.value) >= 0 ? 'text-emerald-400' : 'text-red-400'"
-                >
-                  {{ typeof src.value === 'number' ? (src.value > 0 ? `+${src.value}` : src.value) : src.value }}
-                </span>
+                <span class="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded bg-black/60 border border-white/10" :class="Number(src.value) >= 0 ? 'text-emerald-400' : 'text-red-400'">{{ typeof src.value === 'number' ? (src.value > 0 ? `+${src.value}` : src.value) : src.value }}</span>
               </div>
             </div>
-          </div>
+          </template>
         </div>
       </div>
 
@@ -910,7 +691,6 @@ const calcModes: { id: 'EFFECTIVE' | 'COMBAT' | 'BUFFED' | 'UNBUFFED'; label: st
 
 async function handleModeSelect(modeId: 'EFFECTIVE' | 'COMBAT' | 'BUFFED' | 'UNBUFFED') {
   if (store.buffMode === modeId || store.isCalculating) return;
-  store.buffMode = modeId;
   await store.setBuffMode(modeId);
 }
 
@@ -1057,8 +837,16 @@ function getNodeTypeColor(type?: string): string {
 }
 
 interface DynamicRow {
+  cellId: string;
   label: string;
+  columnLabel?: string;
   value: string;
+  details?: DynamicDetail[];
+}
+
+interface DynamicDetail {
+  key: string;
+  label?: string;
   breakdownLines?: string[];
   breakdownTables?: any[];
   sources?: ModSource[];
@@ -1077,7 +865,6 @@ interface StatCardItem {
   label: string;
   subLabel?: string;
   formattedValue: string;
-  sources?: ModSource[];
   breakdownLines?: string[];
 }
 
@@ -1117,6 +904,56 @@ const activeSubSection = computed<DynamicSubSection | null>(() => {
   const dyn = store.skillBreakdown?.dynamicSubSections || (store.skillBreakdown?.dpsPipeline as any)?.dynamicSubSections;
   if (!dyn) return null;
   return dyn[targetKey] || null;
+});
+
+const averageHitDetailRow = computed<DynamicRow | null>(() => {
+  if (activeCardKey.value !== 'baseDamage') return null;
+  return activeSubSection.value?.rows.find(row => row.label.endsWith('Average Hit') && row.details?.length) || null;
+});
+
+const hitDamageSummaryColumns = [
+  'Total Increased',
+  'Total More',
+  'Effective DPS Mod',
+  'Skill Hit Damage',
+] as const;
+
+const hitDamageSummaryGroups = computed(() => {
+  if (activeCardKey.value !== 'baseDamage') return [];
+  const rows = activeSubSection.value?.rows || [];
+  const groups = new Map<string, { key: string; label: string; rows: DynamicRow[] }>();
+  for (const row of rows) {
+    const label = row.columnLabel || row.label;
+    if (!label) continue;
+    const group = groups.get(label) || { key: label, label, rows: [] };
+    group.rows.push(row);
+    groups.set(label, group);
+  }
+  const typeDamageDetails = Array.from(groups.values())
+    .filter(group => group.label !== 'All Types:')
+    .map(group => group.rows.find(row => row.label === 'Skill Hit Damage'))
+    .filter((row): row is DynamicRow => !!row?.details?.length)
+    .flatMap(row => row.details!.map(detail => ({
+      ...detail,
+      label: detail.label || row.columnLabel,
+    })));
+
+  return Array.from(groups.values())
+    .map(group => ({
+      ...group,
+      columns: hitDamageSummaryColumns.map(key => ({
+        key,
+        label: key,
+        row: (() => {
+          const row = group.rows.find(candidate => candidate.label === key);
+          if (group.label === 'All Types:' && key === 'Skill Hit Damage' && row && typeDamageDetails.length > 0) {
+            return { ...row, details: typeDamageDetails };
+          }
+          return row;
+        })(),
+      })),
+    }))
+    .filter(group => group.columns.some(column => column.row));
 });
 
 const effectiveSecondaryRow = computed<DynamicRow | null>(() => {
@@ -1328,7 +1165,7 @@ function onRowMouseLeave() {
 function onRowClick(row: DynamicRow | null | undefined, e: MouseEvent) {
   e.stopPropagation();
   if (!row) return;
-  if (!row.breakdownLines && !row.sources) return;
+  if (!row.details?.length) return;
 
   // 🛡️ 若点击行固定 2 级浮窗，同时锁定 1 级浮窗，防止光标移开后意外关闭
   if (hoveredCardKey.value && !pinnedCardKey.value) {
@@ -1470,14 +1307,14 @@ const dpsData = computed(() => {
   const pipe = store.skillBreakdown?.dpsPipeline;
   const stats = store.stats as Record<string, any> | undefined;
   return {
-    totalDPS: pipe?.totalDPS ?? stats?.TotalDPS ?? 0,
-    hitDPS: pipe?.hitDPS ?? stats?.HitDPS ?? stats?.TotalDPS ?? 0,
+    combinedDPS: pipe?.combinedDPS ?? stats?.CombinedDPS,
+    totalDPS: pipe?.totalDPS ?? stats?.TotalDPS,
     dotDPS: pipe?.dotDPS ?? stats?.TotalDot ?? 0,
-    avgHit: pipe?.avgHit ?? stats?.AverageHit ?? stats?.AverageDamage ?? 0,
-    speed: pipe?.speed ?? stats?.Speed ?? stats?.CastRate ?? 0,
+    avgHit: pipe?.avgHit ?? stats?.AverageHit ?? 0,
+    speed: pipe?.speed ?? stats?.Speed ?? 0,
     castTime: pipe?.castTime ?? stats?.Time ?? 0,
     hitChance: pipe?.hitChance ?? stats?.HitChance ?? 0,
-    critChance: pipe?.critChance ?? stats?.CritChance ?? stats?.PreEffectiveCritChance ?? 0,
+    critChance: pipe?.critChance ?? stats?.CritChance ?? 0,
     critMultiplier: pipe?.critMultiplier ?? stats?.CritMultiplier ?? 0,
     critEffect: pipe?.critEffect ?? stats?.CritEffect ?? 0,
     critMultiBase: pipe?.critMultiBase ?? 0,
@@ -1497,74 +1334,17 @@ const dpsData = computed(() => {
     shockChance: pipe?.shockChance ?? 0,
     totalMin: pipe?.totalMin ?? stats?.TotalMin ?? 0,
     totalMax: pipe?.totalMax ?? stats?.TotalMax ?? 0,
-    damageTypes: pipe?.damageTypes || {
-      lightning: { min: 0, max: 0, hit: 0, dps: 0 },
-      fire: { min: 0, max: 0, hit: 0, dps: 0 },
-      cold: { min: 0, max: 0, hit: 0, dps: 0 },
-      physical: { min: 0, max: 0, hit: 0, dps: 0 },
-      chaos: { min: 0, max: 0, hit: 0, dps: 0 }
-    },
     manaCost: pipe?.manaCost ?? stats?.ManaCost ?? 0,
     manaCostPerSecond: pipe?.manaCostPerSecond ?? stats?.ManaCostPerSecond ?? 0,
     manaRegen: pipe?.manaRegen ?? stats?.ManaRegen ?? stats?.ManaRegenRecovery ?? 0,
     enemyResist: pipe?.enemyResist || {
-      fire: stats?.EnemyFireResist ?? stats?.FireResist ?? 0,
-      cold: stats?.EnemyColdResist ?? stats?.ColdResist ?? 0,
-      lightning: stats?.EnemyLightningResist ?? stats?.LightningResist ?? 0,
-      chaos: stats?.EnemyChaosResist ?? stats?.ChaosResist ?? 0,
+      fire: stats?.EnemyFireResist ?? 0,
+      cold: stats?.EnemyColdResist ?? 0,
+      lightning: stats?.EnemyLightningResist ?? 0,
+      chaos: stats?.EnemyChaosResist ?? 0,
     },
     officialBreakdowns: pipe?.officialBreakdowns || {},
   };
-});
-
-// 🌟 构建 5 元素全生命周期流水线列表（100% 动态直连 Lua 官方计算引擎，绝对零自编算术与零伪公式）
-const hitDamagePipelineList = computed(() => {
-  const dt = dpsData.value.damageTypes;
-  const elements = [
-    { key: 'lightning', nameCn: '闪电', color: 'text-yellow-300', dotBg: 'bg-yellow-400' },
-    { key: 'cold', nameCn: '冰霜', color: 'text-blue-300', dotBg: 'bg-blue-400' },
-    { key: 'fire', nameCn: '火焰', color: 'text-red-400', dotBg: 'bg-red-500' },
-    { key: 'chaos', nameCn: '混沌', color: 'text-purple-400', dotBg: 'bg-purple-500' },
-    { key: 'physical', nameCn: '物理', color: 'text-stone-300', dotBg: 'bg-stone-400' },
-  ] as const;
-
-  return elements.map(el => {
-    const d = (dt as any)[el.key] || { min: 0, max: 0, hit: 0, dps: 0, inc: 0, more: 0, effMult: 0, sources: undefined };
-    const hitMin = d.min || 0;
-    const hitMax = d.max || 0;
-    const hitAvg = d.hit || 0;
-    const incVal = d.inc ?? 0;
-    const moreVal = d.more ?? 0;
-    const effMultVal = d.effMult ?? 0;
-
-    // 专属官方二级推导 Row（直接透传真实官方推导 breakdownLines 和真实词缀来源 sources）
-    const breakdown = dpsData.value.officialBreakdowns?.[el.key] || 
-                      dpsData.value.officialBreakdowns?.[el.nameCn] || 
-                      dpsData.value.officialBreakdowns?.[el.key.charAt(0).toUpperCase() + el.key.slice(1)];
-
-    const rowRef: DynamicRow = {
-      label: `${el.nameCn}击中伤害`,
-      value: (hitMin > 0 || hitMax > 0) ? `${formatNumber(hitMin)} ~ ${formatNumber(hitMax)}` : (hitAvg > 0 ? `${formatNumber(hitAvg)}` : '-'),
-      breakdownLines: (breakdown && breakdown.length > 0) ? breakdown : undefined,
-      sources: (hitAvg > 0 || hitMax > 0) ? (d.sources && d.sources.length > 0 ? d.sources : undefined) : undefined
-    };
-
-    return {
-      element: el.key,
-      nameCn: el.nameCn,
-      color: el.color,
-      dotBg: el.dotBg,
-      addedMin: 0,
-      addedMax: 0,
-      inc: incVal,
-      more: moreVal,
-      effMult: effMultVal,
-      hitMin: hitMin,
-      hitMax: hitMax,
-      hitAvg: hitAvg,
-      rowRef: rowRef,
-    };
-  });
 });
 
 // 构造所有结构化金字塔卡片 (100% 官方数据透传)
@@ -1573,22 +1353,13 @@ const allCardsMap = computed(() => {
   const d = dpsData.value;
   const enemyRes = d.enemyResist.fire || 0;
 
-  // 1. 综合总秒伤
+  // 1. 当前技能 DPS 官方明细
   map.set('totalDPS', {
     key: 'totalDPS',
-    label: '综合总输出秒伤',
-    subLabel: '全维度秒伤推导流水线',
-    formattedValue: d.totalDPS > 0 ? formatNumber(d.totalDPS) : '-',
-    breakdownLines: d.officialBreakdowns?.TotalDPS || undefined,
-  });
-
-  // 2. 击中秒伤
-  map.set('hitDPS', {
-    key: 'hitDPS',
     label: '击中秒伤',
     subLabel: '单次击中均伤与频次推导明细',
-    formattedValue: d.hitDPS > 0 ? formatNumber(d.hitDPS) : '-',
-    breakdownLines: d.officialBreakdowns?.HitDPS || undefined,
+    formattedValue: formatOfficialNumber(d.totalDPS),
+    breakdownLines: d.officialBreakdowns?.TotalDPS || undefined,
   });
 
   // 3. 持续伤害秒伤
@@ -1612,10 +1383,10 @@ const allCardsMap = computed(() => {
   // 5. 支柱 ①：各元素击中伤害构成
   map.set('baseDamage', {
     key: 'baseDamage',
+    subSectionKey: 'HitDamage',
     label: '① 各元素击中伤害构成',
     subLabel: '各元素点伤与放大流水线',
     formattedValue: d.avgHit > 0 ? `${formatNumber(d.avgHit)} 均伤` : '-',
-    breakdownLines: d.officialBreakdowns?.BaseDamage || d.officialBreakdowns?.Damage || undefined,
   });
 
   // 6. 支柱 ②：增伤放大乘区
@@ -1625,7 +1396,6 @@ const allCardsMap = computed(() => {
     subLabel: '伤害提高与更多乘区汇总',
     formattedValue: (d.incDamage > 0 || d.moreDamage > 0) ? `+${d.incDamage}% / ${d.moreDamage.toFixed(2)}x` : '-',
     breakdownLines: d.officialBreakdowns?.Multipliers || undefined,
-    sources: d.multiplierSources.length > 0 ? d.multiplierSources : undefined,
   });
 
   // 7. 支柱 ③：暴击期望系统
@@ -1636,7 +1406,6 @@ const allCardsMap = computed(() => {
     subLabel: '暴击几率与伤害倍率推导',
     formattedValue: (d.critChance > 0 || d.critMultiplier > 0) ? `${d.critChance.toFixed(1)}% / ${d.critMultiplier.toFixed(2)}x` : '-',
     breakdownLines: d.officialBreakdowns?.CritEffect || d.officialBreakdowns?.CritMultiplier || d.officialBreakdowns?.CritChance || undefined,
-    sources: d.critMultiSources.length > 0 ? d.critMultiSources : (d.critChanceSources.length > 0 ? d.critChanceSources : undefined),
   });
 
   // 8. 支柱 ④：动作频次与速度
@@ -1695,6 +1464,11 @@ function formatNumber(num: number | null | undefined): string {
   return num.toLocaleString('en-US', { maximumFractionDigits: 1 });
 }
 
+function formatOfficialNumber(num: number | null | undefined): string {
+  if (num === null || num === undefined || isNaN(num)) return '';
+  return formatNumber(num);
+}
+
 function getSourceTypeColor(type: string): string {
   if (type === 'Jewel') return 'text-sky-400';
   if (type === 'Item') return 'text-amber-400';
@@ -1705,17 +1479,4 @@ function getSourceTypeColor(type: string): string {
   return 'text-gray-400';
 }
 
-function getSourceSummary(sources: ModSource[]): Record<string, string> {
-  const map: Record<string, number> = {};
-  for (const s of sources) {
-    const t = translateSourceType(s.sourceType);
-    const num = Number(s.value) || 0;
-    map[t] = (map[t] || 0) + num;
-  }
-  const result: Record<string, string> = {};
-  for (const [k, v] of Object.entries(map)) {
-    result[k] = v >= 0 ? `+${v.toFixed(1)}` : v.toFixed(1);
-  }
-  return result;
-}
 </script>

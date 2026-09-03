@@ -289,6 +289,16 @@ P1 准入结论：**通过，服务已重启并可供用户验收；已完成 P2
 | 2026-09-02 | 服务与浏览器冒烟 | 新启动 Bridge / Vite 本地进程 | `GET http://127.0.0.1:3002/health`：200 `{"ready":true}`；`GET http://127.0.0.1:3000/`：200；浏览器点击 `CALCS` 入口后 DOM 同时包含“综合总输出秒伤”和“各元素击中伤害构成”，控制台 error 为 0。 | 通过。用户可在 `http://127.0.0.1:3000/` 实测已恢复的伤害页面。 |
 | 2026-09-02 | GitNexus 变更范围复核 | 共享脏工作区 | `gitnexus_detect_changes({scope:'all'})` 返回 `Git diff failed: spawnSync git ENOBUFS`。 | 未通过且不可作为本轮范围证明；原因是全仓历史累计差异过大。已用本表的逐符号 pre-impact、定向测试、真实 LuaJIT、全量 M3、Web 构建和浏览器冒烟补偿。拆分为干净变更集后仍需重跑该命令，当前不得据此提交。 |
 
+#### 2026-09-03 干净基线上的 P2 合同重新实施
+
+- **基线差异必须透明记录。** 当前干净基线的 `real-calc-adapter.lua` 实际仍包含旧版 `projectDpsPipeline`：手工 `Sum`/`More`/`Combine`、元素均值与抗性公式、非零默认值，以及固定 19 次 `Tabulate`。因此本次按本节的兼容 DTO 合同重新实施；没有假定此前记录中的实现仍在当前基线。
+- **实际修改范围。** `projectDpsPipeline` 保留既有页面所读字段名，但每个计算数值直接读取当前 `actor.output`，元素均伤只取官方 `*HitAverage`；缺失字段保持缺失。完整计算的文本明细只逐行复制 `actor.breakdown`，词缀来源继续由既有 `projectModSources -> ModStore:Tabulate` 透传。已删除手工公式、`Sum`/`More`/`Combine`、固定非零值、`*HitAvg`/`*DPS` 伪字段和手写 breakdown 文本。
+- **防御页交叉契约。** 曾评估让 fast projection 提前返回空明细以进一步降载；源码核对确认当前基线没有可用的按需详情恢复端点，而 `DefencesPanel` 仍依赖 `dynamicSubSections`。该方案在提交前已撤回：fast mutation 继续返回同 revision 的官方动态明细与来源，禁止以删数据换性能。固定 pipeline 的 19 次查询已移除，但动态明细的官方来源查询保持原语义。
+- **陈旧数据处理。** `buildStore.applyOfficialProjection` 现在无条件替换 `skillBreakdown`；若本次官方响应未携带明细，旧 revision 的浮窗/抽屉数据不会残留。
+- **模板和词典冻结。** 未修改 `CalcsPanel.vue`、`DefencesPanel.vue`、`App.vue` 或任何翻译文件。`CalcsPanel.vue` SHA-256 仍为 `62a8ecc1f7ce0771a424f494e5491c5556527dc358572681eb252678301b8950`；唯一词典门禁通过。
+- **验证结果。** 定向 Adapter/铁律/Store：31 pass、9 legacy skip、0 fail。完整 `npm run test:m3`：91 pass、9 legacy skip、0 fail；其中真实 LuaJIT `HeadlessWrapper` 集成通过。`npm run web:typecheck` 和 `npm run web:build` 均退出 0。新增断言覆盖：禁止投影层调用 `Sum`/`More`/`Combine` 和非零兜底；直接字段/原始 breakdown 透传；fast mutation 保留动态明细；新 revision 清除旧 `skillBreakdown`。
+- **本阶段结论。** P2 的 `projectDpsPipeline` 数据完整性修复已完成，页面模板与明细功能保持。性能收益限定为移除旧 pipeline 固定计算与其 19 次来源查询；进一步减少动态明细 `Tabulate` 必须先单独提供并验收严格 revision 的按需详情接口，不能混入本次修复。
+
 ### 每阶段固定验收与回填格式
 
 每个阶段结束必须在本节追加：修改文件与符号、GitNexus impact 输出摘要（直接调用者/受影响流程/风险）、输入 fixture 的来源、逐条命令、完整退出码、自动化结果、浏览器手工结果、性能数据、未覆盖情形和明确的下一阶段准入结论。任一失败项必须标记为“阻断”，不可写作已完成。

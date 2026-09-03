@@ -72,6 +72,30 @@ test('a level edit commits a new canonical PoB document instead of retaining a l
   } });
 });
 
+test('a newer official projection clears detail that the current revision did not return', async () => {
+  const response = body => ({ ok: true, json: async () => body });
+  const store = await loadStore(async (url) => {
+    if (url === '/api/import') return response({ success: true, data: {
+      buildName: 'fixture', characterLevel: 90, output: { Life: 100 },
+      skillBreakdown: { dpsPipeline: { totalDPS: 100 } },
+      loadouts: { active: { specId: 1, itemSetId: 1, skillSetId: 1, configSetId: 1 } },
+    } });
+    return response({ success: true, data: {
+      sourceRevision: 1, revision: 2, code: 'level-91-code',
+      build: {
+        buildName: 'fixture', characterLevel: 91, output: { Life: 101 },
+        loadouts: { active: { specId: 1, itemSetId: 1, skillSetId: 1, configSetId: 1 } },
+      },
+    } });
+  });
+
+  await store.importBuildFromCode('<PathOfBuilding2><Build /></PathOfBuilding2>');
+  assert.equal(store.skillBreakdown.dpsPipeline.totalDPS, 100);
+  const committed = await store.setLevel(91);
+  assert.equal(committed.success, true);
+  assert.equal(store.skillBreakdown, null);
+});
+
 test('canonical reload replaces a stale stored projection before equipment actions need loadout ids', async () => {
   const calls = [];
   const response = body => ({ ok: true, json: async () => body });

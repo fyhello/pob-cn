@@ -7,12 +7,19 @@ const require = createRequire(import.meta.url);
 const { LUA_OK } = require('lua-wasm-bindings/dist/lua');
 const { lauxlib, lua, lualib } = require('lua-wasm-bindings/dist/lua.51');
 const adapterPath = new URL('../../lua/real-calc-adapter.lua', import.meta.url);
+const calcFormatPath = new URL('../../../src/Modules/CalcFormat.lua', import.meta.url);
 
 async function runLua(scenario) {
-  const adapterSource = await readFile(adapterPath, 'utf8');
+  const [adapterSource, calcFormatSource] = await Promise.all([
+    readFile(adapterPath, 'utf8'),
+    readFile(calcFormatPath, 'utf8'),
+  ]);
   const state = lauxlib.luaL_newstate();
   lualib.luaL_openlibs(state);
   const script = `
+    function round(value) return value end
+    function formatNumSep(value) return value end
+    assert(loadstring(${JSON.stringify(calcFormatSource)}))()
     local factory = assert(loadstring(${JSON.stringify(adapterSource)}))
     local Adapter = factory()
     ${scenario}
@@ -131,13 +138,46 @@ test('calls only the HeadlessWrapper build APIs and returns calculated mainOutpu
     assert(calls.newBuild == 1)
     assert(calls.loadBuildFromXML == 1)
     assert(calls.buildOutput == 2)
-    -- One projection of the official DPS pipeline currently performs 19
-    -- Tabulate calls. loadXML must reuse calculate()'s result instead of
-    -- repeating the entire breakdown pass while preparing its response.
-    assert(calls.tabulate == 19)
+    -- Compatibility projection must not reconstruct damage or query sources.
+    assert(calls.tabulate == 0)
     return table.concat({ calls.newBuild, calls.loadBuildFromXML, calls.buildOutput, calls.tabulate }, ":")
   `);
-  assert.equal(result, '1:1:2:19');
+  assert.equal(result, '1:1:2:0');
+});
+
+test('projects DPS compatibility fields only from official actor output', async () => {
+  const result = await runLua(`
+    local forbidden = function() error("adapter must not derive official values") end
+    local build = {
+      calcsTab = {
+        input = { misc_buffMode = "COMBAT" },
+        calcsEnv = {
+          player = {
+            output = {
+              CombinedDPS = 999, TotalDPS = 777, TotalDot = 555, AverageHit = 333, Speed = 2.5, Time = 0.4,
+              HitChance = 95, CritChance = 12, CritMultiplier = 1.7, CritEffect = 1.084,
+              ManaCost = 30, ManaRegenRecovery = 42,
+            },
+            breakdown = {
+              TotalDPS = { "^7Base damage: 100", "= 777" },
+            },
+            modDB = { Sum = forbidden, More = forbidden, Combine = forbidden, Tabulate = forbidden },
+          },
+        },
+        sectionList = {},
+        BuildOutput = function(self) self.mainOutput = { TotalDPS = 777 } end,
+      },
+    }
+    local result = Adapter.new({ build = build, newBuild = function() end, loadBuildFromXML = function() end }):calculate("calculate")
+    assert(result.success == true)
+    local pipe = result.skillBreakdown.dpsPipeline
+    assert(pipe.combinedDPS == 999 and pipe.totalDPS == 777 and pipe.dotDPS == 555 and pipe.avgHit == 333)
+    assert(pipe.damageTypes == nil)
+    assert(pipe.hitDPS == nil and pipe.incDamage == nil and pipe.critMultiBase == nil)
+    assert(pipe.officialBreakdowns.TotalDPS[1] == "Base damage: 100")
+    return tostring(pipe.totalDPS) .. ":" .. tostring(pipe.manaRegen)
+  `);
+  assert.equal(result, '777:42');
 });
 
 test('projects only official visible equipment slots', async () => {
@@ -643,463 +683,6 @@ test('commits existing official item assignments, clears slots, rejects invalid 
   assert.equal(result, '102:0');
 });
 
-test.skip('legacy mock: creates preview-only strict crafted items through the official item APIs (use HeadlessWrapper integration)', async () => {
-  const result = await runLua(`
-    local originalId = 1
-    _G.itemLib = { applyRange = function(_, range) return range == .5 and "+15 to maximum Life" or "unexpected range" end }
-    local function makeBuild()
-      local oldItem = { id = originalId, title = "Old Wand", baseName = "Wand", base = { name = "Wand", type = "Wand" }, rarity = "RARE", raw = "Rarity: RARE\\nOld Wand\\nWand" }
-      local slot = { selItemId = originalId, SetSelItemId = function(self, id) self.selItemId = id end }
-      local items = { [originalId] = oldItem }
-      local itemSet = { id = 1, ["Weapon 1"] = slot }
-      local tab = { items = items, slots = { ["Weapon 1"] = slot }, itemSetOrderList = { 1 }, itemSets = { [1] = itemSet }, activeItemSetId = 1, activeItemSet = itemSet }
-	  function tab:SetActiveItemSet(itemSetId) self.activeItemSetId = itemSetId; self.activeItemSet = self.itemSets[itemSetId] end
-      function tab:AddItem(item) item.id = 2; self.items[2] = item end
-      function tab:IsItemValidForSlot(item, slotName) return slotName == "Weapon 1" and item.base.type == "Wand" end
-      function tab:GetValidRunesForItem() return { { name = "None" } } end
-      function tab:PopulateSlots() end
-      local build = { savers = {}, characterLevel = 90, spec = { allocNodes = {}, jewels = {} }, treeTab = { specList = { {} } }, itemsTab = tab, skillsTab = { skillSetOrderList = { 1 }, socketGroupList = {} }, configTab = { UpdateLevel = function() end, BuildModList = function() end }, calcsTab = { mainOutput = { Life = 10 } } }
-      function build.calcsTab:BuildOutput() self.mainOutput = { Life = 123 } end
-      function build:SaveDB() return "<PathOfBuilding2 />" end
-      return build
-    end
-    local runtime = { build = makeBuild(), newBuild = function() end }
-    runtime.loadBuildFromXML = function() runtime.build = makeBuild() end
-    runtime.new = function(kind, raw)
-      assert(kind == "Item")
-      assert(raw:match("Prefix: {range:0.500}Life1"))
-      return { title = "Crafted Wand", baseName = "Wand", base = { name = "Wand", type = "Wand" }, rarity = "RARE", crafted = true, itemLevel = 82, raw = raw, affixLimit = 6, prefixes = { { modId = "Life1", range = .5 }, { modId = "None" }, { modId = "None" } }, suffixes = { { modId = "None" }, { modId = "None" }, { modId = "None" } }, affixes = { Life1 = { "+(10-20) to maximum Life", level = 1, type = "Prefix" } }, GetModSpawnWeight = function() return 1 end, NormaliseQuality = function() end }
-    end
-    local adapter = Adapter.new(runtime)
-    local draft = { baseName = "Wand", rarity = "RARE", itemLevel = 82, prefixes = { { id = "Life1", roll = .5 } }, suffixes = {} }
-    local response = adapter:execute({ action = "craftPreview", operation = "create", draft = draft })
-    assert(response.success == true, response.error and response.error.message)
-    assert(response.data.item.id == nil)
-    assert(response.data.item.rawLines[3] == "+15 to maximum Life", table.concat(response.data.item.rawLines or {}, " | "))
-    assert(runtime.build.itemsTab.items[2] == nil, "preview unexpectedly added item")
-    assert(response.data.output.Life == 10, "preview output="..tostring(response.data.output.Life))
-    assert(runtime.build.itemsTab.slots["Weapon 1"].selItemId == originalId)
-    local committed = adapter:execute({ action = "craftCommit", operation = "create", draft = draft })
-    assert(committed.success == true, committed.error and committed.error.message)
-    assert(committed.data.item.id == 2)
-    assert(committed.data.build.itemLibrary[2].rawLines[3] == "+15 to maximum Life")
-    assert(runtime.build.itemsTab.items[2] ~= nil)
-    assert(runtime.build.itemsTab.slots["Weapon 1"].selItemId == originalId)
-    return tostring(committed.data.item.id)..":"..tostring(committed.data.output.Life)
-  `);
-  assert.equal(result, '2:123');
-});
-
-test.skip('legacy mock: builds normal and magic crafts through the official item parser (use HeadlessWrapper integration)', async () => {
-  const result = await runLua(`
-    local seen = {}
-    local runtime = {
-      new = function(kind, raw)
-        assert(kind == "Item")
-        table.insert(seen, raw)
-        local rarity = raw:match("Rarity: ([A-Z]+)")
-        local magic = rarity == "MAGIC"
-        local item = {
-          baseName = "Test Flask", base = { name = "Test Flask", type = "Flask", socketLimit = 0 }, rarity = rarity,
-          crafted = magic, itemLevel = 12, raw = raw, affixLimit = magic and 2 or 0,
-          prefixes = magic and { { modId = "Prefix1", range = .5 } } or {},
-          suffixes = magic and { { modId = "Suffix1", range = .5 } } or {},
-          affixes = magic and { Prefix1 = { level = 1, type = "Prefix", group = "P" }, Suffix1 = { level = 1, type = "Suffix", group = "S" } } or {},
-        }
-        function item:NormaliseQuality() end
-        function item:BuildAndParseRaw()
-          self.raw = "Rarity: "..self.rarity.."\\nTest Flask\\nItem Level: "..self.itemLevel..(self.crafted and "\\nCrafted: true" or "")
-        end
-        function item:GetModSpawnWeight() return 1 end
-        return item
-      end,
-    }
-    local tab = { GetValidRunesForItem = function() return {} end }
-    local adapter = Adapter.new(runtime)
-    local normal = assert(adapter:createStrictCraftItem({ baseName = "Test Flask", rarity = "NORMAL", itemLevel = 12, prefixes = {}, suffixes = {} }, tab))
-    local magic = assert(adapter:createStrictCraftItem({ baseName = "Test Flask", rarity = "MAGIC", itemLevel = 12, prefixes = { { id = "Prefix1", roll = .5 } }, suffixes = { { id = "Suffix1", roll = .5 } } }, tab))
-    assert(seen[1]:match("Rarity: NORMAL"))
-    assert(not seen[1]:match("Crafted: true"))
-    assert(seen[2]:match("Rarity: MAGIC"))
-    assert(seen[2]:match("Crafted: true"))
-    local projected = assert(adapter:projectOfficialItem(magic, true))
-    assert(projected.raw == magic.raw)
-    assert(projected.rawLines[1] == "Rarity: MAGIC")
-    return normal.rarity..":"..magic.rarity..":"..projected.rawLines[1]
-  `);
-  assert.equal(result, 'NORMAL:MAGIC:Rarity: MAGIC');
-});
-
-test.skip('legacy mock: creates strict crafted item runes only through official socket and rune APIs (use HeadlessWrapper integration)', async () => {
-  const result = await runLua(`
-    local function makeBuild()
-      local oldItem = { id = 1, title = "Old Wand", baseName = "Wand", base = { name = "Wand", type = "Wand" }, rarity = "RARE", raw = "Rarity: RARE\\nOld Wand\\nWand" }
-      local slot = { selItemId = 1, SetSelItemId = function(self, id) self.selItemId = id end }
-      local itemSet = { id = 1, ["Weapon 1"] = slot }
-      local tab = { items = { [1] = oldItem }, slots = { ["Weapon 1"] = slot }, itemSetOrderList = { 1 }, itemSets = { [1] = itemSet }, activeItemSetId = 1, activeItemSet = itemSet }
-      function tab:SetActiveItemSet(itemSetId) self.activeItemSetId = itemSetId; self.activeItemSet = self.itemSets[itemSetId] end
-      function tab:AddItem(item) item.id = 2; self.items[2] = item end
-      function tab:IsItemValidForSlot(item, slotName) return slotName == "Weapon 1" and item.base.type == "Wand" end
-      function tab:GetValidRunesForItem(item)
-        return { { name = "None" }, { name = "Iron Rune" }, { name = "Bound Rune" } }
-      end
-      function tab:IsSocketBoundRune(_, name) return name == "Bound Rune" end
-      function tab:PopulateSlots() end
-      local build = { savers = {}, spec = { allocNodes = {}, jewels = {} }, treeTab = { specList = { {} } }, itemsTab = tab, skillsTab = { skillSetOrderList = { 1 }, socketGroupList = {} }, configTab = { UpdateLevel = function() end, BuildModList = function() end }, calcsTab = { mainOutput = {} } }
-      function build.calcsTab:BuildOutput() self.mainOutput = { Score = slot.selItemId == 2 and tab.items[2].runes[1] == "Iron Rune" and 130 or 110 } end
-      function build:SaveDB() return "<PathOfBuilding2 />" end
-      return build
-    end
-    local runtime = { build = makeBuild(), newBuild = function() end }
-    runtime.loadBuildFromXML = function() runtime.build = makeBuild() end
-    runtime.new = function(kind, raw)
-      assert(kind == "Item")
-      assert(not raw:match("Rune:"))
-      local noSockets = raw:match("No Socket Wand") ~= nil
-      local item = { title = "Crafted Wand", baseName = noSockets and "No Socket Wand" or "Wand", base = { name = noSockets and "No Socket Wand" or "Wand", type = "Wand" }, rarity = "RARE", raw = raw, affixLimit = 6, prefixes = {}, suffixes = {}, affixes = {}, itemSocketCount = noSockets and 0 or 1, sockets = noSockets and {} or { { group = 1 } }, runes = noSockets and {} or { "None" } }
-      function item:NormaliseQuality() end
-      function item:UpdateRunes() self.runeModLines = {} end
-      function item:BuildAndParseRaw() self.raw = "Rarity: RARE\\nCrafted Wand\\nWand\\nSockets: S\\nRune: "..(self.runes[1] or "None") end
-      return item
-    end
-    local adapter = Adapter.new(runtime)
-    local request = { action = "craftPreview", operation = "replace", target = { itemSetId = 1, slotName = "Weapon 1" }, draft = { baseName = "Wand", rarity = "RARE", itemLevel = 82, prefixes = {}, suffixes = {}, runes = { "Iron Rune" } } }
-    local preview = adapter:execute(request)
-    assert(preview.success == true, preview.error and preview.error.message)
-    assert(preview.data.item.rawLines[5] == "Rune: Iron Rune")
-    assert(preview.data.output.Score == 130)
-    assert(preview.data.runeCapabilities.socketCount == 1)
-    assert(#preview.data.runeCapabilities.allowed == 2)
-    assert(preview.data.runeCapabilities.allowed[1] == "None")
-    assert(preview.data.runeCapabilities.allowed[2] == "Iron Rune")
-    assert(runtime.build.itemsTab.slots["Weapon 1"].selItemId == 1)
-    local wrongCount = adapter:execute({ action = "craftPreview", operation = "replace", target = request.target, draft = { baseName = "Wand", rarity = "RARE", itemLevel = 82, prefixes = {}, suffixes = {}, runes = {} } })
-    assert(wrongCount.success == false and wrongCount.error.api == "draft.runes")
-    local bound = adapter:execute({ action = "craftPreview", operation = "replace", target = request.target, draft = { baseName = "Wand", rarity = "RARE", itemLevel = 82, prefixes = {}, suffixes = {}, runes = { "Bound Rune" } } })
-    assert(bound.success == false and bound.error.api == "draft.runes[1]")
-    local noSockets = adapter:execute({ action = "craftPreview", operation = "replace", target = request.target, draft = { baseName = "No Socket Wand", rarity = "RARE", itemLevel = 82, prefixes = {}, suffixes = {}, runes = { "Iron Rune" } } })
-    assert(noSockets.success == false and noSockets.error.api == "draft.runes")
-    local noSocketCapability = adapter:execute({ action = "craftPreview", operation = "replace", target = request.target, draft = { baseName = "No Socket Wand", rarity = "RARE", itemLevel = 82, prefixes = {}, suffixes = {} } })
-    assert(noSocketCapability.success == true, noSocketCapability.error and noSocketCapability.error.message)
-    assert(noSocketCapability.data.runeCapabilities.socketCount == 0)
-    assert(#noSocketCapability.data.runeCapabilities.allowed == 0)
-    local forgedSockets = adapter:execute({ action = "craftPreview", operation = "replace", target = request.target, draft = { baseName = "Wand", rarity = "RARE", itemLevel = 82, prefixes = {}, suffixes = {}, sockets = 4 } })
-    assert(forgedSockets.success == false and forgedSockets.error.api == "draft.sockets")
-    local committed = adapter:execute({ action = "craftCommit", operation = "replace", target = request.target, draft = request.draft })
-    assert(committed.success == true, committed.error and committed.error.message)
-    assert(type(committed.data.xml) == "string" and committed.data.xml ~= "")
-    assert(runtime.build.itemsTab.items[2].runes[1] == "Iron Rune")
-    return tostring(committed.data.output.Score)
-  `);
-  assert.equal(result, '130');
-});
-
-test.skip('legacy mock: crafts jewels only in allocated official passive sockets (use HeadlessWrapper integration)', async () => {
-  const result = await runLua(`
-    local function makeBuild()
-      local build = { savers = {}, characterLevel = 90 }
-      local activeSpec = { title = "Active", allocNodes = { [100] = true }, jewels = {} }
-      local targetSpec = { title = "Target", allocNodes = { [200] = true }, jewels = {} }
-      local jewelSlot = { nodeId = 200, slotName = "Jewel 200", selItemId = 0 }
-      local tab = {
-        items = {}, itemOrderList = {}, slots = {}, sockets = { [200] = jewelSlot },
-        itemSetOrderList = { 1 }, itemSets = { [1] = { title = "Default" } }, activeItemSetId = 1,
-      }
-      function jewelSlot:SetSelItemId(itemId)
-        self.selItemId = itemId
-        build.spec.jewels[self.nodeId] = itemId
-      end
-      function tab:AddItem(item)
-        item.id = 2
-        self.items[item.id] = item
-        table.insert(self.itemOrderList, item.id)
-      end
-      function tab:IsItemValidForSlot(item, slotName)
-        return slotName == "Jewel 200" and item.base.type == "Jewel"
-      end
-      function tab:GetValidRunesForItem() return { { name = "None" } } end
-      function tab:PopulateSlots() end
-      build.treeTab = { activeSpec = 1, specList = { activeSpec, targetSpec } }
-      function build.treeTab:SetActiveSpec(specId)
-        self.activeSpec = specId
-        build.spec = self.specList[specId]
-        jewelSlot.selItemId = build.spec.jewels[200] or 0
-      end
-      build.spec = activeSpec
-      build.itemsTab = tab
-      build.skillsTab = { activeSkillSetId = 1, skillSetOrderList = { 1 }, skillSets = { [1] = { title = "Default", socketGroupList = {} } } }
-      build.configTab = { activeConfigSetId = 1, configSetOrderList = {}, configSets = {} }
-      build.calcsTab = { mainOutput = {} }
-      function build.calcsTab:BuildOutput()
-        self.mainOutput = { Score = build.treeTab.activeSpec == 2 and (build.spec.jewels[200] == 2 and 222 or 200) or 111 }
-      end
-      function build:SaveDB()
-        return "<PathOfBuilding2 activeSpec='"..build.treeTab.activeSpec.."' />"
-      end
-      return build
-    end
-    local runtime = { build = makeBuild(), newBuild = function() end }
-    runtime.loadBuildFromXML = function() runtime.build = makeBuild() end
-    runtime.new = function(kind, raw)
-      assert(kind == "Item")
-      assert(raw:match("Cobalt Jewel"))
-      return {
-        title = "Crafted Jewel", baseName = "Cobalt Jewel", base = { name = "Cobalt Jewel", type = "Jewel" }, rarity = "RARE", raw = raw, affixLimit = 4,
-        prefixes = { { modId = "Life1" } }, suffixes = {}, affixes = { Life1 = { level = 1, type = "Prefix" } },
-        GetModSpawnWeight = function() return 1 end, NormaliseQuality = function() end,
-      }
-    end
-    local adapter = Adapter.new(runtime)
-    local request = {
-      operation = "replace", target = { kind = "jewel", specId = 2, nodeId = 200 },
-      draft = { baseName = "Cobalt Jewel", rarity = "RARE", itemLevel = 82, prefixes = { { id = "Life1", roll = .5 } }, suffixes = {} },
-    }
-    local preview = adapter:execute({ action = "craftPreview", operation = request.operation, target = request.target, draft = request.draft })
-    assert(preview.success == true, preview.error and preview.error.message)
-    assert(preview.data.output.Score == 222)
-    assert(runtime.build.treeTab.activeSpec == 1)
-    assert(runtime.build.treeTab.specList[2].jewels[200] == nil)
-    assert(runtime.build.itemsTab.items[2] == nil)
-    local rejected = adapter:execute({ action = "craftPreview", operation = request.operation, target = { kind = "jewel", specId = 2, nodeId = 201 }, draft = request.draft })
-    assert(rejected.success == false)
-    assert(rejected.error.api == "target.nodeId")
-    assert(runtime.build.treeTab.activeSpec == 1)
-    local committed = adapter:execute({ action = "craftCommit", operation = request.operation, target = request.target, draft = request.draft })
-    assert(committed.success == true, committed.error and committed.error.message)
-    assert(runtime.build.treeTab.activeSpec == 1)
-    assert(runtime.build.treeTab.specList[1].jewels[200] == nil)
-    assert(runtime.build.treeTab.specList[2].jewels[200] == 2)
-    assert(committed.data.targetOutput.Score == 222)
-    assert(committed.data.output.Score == 111)
-    assert(committed.data.build.loadouts.active.specId == 1)
-    assert(committed.data.build.loadouts.passiveTrees[2].socketedJewels["200"].id == 2)
-    return tostring(committed.data.output.Score)
-  `);
-  assert.equal(result, '111');
-});
-
-test.skip('legacy mock: rejects raw PoB text under the structured authority contract (use HeadlessWrapper integration)', async () => {
-  const result = await runLua(`
-    local runtime = {
-      new = function(kind, raw)
-        assert(kind == "Item")
-        return {
-          id = 2,
-          name = "Beast Amulet",
-          title = "Beast Amulet",
-          baseName = "Absent Amulet",
-          base = { name = "Absent Amulet", type = "Amulet" },
-          rarity = "RARE",
-          raw = raw,
-          BuildRaw = function(self) return self.raw end,
-        }
-      end,
-    }
-    local itemsTab = {
-      items = {
-        [1] = { id = 1, name = "Old Amulet", title = "Old Amulet", baseName = "Absent Amulet", base = { name = "Absent Amulet", type = "Amulet" }, rarity = "RARE", raw = "Rarity: RARE\\nOld Amulet\\nAbsent Amulet", BuildRaw = function(self) return self.raw end }
-      },
-      itemSets = { [1] = { id = 1, title = "Default", useSecondWeaponSet = false, ["Amulet"] = { selItemId = 1 } } },
-      activeItemSetId = 1,
-      slots = { ["Amulet"] = { selItemId = 1, SetSelItemId = function(self, id) self.selItemId = id end } },
-      AddItem = function(self, item, bool)
-        self.items[item.id] = item
-      end,
-      IsItemValidForSlot = function(self, item, slotName) return true end,
-      SetActiveItemSet = function(self, id) self.activeItemSetId = id end,
-    }
-    local build = {
-      itemsTab = itemsTab,
-      calcsTab = { BuildOutput = function() end, mainOutput = { TotalDPS = 9999 } },
-      treeTab = { activeSpec = 1, specList = { [1] = { title = "Default", allocNodes = {} } } },
-      configTab = { activeConfigSetId = 1, configSets = { [1] = { title = "Default" } } },
-      skillsTab = { activeSkillSetId = 1, skillSets = { [1] = { title = "Default", socketGroupList = {} } } },
-      spec = { allocNodes = {} },
-      characterLevel = 90,
-      savers = { itemsTab = true, calcsTab = true, treeTab = true, configTab = true, skillsTab = true },
-      SaveDB = function() return "<PathOfBuilding2><Build level='90' /></PathOfBuilding2>" end,
-    }
-    runtime.build = build
-    runtime.newBuild = function() end
-    runtime.loadBuildFromXML = function() end
-    local adapter = Adapter.new(runtime)
-    local rawText = "Rarity: RARE\\n兽语咒符\\nAbsent Amulet\\nQuality: 40\\n+4 to Level of all Spell Skills"
-    local preview = adapter:execute({
-      action = "craftPreview",
-      operation = "replace",
-      target = { kind = "equipment", itemSetId = 1, slotName = "Amulet" },
-      draft = { kind = "rawItem", raw = rawText }
-    })
-    assert(preview.success == false)
-    assert(preview.error.api == "draft")
-    assert(itemsTab.items[2] == nil)
-    assert(itemsTab.slots["Amulet"].selItemId == 1)
-    return preview.error.message
-  `);
-  assert.equal(result, '制作只能提交由官方规则接口校验的结构化草稿');
-});
-
-test.skip('legacy mock: rejects an official cross-prefix/suffix group conflict (use HeadlessWrapper integration)', async () => {
-  const result = await runLua(`
-    local runtime = {
-      new = function(kind, raw)
-        assert(kind == "Item")
-        return {
-          baseName = "Wand", base = { name = "Wand", type = "Wand" }, affixLimit = 6,
-          prefixes = { { modId = "PrefixA" } }, suffixes = { { modId = "SuffixA" } },
-          affixes = {
-            PrefixA = { level = 1, type = "Prefix", group = "SharedGroup" },
-            SuffixA = { level = 1, type = "Suffix", group = "SharedGroup" },
-          },
-          GetModSpawnWeight = function() return 1 end,
-          NormaliseQuality = function() end,
-        }
-      end,
-    }
-    local item, response = Adapter.new(runtime):createStrictCraftItem({
-      baseName = "Wand", rarity = "RARE", itemLevel = 82,
-      prefixes = { { id = "PrefixA", roll = .5 } }, suffixes = { { id = "SuffixA", roll = .5 } },
-    })
-    assert(item == nil)
-    assert(response.success == false)
-    assert(response.error.code == "POB_CRAFT_DRAFT_INVALID")
-    return response.error.code
-  `);
-  assert.equal(result, 'POB_CRAFT_DRAFT_INVALID');
-});
-
-test.skip('legacy mock: uses the parsed official per-kind affix limits (use HeadlessWrapper integration)', async () => {
-  const result = await runLua(`
-    local function affixes(kind, count)
-      local list, map = {}, {}
-      for index = 1, count do
-        local id = kind .. index
-        list[index] = { modId = id, range = .5 }
-        map[id] = { level = 1, type = kind, group = id }
-      end
-      return list, map
-    end
-    local runtime = {
-      new = function(kind, raw)
-        assert(kind == "Item")
-        local baseName, prefixLimit, suffixLimit, prefixCount, suffixCount
-        if raw:match("Penumbra Amulet") then
-          baseName, prefixLimit, suffixLimit, prefixCount, suffixCount = "Penumbra Amulet", 5, 1, 5, 1
-        elseif raw:match("Abyss Test Jewel") then
-          assert(raw:match("Corrupted"), "corrupted item must reach the official parser as raw text")
-          baseName, prefixLimit, suffixLimit, prefixCount, suffixCount = "Abyss Test Jewel", 3, 3, 3, 3
-        else
-          baseName, prefixLimit, suffixLimit, prefixCount, suffixCount = "Absent Amulet", 2, 2, 3, 0
-        end
-        local prefixes, prefixMap = affixes("Prefix", prefixCount)
-        local suffixes, suffixMap = affixes("Suffix", suffixCount)
-        for id, mod in pairs(suffixMap) do prefixMap[id] = mod end
-        local item = {
-          baseName = baseName,
-          base = { name = baseName, type = baseName == "Abyss Test Jewel" and "Jewel" or "Amulet", subType = baseName == "Abyss Test Jewel" and "Abyss" or nil },
-          rarity = "RARE", raw = raw,
-          prefixes = prefixes, suffixes = suffixes, affixes = prefixMap,
-        }
-        item.prefixes.limit = prefixLimit
-        item.suffixes.limit = suffixLimit
-        function item:GetModSpawnWeight() return 1 end
-        function item:NormaliseQuality() end
-        return item
-      end,
-    }
-    local itemsTab = { GetValidRunesForItem = function() return {} end }
-    local adapter = Adapter.new(runtime)
-    local function requested(kind, count)
-      local list = {}
-      for index = 1, count do list[index] = { id = kind .. index, roll = .5 } end
-      return list
-    end
-    local penumbra = assert(adapter:createStrictCraftItem({ baseName = "Penumbra Amulet", rarity = "RARE", itemLevel = 82, prefixes = requested("Prefix", 5), suffixes = requested("Suffix", 1) }, itemsTab))
-    local abyss = assert(adapter:createStrictCraftItem({ baseName = "Abyss Test Jewel", rarity = "RARE", itemLevel = 82, corrupted = true, prefixes = requested("Prefix", 3), suffixes = requested("Suffix", 3) }, itemsTab))
-    local absent, absentError = adapter:createStrictCraftItem({ baseName = "Absent Amulet", rarity = "RARE", itemLevel = 82, prefixes = requested("Prefix", 3), suffixes = {} }, itemsTab)
-    assert(absent == nil)
-    assert(absentError.success == false)
-    return tostring(penumbra.prefixes.limit) .. ":" .. tostring(penumbra.suffixes.limit) .. ":" .. tostring(abyss.prefixes.limit) .. ":" .. tostring(abyss.suffixes.limit)
-  `);
-  assert.equal(result, '5:1:3:3');
-});
-
-test.skip('legacy mock: returns crafting candidates from current official Lua data (use HeadlessWrapper integration)', async () => {
-  const result = await runLua(`
-    local prefix = { "+(10-20) to maximum Life", level = 1, type = "Prefix", group = "Life" }
-    local suffix = { "+(10-20)% to Fire Resistance", level = 1, type = "Suffix", group = "FireRes" }
-    local essence = { "+(5-10) to maximum Life", level = 1, type = "Prefix", group = "EssenceLife" }
-    local runtime = {
-      newBuild = function() end,
-      loadBuildFromXML = function() end,
-      build = {
-        calcsTab = { BuildOutput = function() end, mainOutput = {} },
-        data = {
-          itemMods = { Life1 = prefix, FireRes1 = suffix, EssenceLife = essence },
-          essences = { EssenceOfLife = { name = "Essence of Life", type = "Life", mods = { Amulet = "EssenceLife" } } },
-        },
-        itemsTab = { GetValidRunesForItem = function() return {} end },
-      },
-      new = function(kind, raw)
-        assert(kind == "Item")
-        return {
-          baseName = "Test Amulet", type = "Amulet", base = { name = "Test Amulet", type = "Amulet" }, rarity = raw:match("Rarity: ([A-Z]+)"), itemLevel = 82,
-          corruptible = true, prefixes = { limit = 1 }, suffixes = { limit = 1 }, affixes = { Life1 = prefix, FireRes1 = suffix },
-          GetModSpawnWeight = function(_, mod) return (mod == prefix or mod == suffix) and 1 or 0 end,
-          NormaliseQuality = function() end,
-          BuildAndParseRaw = function(self) self.raw = raw end,
-        }
-      end,
-    }
-    runtime.build.itemsTab.build = runtime.build
-    local options = Adapter.new(runtime):execute({ action = "craftOptions", baseName = "Test Amulet", rarity = "MAGIC", itemLevel = 82, corrupted = false })
-    assert(options.success == true, options.error and options.error.message)
-    assert(options.data.affixLimits.prefixes == 1 and options.data.affixLimits.suffixes == 1)
-    assert(options.data.affixCounts.prefixes == 0 and options.data.affixCounts.suffixes == 0)
-    assert(options.data.qualityLimit == 20)
-    assert(#options.data.prefixes == 1 and options.data.prefixes[1].id == "Life1")
-    assert(#options.data.suffixes == 1 and options.data.suffixes[1].id == "FireRes1")
-    assert(#options.data.essences == 1 and options.data.essences[1].mod.id == "EssenceLife")
-    return options.data.rarity .. ":" .. tostring(options.data.corruptible)
-  `);
-  assert.equal(result, 'MAGIC:true');
-});
-
-test.skip('legacy mock: does not offer crafted affixes or essences for normal items (use HeadlessWrapper integration)', async () => {
-  const result = await runLua(`
-    local prefix = { type = "Prefix", group = "Life", level = 1, "+10 to maximum Life" }
-    local suffix = { type = "Suffix", group = "Fire", level = 1, "+10% to Fire Resistance" }
-    local runtime = {
-      newBuild = function() end,
-      loadBuildFromXML = function() end,
-      build = {
-        data = {
-          itemBases = { ["Test Amulet"] = { type = "Amulet" } },
-          itemMods = { Life1 = prefix, Fire1 = suffix, EssenceLife = prefix },
-          essences = { EssenceTest = { name = "Essence Test", type = "Test", mods = { Amulet = "EssenceLife" } } },
-        },
-        itemsTab = { build = nil, GetValidRunesForItem = function() return {} end },
-        calcsTab = { BuildOutput = function() end, mainOutput = {} },
-      },
-    }
-    runtime.build.itemsTab.build = runtime.build
-    runtime.new = function(_, raw)
-      return {
-        baseName = "Test Amulet", type = "Amulet", base = { name = "Test Amulet", type = "Amulet" }, rarity = raw:match("Rarity: ([A-Z]+)"),
-        corruptible = true, prefixes = { limit = 1 }, suffixes = { limit = 1 }, affixes = { Life1 = prefix, Fire1 = suffix },
-        GetModSpawnWeight = function() return 1 end, NormaliseQuality = function() end, BuildAndParseRaw = function(self) self.raw = raw end,
-      }
-    end
-    local options = Adapter.new(runtime):execute({ action = "craftOptions", baseName = "Test Amulet", rarity = "NORMAL", itemLevel = 82, corrupted = false })
-    assert(options.success == true, options.error and options.error.message)
-    assert(#options.data.prefixes == 0)
-    assert(#options.data.suffixes == 0)
-    assert(#options.data.essences == 0)
-    return tostring(options.data.affixCounts.prefixes) .. ":" .. tostring(options.data.affixCounts.suffixes)
-  `);
-  assert.equal(result, '0:0');
-});
-
 test('projects an official essence id so an existing crafted item can be edited as a structured draft', async () => {
   const result = await runLua(`
     local essenceMod = { "+(5-10) to maximum Life", level = 1, type = "Prefix", group = "EssenceLife" }
@@ -1144,6 +727,12 @@ test('projects only upstream-visible calculation breakdowns and keeps calculatio
         input = { skill_number = 1 },
         calcsEnv = {
           player = {
+            output = { Damage = 250 },
+            modDB = {
+              Combine = function(_, _, _, modName)
+                return modName == "Damage" and 60 or 40
+              end,
+            },
             breakdown = {
               HitDamage = { "^7Base damage: 100", "Final damage: 250" },
               DamageTable = {
@@ -1158,8 +747,8 @@ test('projects only upstream-visible calculation breakdowns and keeps calculatio
         sectionList = {
           { subSection = {
             { label = "Official damage", data = {
-              { label = "Hit damage", { format = "{output:Damage}", { breakdown = "HitDamage" } } },
-              { label = "Source table", { format = "{output:Damage}", { breakdown = "DamageTable" } } },
+              { { format = "All Types:" } },
+              { label = "Hit damage", { format = "{0:mod:1,2}%", { breakdown = "HitDamage", modType = "INC", modName = "Damage" }, { label = "Conversions", breakdown = "DamageTable", modType = "INC", modName = "SpellDamage" } } },
               { label = "Hidden row", flag = "hidden", { format = "{output:Damage}", { breakdown = "Hidden" } } },
             } },
           } },
@@ -1181,6 +770,14 @@ test('projects only upstream-visible calculation breakdowns and keeps calculatio
     assert(tableSection.rows[1].source == "Wand", "source="..tostring(tableSection.rows[1].source))
     assert(tableSection.rows[1].total == 250, "projected total="..tostring(tableSection.rows[1].total))
     assert(tableSection.rows[1].affixLimit == nil)
+    local dynamicRow = calculated.skillBreakdown.dynamicSubSections["Official damage"].rows[1]
+    assert(dynamicRow.cellId == "1:1:2:1")
+    assert(dynamicRow.columnLabel == "All Types:")
+    assert(dynamicRow.value == "100%")
+    assert(not dynamicRow.value:find("{", 1, true))
+    assert(dynamicRow.details[1].breakdownLines[1] == "Base damage: 100")
+    assert(dynamicRow.details[2].label == "Conversions")
+    assert(dynamicRow.details[2].breakdownTables[1].rows[1].source == "Wand")
 
     local applied = adapter:applyCalculationInputs(build, { calcsSkillGroup = 2 })
     assert(applied == true)
@@ -1198,6 +795,7 @@ test('projects only upstream-visible calculation breakdowns and keeps calculatio
 
 test('commits official buffMode changes and reflects in build projection', async () => {
   const result = await runLua(`
+    local calls = { tabulate = 0 }
     local build = {
       spec = { curClassName = "Witch", allocNodes = {} },
       characterLevel = 90,
@@ -1207,6 +805,31 @@ test('commits official buffMode changes and reflects in build projection', async
       configTab = { activeConfigSetId = 1, configSets = { [1] = { title = "Default" } } },
       calcsTab = {
         input = { misc_buffMode = "EFFECTIVE" },
+        calcsEnv = {
+          player = {
+            output = { TotalDPS = 1000 },
+            modDB = {
+              Tabulate = function()
+                calls.tabulate = calls.tabulate + 1
+                return {}
+              end,
+            },
+          },
+        },
+        sectionList = {
+          {
+            subSection = {
+              {
+                data = {
+                  {
+                    label = "Expensive source",
+                    { format = "{output:TotalDPS}", modType = "INC", modName = "Damage" },
+                  },
+                },
+              },
+            },
+          },
+        },
         BuildOutput = function(self)
           self.mainOutput = { TotalDPS = 1000 }
         end,
@@ -1219,7 +842,13 @@ test('commits official buffMode changes and reflects in build projection', async
     assert(result.success == true)
     assert(build.calcsTab.input.misc_buffMode == "COMBAT")
     assert(result.data.build.buffMode == "COMBAT")
-    return result.data.build.buffMode
+    assert(result.data.build.skillBreakdown.dpsPipeline.totalDPS == 1000)
+    assert(#result.data.build.skillBreakdown.sections == 0)
+    assert(result.data.build.skillBreakdown.dynamicSubSections["1"].rows[1].value == "1000")
+    -- The dynamic row calls Tabulate once with the exact official context.
+    -- Retrying with an empty context would invent a different source set.
+    assert(calls.tabulate == 1)
+    return result.data.build.buffMode .. ":" .. tostring(calls.tabulate)
   `);
-  assert.equal(result, 'COMBAT');
+  assert.equal(result, 'COMBAT:1');
 });

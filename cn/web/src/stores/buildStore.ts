@@ -292,15 +292,13 @@ export const useBuildStore = defineStore('build', {
       this.equippedSlots = next.equippedSlots;
       this.socketedJewels = next.socketedJewels;
       this.socketGroups = next.socketGroups;
-      if (next.skillBreakdown) {
-        this.skillBreakdown = next.skillBreakdown;
-      }
+      this.skillBreakdown = next.skillBreakdown;
       this.config = next.config;
       this.selectedSkillIndex = Math.max(0, next.socketGroups.findIndex(group => group.isMain));
       this.selectedCalculationSkillIndex = Math.min(Math.max(0, next.calcsSkillGroup - 1), Math.max(0, next.socketGroups.length - 1));
       if (next.buffMode) this.buffMode = next.buffMode;
       const nextOutput = (next as any).output || next.stats;
-      if (nextOutput) this.stats = { ...this.stats, ...nextOutput };
+      if (nextOutput) this.stats = nextOutput as CharacterStats;
       this.loadouts = next.loadouts;
       this.canonicalBuild = document;
       this.bridgeCanonicalVersion = document.version;
@@ -603,8 +601,12 @@ export const useBuildStore = defineStore('build', {
           };
           return;
         }
-        this.stats = { ...this.stats, ...buildData.output };
+        this.stats = buildData.output as CharacterStats;
         this.skillBreakdown = buildData.skillBreakdown ?? this.skillBreakdown;
+        const rawBuffMode = buildData.buffMode ?? buildData.skillBreakdown?.dpsPipeline?.calcMode;
+        if (['EFFECTIVE', 'COMBAT', 'BUFFED', 'UNBUFFED'].includes(rawBuffMode)) {
+          this.buffMode = rawBuffMode;
+        }
       } catch (e) {
         console.warn("Recalculate failed:", e);
         this.lastCalculationError = {

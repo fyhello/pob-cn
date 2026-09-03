@@ -535,9 +535,9 @@ local function resolveModSource(sourceStr, build)
 				if item.type == "Jewel" or (item.base and (item.base.type == "Jewel" or item.base.subType == "Jewel")) or item.rarity == "JEWEL" then
 					sourceType = "Jewel"
 				end
-				local displayLines = {}
+				local rawLines = {}
 				if type(item.displayLines) == "table" then
-					for _, l in ipairs(item.displayLines) do displayLines[#displayLines + 1] = stripColourCodes(tostring(l)) end
+					for _, l in ipairs(item.displayLines) do rawLines[#rawLines + 1] = stripColourCodes(tostring(l)) end
 				end
 				sourceRef = {
 					kind = "item",
@@ -546,7 +546,7 @@ local function resolveModSource(sourceStr, build)
 					baseName = item.base and stripColourCodes(item.base.name) or nil,
 					rarity = item.rarity or "NORMAL",
 					itemType = item.type or (item.base and item.base.type) or nil,
-					displayLines = displayLines,
+					rawLines = rawLines,
 				}
 			else
 				sourceRef = { kind = "item", id = numId }
@@ -660,12 +660,7 @@ local function projectModSources(actor, sectionData, build)
 		rowList = copyTable(sectionData.modList, true)
 	elseif #modNames > 0 then
 		local ok, list = pcall(modStore.Tabulate, modStore, sectionData.modType, cfg, unpack(modNames))
-		if ok and type(list) == "table" and #list > 0 then 
-			rowList = list 
-		else
-			local ok2, list2 = pcall(modStore.Tabulate, modStore, sectionData.modType, {}, unpack(modNames))
-			if ok2 and type(list2) == "table" then rowList = list2 end
-		end
+		if ok and type(list) == "table" and #list > 0 then rowList = list end
 	end
 
 	if not rowList or #rowList == 0 then return nil end
@@ -697,441 +692,81 @@ local function projectModSources(actor, sectionData, build)
 	return #sources > 0 and sources or nil
 end
 
+-- This compatibility DTO exists solely to preserve the established calculation
+-- screen contract. Every field is copied from the current official actor.output
+-- or actor.breakdown; absent upstream fields remain absent. It must never derive, aggregate, or
+-- default a calculation value.
 local function projectDpsPipeline(actor, calcsTab, build)
-	if not actor or type(actor.output) ~= "table" then return nil end
+	if type(actor) ~= "table" or type(actor.output) ~= "table" then return nil end
 	local out = actor.output
 	local mainSkill = actor.mainSkill
 	local activeEffect = mainSkill and mainSkill.activeEffect
-	local cfg = (mainSkill and type(mainSkill.skillCfg) == "table" and mainSkill.skillCfg) or {}
-	local skillModList = (mainSkill and mainSkill.skillModList) or actor.modDB
-	local modStore = skillModList or actor.modDB
-
-	local skillName = activeEffect and activeEffect.grantedEffect and activeEffect.grantedEffect.name or "主技能"
-	local skillLevel = activeEffect and activeEffect.level or 20
-	local skillQuality = activeEffect and activeEffect.quality or 0
-	local gemCount = (mainSkill and mainSkill.socketGroup and type(mainSkill.socketGroup.gemList) == "table") and #mainSkill.socketGroup.gemList or 0
-
-	local calcMode = (calcsTab and calcsTab.input and calcsTab.input.misc_buffMode) or "EFFECTIVE"
-
-	-- 1. 暴击几率与暴击伤害拆解
-	local critChance = tonumber(out.CritChance) or tonumber(out.PreEffectiveCritChance) or 0
-	local critMultiplier = tonumber(out.CritMultiplier) or 1
-	local critEffect = tonumber(out.CritEffect) or ((1 - critChance / 100) + (critChance / 100) * critMultiplier)
-	local critMultiBase = (skillModList and skillModList.Sum and skillModList:Sum("BASE", cfg, "CritMultiplier")) or 150
-	local critMultiInc = (skillModList and skillModList.Sum and skillModList:Sum("INC", cfg, "CritMultiplier")) or 0
-	local critMultiMore = (skillModList and skillModList.More and skillModList:More("MORE", cfg, "CritMultiplier")) or 1
-
-	-- 2. 增伤乘区
-	local incDamage = (skillModList and skillModList.Sum and skillModList:Sum("INC", cfg, "Damage", "SpellDamage", "ElementalDamage", "LightningDamage", "FireDamage", "ColdDamage", "PhysicalDamage", "ChaosDamage")) or 0
-	local moreDamage = (skillModList and skillModList.More and skillModList:More("MORE", cfg, "Damage", "SpellDamage", "ElementalDamage", "LightningDamage", "FireDamage", "ColdDamage", "PhysicalDamage", "ChaosDamage")) or 1
-
-	-- 3. 独立提取专属于暴击率与暴击伤害的 Tabulate 来源
-	local critChanceSources, critMultiSources = {}, {}
-	if modStore and modStore.Tabulate then
-		-- 暴击几率 sources
-		local ok1, list1 = pcall(modStore.Tabulate, modStore, "INC", cfg, "CritChance", "SpellCritChance", "AttackCritChance")
-		if ok1 and type(list1) == "table" then
-			for _, r in ipairs(list1) do
-				if r.mod then
-					local sDesc = stripColourCodes(stringValue(r.mod.source, ""))
-					local sType = sDesc:match("^Item:") and "Item" or sDesc:match("^Tree:") and "Tree" or sDesc:match("^Skill:") and "Skill" or "Other"
-					critChanceSources[#critChanceSources + 1] = {
-						value = tonumber(r.value or r.mod.value) or r.value,
-						modType = "INC",
-						name = stripColourCodes(stringValue(r.mod.name, "暴击几率提高")),
-						source = sDesc,
-						sourceName = stripColourCodes(stringValue(r.sourceName, r.mod.sourceName, sDesc)),
-						sourceType = sType,
-					}
-				end
-			end
-		end
-		-- 暴击伤害 sources
-		local ok2, list2 = pcall(modStore.Tabulate, modStore, "BASE", cfg, "CritMultiplier", "SpellCritMultiplier", "AttackCritMultiplier")
-		if ok2 and type(list2) == "table" then
-			for _, r in ipairs(list2) do
-				if r.mod then
-					local sDesc = stripColourCodes(stringValue(r.mod.source, ""))
-					local sType = sDesc:match("^Item:") and "Item" or sDesc:match("^Tree:") and "Tree" or sDesc:match("^Skill:") and "Skill" or "Other"
-					critMultiSources[#critMultiSources + 1] = {
-						value = tonumber(r.value or r.mod.value) or r.value,
-						modType = "BASE",
-						name = stripColourCodes(stringValue(r.mod.name, "暴击伤害加成")),
-						source = sDesc,
-						sourceName = stripColourCodes(stringValue(r.sourceName, r.mod.sourceName, sDesc)),
-						sourceType = sType,
-					}
-				end
-			end
-		end
-	end
-
-	-- 4. 提取 5 大元素专属的点伤、提高、更多乘区与抗性修正 (动态直连 Lua 引擎，杜绝任何假数据或词条污染)
-	local elementStats = {}
-	local elementNames = {
-		lightning = { 
-			min = "LightningMin", max = "LightningMax", 
-			incNames = { "LightningDamage", "ElementalDamage", "SpellDamage", "Damage" },
-			effKey = "LightningEffMult",
-			resKey = "EnemyLightningResist"
-		},
-		cold = { 
-			min = "ColdMin", max = "ColdMax", 
-			incNames = { "ColdDamage", "ElementalDamage", "SpellDamage", "Damage" },
-			effKey = "ColdEffMult",
-			resKey = "EnemyColdResist"
-		},
-		fire = { 
-			min = "FireMin", max = "FireMax", 
-			incNames = { "FireDamage", "ElementalDamage", "SpellDamage", "Damage" },
-			effKey = "FireEffMult",
-			resKey = "EnemyFireResist"
-		},
-		chaos = { 
-			min = "ChaosMin", max = "ChaosMax", 
-			incNames = { "ChaosDamage", "SpellDamage", "Damage" },
-			effKey = "ChaosEffMult",
-			resKey = "EnemyChaosResist"
-		},
-		physical = { 
-			min = "PhysicalMin", max = "PhysicalMax", 
-			incNames = { "PhysicalDamage", "SpellDamage", "Damage" },
-			effKey = "PhysicalEffMult",
-			resKey = nil
-		},
-	}
-
-	for eleKey, modCfg in pairs(elementNames) do
-		local eleInc = (skillModList and skillModList.Sum and skillModList:Sum("INC", cfg, unpack(modCfg.incNames))) or 0
-		local eleMore = (skillModList and skillModList.More and skillModList:More("MORE", cfg, unpack(modCfg.incNames))) or 1
-		local eleEff = tonumber(out[modCfg.effKey]) or (modCfg.resKey and (1 - (tonumber(out[modCfg.resKey]) or 0) / 100)) or 1.0
-
-		local sources = {}
-		if modStore and modStore.Tabulate then
-			-- A. 附加点伤
-			local okMin, listMin = pcall(modStore.Tabulate, modStore, "BASE", cfg, modCfg.min, modCfg.max)
-			if okMin and type(listMin) == "table" then
-				for _, r in ipairs(listMin) do
-					if r.mod then
-						local sDesc = stripColourCodes(stringValue(r.mod.source, ""))
-						local sName, sType, sRef = resolveModSource(sDesc, build)
-						if sName == "" or sName == sDesc then
-							sName = stripColourCodes(stringValue(r.sourceName, r.mod.sourceName, sDesc))
-						end
-						sources[#sources + 1] = {
-							value = tonumber(r.value or r.mod.value) or r.value,
-							modType = "BASE",
-							name = stripColourCodes(stringValue(r.mod.name, "附加点伤")),
-							source = sDesc,
-							sourceName = sName,
-							sourceType = sType,
-							sourceRef = sRef,
-						}
-					end
-				end
-			end
-			-- B. 元素提高 (严格按专属 incNames 过滤，混沌/物理绝不混入元素提高)
-			local okInc, listInc = pcall(modStore.Tabulate, modStore, "INC", cfg, unpack(modCfg.incNames))
-			if okInc and type(listInc) == "table" then
-				for _, r in ipairs(listInc) do
-					if r.mod then
-						local sDesc = stripColourCodes(stringValue(r.mod.source, ""))
-						local sName, sType, sRef = resolveModSource(sDesc, build)
-						if sName == "" or sName == sDesc then
-							sName = stripColourCodes(stringValue(r.sourceName, r.mod.sourceName, sDesc))
-						end
-						sources[#sources + 1] = {
-							value = tonumber(r.value or r.mod.value) or r.value,
-							modType = "INC",
-							name = stripColourCodes(stringValue(r.mod.name, "伤害提高")),
-							source = sDesc,
-							sourceName = sName,
-							sourceType = sType,
-							sourceRef = sRef,
-						}
-					end
-				end
-			end
-			-- C. 元素更多 (More)
-			local okMore, listMore = pcall(modStore.Tabulate, modStore, "MORE", cfg, unpack(modCfg.incNames))
-			if okMore and type(listMore) == "table" then
-				for _, r in ipairs(listMore) do
-					if r.mod then
-						local sDesc = stripColourCodes(stringValue(r.mod.source, ""))
-						local sName, sType, sRef = resolveModSource(sDesc, build)
-						if sName == "" or sName == sDesc then
-							sName = stripColourCodes(stringValue(r.sourceName, r.mod.sourceName, sDesc))
-						end
-						sources[#sources + 1] = {
-							value = tonumber(r.value or r.mod.value) or r.value,
-							modType = "MORE",
-							name = stripColourCodes(stringValue(r.mod.name, "伤害更多")),
-							source = sDesc,
-							sourceName = sName,
-							sourceType = sType,
-							sourceRef = sRef,
-						}
-					end
-				end
-			end
-		end
-
-		local prefix = eleKey:gsub("^%l", string.upper)
-		local eleMin = tonumber(out[prefix .. "Min"]) or 0
-		local eleMax = tonumber(out[prefix .. "Max"]) or 0
-		local eleHit = tonumber(out[prefix .. "HitAvg"]) or ((eleMin + eleMax) / 2)
-		local eleDps = tonumber(out[prefix .. "DPS"]) or 0
-
-		elementStats[eleKey] = {
-			min = eleMin,
-			max = eleMax,
-			hit = eleHit,
-			dps = eleDps,
-			inc = eleInc,
-			more = eleMore,
-			effMult = eleEff,
-			sources = #sources > 0 and sources or nil
-		}
-	end
-
-	-- 5. 提取全量增伤乘区来源 (所有 Inc 提高与 More 更多)
-	local multiplierSources = {}
-	if modStore and modStore.Tabulate then
-		local incModNames = { "Damage", "SpellDamage", "AttackDamage", "ElementalDamage", "LightningDamage", "ColdDamage", "FireDamage", "PhysicalDamage", "ChaosDamage", "AreaDamage", "ProjectileDamage", "MeleeDamage" }
-		local okIncAll, listIncAll = pcall(modStore.Tabulate, modStore, "INC", cfg, unpack(incModNames))
-		if okIncAll and type(listIncAll) == "table" then
-			for _, r in ipairs(listIncAll) do
-				if r.mod then
-					local sDesc = stripColourCodes(stringValue(r.mod.source, ""))
-					local sName, sType, sRef = resolveModSource(sDesc, build)
-					if sName == "" or sName == sDesc then
-						sName = stripColourCodes(stringValue(r.sourceName, r.mod.sourceName, sDesc))
-					end
-					multiplierSources[#multiplierSources + 1] = {
-						value = tonumber(r.value or r.mod.value) or r.value,
-						modType = "INC",
-						name = stripColourCodes(stringValue(r.mod.name, "伤害提高")),
-						source = sDesc,
-						sourceName = sName,
-						sourceType = sType,
-						sourceRef = sRef,
-					}
-				end
-			end
-		end
-
-		local okMoreAll, listMoreAll = pcall(modStore.Tabulate, modStore, "MORE", cfg, unpack(incModNames))
-		if okMoreAll and type(listMoreAll) == "table" then
-			for _, r in ipairs(listMoreAll) do
-				if r.mod then
-					local sDesc = stripColourCodes(stringValue(r.mod.source, ""))
-					local sName, sType, sRef = resolveModSource(sDesc, build)
-					if sName == "" or sName == sDesc then
-						sName = stripColourCodes(stringValue(r.sourceName, r.mod.sourceName, sDesc))
-					end
-					multiplierSources[#multiplierSources + 1] = {
-						value = tonumber(r.value or r.mod.value) or r.value,
-						modType = "MORE",
-						name = stripColourCodes(stringValue(r.mod.name, "伤害更多")),
-						source = sDesc,
-						sourceName = sName,
-						sourceType = sType,
-						sourceRef = sRef,
-					}
-				end
-			end
-		end
-	end
-
-	local officialBreakdowns = {}
-	if actor and actor.breakdown then
-		for bKey, bVal in pairs(actor.breakdown) do
-			if type(bVal) == "table" then
-				local lines = {}
-				for _, line in ipairs(bVal) do
-					if type(line) == "string" then
-						if line == "Hit damage:" and bVal.damageTypes and #bVal.damageTypes > 0 then
-							for _, dt in ipairs(bVal.damageTypes) do
-								local dtSource = dt.source or bKey
-								local srcLabel = dtSource .. "来源加成"
-								if dt.inc then
-									lines[#lines + 1] = stripColourCodes(dt.inc .. " (提高伤害倍率: " .. srcLabel .. ")")
-								end
-								if dt.more then
-									lines[#lines + 1] = stripColourCodes(dt.more .. " (更多伤害乘区: " .. srcLabel .. ")")
-								end
-							end
-						end
-						lines[#lines + 1] = stripColourCodes(line)
-					end
-				end
-				if #lines > 0 then
-					officialBreakdowns[bKey] = lines
-				end
-			end
-		end
-	end
-
+	local activeGrantedEffect = activeEffect and activeEffect.grantedEffect
 	return {
-		skillName = stripColourCodes(skillName),
-		skillLevel = skillLevel,
-		skillQuality = skillQuality,
-		gemCount = gemCount,
-		calcMode = calcMode,
-
-		-- 金字塔各层核心指标
-		totalDPS = tonumber(out.TotalDPS) or 0,
-		hitDPS = tonumber(out.HitDPS) or tonumber(out.TotalDPS) or 0,
-		dotDPS = tonumber(out.TotalDot) or 0,
-		avgHit = tonumber(out.AverageHit) or tonumber(out.AverageDamage) or 0,
-		speed = tonumber(out.Speed) or tonumber(out.CastRate) or 0,
-		castTime = tonumber(out.Time) or (tonumber(out.Speed) and tonumber(out.Speed) > 0 and (1 / tonumber(out.Speed))) or 0,
-		hitChance = tonumber(out.HitChance) or 100,
-
-		-- 暴击金字塔
-		critChance = critChance,
-		critMultiplier = critMultiplier,
-		critEffect = critEffect,
-		critMultiBase = critMultiBase,
-		critMultiInc = critMultiInc,
-		critMultiMore = critMultiMore,
-		critChanceSources = #critChanceSources > 0 and critChanceSources or nil,
-		critMultiSources = #critMultiSources > 0 and critMultiSources or nil,
-
-		-- 增伤金字塔
-		incDamage = incDamage,
-		moreDamage = moreDamage,
-		multiplierSources = #multiplierSources > 0 and multiplierSources or nil,
-
-		-- 异常状态核心及官方原版全量明细
-		igniteDPS = tonumber(out.IgniteDPS) or 0,
-		igniteChance = tonumber(out.IgniteChancePerHit) or tonumber(out.IgniteChance) or 0,
-		igniteDuration = tonumber(out.IgniteDuration) or 4.0,
-		igniteDamage = tonumber(out.IgniteDamage) or 0,
-		
-		igniteDetails = {
-			enemyThreshold = tonumber(out.EnemyAilmentThreshold) or 0,
-			stacksMax = tonumber(out.IgniteStacksMax) or 1,
-			stackPotential = tonumber(out.IgniteStackPotentialPercent) or 0,
-			rollAverage = tonumber(out.IgniteRollAverage) or 0,
-			chancePerHit = tonumber(out.IgniteChancePerHit) or 0,
-			magnitudeEffect = tonumber(out.IgniteMagnitudeEffect) or 1,
-			sources = {
-				lightning = (tonumber(out.IgniteLightningMax) or 0) > 0 and { min = tonumber(out.IgniteLightningMin) or 0, max = tonumber(out.IgniteLightningMax) or 0 } or nil,
-				cold = (tonumber(out.IgniteColdMax) or 0) > 0 and { min = tonumber(out.IgniteColdMin) or 0, max = tonumber(out.IgniteColdMax) or 0 } or nil,
-				fire = (tonumber(out.IgniteFireMax) or 0) > 0 and { min = tonumber(out.IgniteFireMin) or 0, max = tonumber(out.IgniteFireMax) or 0 } or nil,
-				chaos = (tonumber(out.IgniteChaosMax) or 0) > 0 and { min = tonumber(out.IgniteChaosMin) or 0, max = tonumber(out.IgniteChaosMax) or 0 } or nil,
-				physical = (tonumber(out.IgnitePhysicalMax) or 0) > 0 and { min = tonumber(out.IgnitePhysicalMin) or 0, max = tonumber(out.IgnitePhysicalMax) or 0 } or nil,
-			},
-			effectiveMult = tonumber(out.IgniteEffMult) or 1,
-			dps = tonumber(out.IgniteDPS) or 0,
-			duration = tonumber(out.IgniteDuration) or 4.0,
-			damageAll = tonumber(out.IgniteDamage) or 0,
-		},
-
-		shockEffect = tonumber(out.ShockVal) or tonumber(out.ShockEffect) or 1.0,
-		shockChance = tonumber(out.ShockChance) or 0,
-		
-		freezeChance = tonumber(out.FreezeChance) or 0,
-		chillChance = tonumber(out.ChillChance) or 0,
-		bleedDPS = tonumber(out.BleedDPS) or 0,
-		poisonDPS = tonumber(out.PoisonDPS) or 0,
-
-		-- 元素点伤与秒伤 (真实动态计算)
-		damageTypes = elementStats,
-
-		-- 消耗与抗性
-		manaCost = tonumber(out.ManaCost) or 0,
-		manaCostPerSecond = tonumber(out.ManaCostPerSecond) or 0,
-		manaRegen = tonumber(out.ManaRegen) or tonumber(out.ManaRegenRecovery) or 0,
+		skillName = activeGrantedEffect and stripColourCodes(activeGrantedEffect.name) or nil,
+		skillLevel = activeEffect and activeEffect.level or nil,
+		skillQuality = activeEffect and activeEffect.quality or nil,
+		gemCount = mainSkill and mainSkill.socketGroup and type(mainSkill.socketGroup.gemList) == "table" and #mainSkill.socketGroup.gemList or nil,
+		calcMode = calcsTab and calcsTab.input and calcsTab.input.misc_buffMode or nil,
+		combinedDPS = out.CombinedDPS,
+		totalDPS = out.TotalDPS,
+		dotDPS = out.TotalDot,
+		avgHit = out.AverageHit,
+		speed = out.Speed,
+		castTime = out.Time,
+		hitChance = out.HitChance,
+		critChance = out.CritChance,
+		critMultiplier = out.CritMultiplier,
+		critEffect = out.CritEffect,
+		igniteDPS = out.IgniteDPS,
+		bleedDPS = out.BleedDPS,
+		poisonDPS = out.PoisonDPS,
+		igniteChance = out.IgniteChancePerHit,
+		igniteDuration = out.IgniteDuration,
+		igniteDamage = out.IgniteDamage,
+		shockEffect = out.ShockVal,
+		shockChance = out.ShockChance,
+		freezeChance = out.FreezeChance,
+		chillChance = out.ChillChance,
+		totalMin = out.TotalMin,
+		totalMax = out.TotalMax,
+		manaCost = out.ManaCost,
+		manaCostPerSecond = out.ManaCostPerSecond,
+		manaRegen = out.ManaRegenRecovery,
 		enemyResist = {
-			fire = tonumber(out.EnemyFireResist) or 0,
-			cold = tonumber(out.EnemyColdResist) or 0,
-			lightning = tonumber(out.EnemyLightningResist) or 0,
-			chaos = tonumber(out.EnemyChaosResist) or 0,
+			fire = out.EnemyFireResist,
+			cold = out.EnemyColdResist,
+			lightning = out.EnemyLightningResist,
+			chaos = out.EnemyChaosResist,
 		},
-
-		-- 官方核心生成的原始推导文本
-		officialBreakdowns = officialBreakdowns,
 	}
 end
 
 local function formatDisplayValue(columnData, actor)
-	if not columnData or not actor then return "" end
-	local out = actor.output or {}
-	local fmt = columnData.format
-	if type(fmt) ~= "string" then return "" end
+	if type(columnData) ~= "table" or type(actor) ~= "table" or type(columnData.format) ~= "string" then return "" end
+	-- PoB owns this placeholder language, including {n:mod:...}. Do not
+	-- duplicate Combine behaviour here: a missing official formatter is blank.
+	if type(formatCalcStr) ~= "function" then return "" end
+	local ok, value = pcall(formatCalcStr, columnData.format, actor, columnData)
+	if not ok or type(value) ~= "string" then return "" end
+	value = stripColourCodes(value)
+	-- A partial formatter must never leak raw PoB control tokens into the UI.
+	if value:find("{[^}]+}") then return "" end
+	return value
+end
 
-	local str = fmt:gsub("{output:([%a%.:_]+)}", function(c) 
-		local ns, var = c:match("^(%a+)%.(%a+)$")
-		if ns then
-			return out[ns] and out[ns][var] or ""
-		else
-			return out[c] or ""
-		end
-	end)
-	str = str:gsub("{(%d+):output:([%a%.:_]+)}", function(p, c) 
-		local ns, var = c:match("^(%a+)%.(%a+)$")
-		local val = ns and (out[ns] and out[ns][var] or 0) or (out[c] or 0)
-		local num = tonumber(val)
-		if num then
-			local prec = tonumber(p) or 0
-			if prec > 0 then
-				return string.format("%." .. prec .. "f", num)
-			else
-				return tostring(math.floor(num + 0.5))
+local function projectOfficialBreakdowns(actor)
+	local projected = {}
+	for key, breakdown in pairs(type(actor) == "table" and actor.breakdown or {}) do
+		if type(breakdown) == "table" then
+			local lines = {}
+			for _, line in ipairs(breakdown) do
+				if type(line) == "string" then table.insert(lines, stripColourCodes(line)) end
 			end
+			if #lines > 0 then projected[key] = lines end
 		end
-		return tostring(val or "")
-	end)
-	str = str:gsub("{(%d+):mod:([%d,]+)}", function(p, n)
-		local numList = { }
-		for num in n:gmatch("%d+") do
-			table.insert(numList, tonumber(num))
-		end
-		if #numList == 0 or not columnData[numList[1]] then return "" end
-		local modType = columnData[numList[1]].modType
-		local modTotal = modType == "MORE" and 1 or 0
-		for _, num in ipairs(numList) do
-			local sectionData = columnData[num]
-			if sectionData then
-				local modCfg = (sectionData.cfg and actor.mainSkill and actor.mainSkill[sectionData.cfg.."Cfg"]) or { }
-				if sectionData.modSource then
-					modCfg.source = sectionData.modSource
-					modCfg.ignoreSourceInCheckConditions = true
-				end
-				if sectionData.actor then
-					modCfg.actor = sectionData.actor
-				end
-				local modVal = modType == "MORE" and 1 or 0
-				local modStore = (sectionData.enemy and actor.enemy and actor.enemy.modDB) or (sectionData.cfg and actor.mainSkill and actor.mainSkill.skillModList) or actor.modDB
-				if modStore and type(modStore.Combine) == "function" then
-					if type(sectionData.modName) == "table" then
-						local ok, res = pcall(modStore.Combine, modStore, sectionData.modType, modCfg, unpack(sectionData.modName))
-						if ok and res then modVal = res end
-					elseif sectionData.modName then
-						local ok, res = pcall(modStore.Combine, modStore, sectionData.modType, modCfg, sectionData.modName)
-						if ok and res then modVal = res end
-					end
-				end
-				if modType == "MORE" then
-					modTotal = modTotal * modVal
-				else
-					modTotal = modTotal + modVal
-				end
-			end
-		end
-		if modType == "MORE" then
-			modTotal = (modTotal - 1) * 100
-		end
-		local prec = tonumber(p) or 0
-		if prec > 0 then
-			return string.format("%." .. prec .. "f", modTotal)
-		else
-			return tostring(math.floor(modTotal + 0.5))
-		end
-	end)
-	return stripColourCodes(str)
+	end
+	return projected
 end
 
 local function projectBreakdown(build, fastMode)
@@ -1142,6 +777,7 @@ local function projectBreakdown(build, fastMode)
 	if not actor then return { sections = {}, dynamicSubSections = {}, dpsPipeline = nil } end
 
 	local dpsPipeline = projectDpsPipeline(actor, calcsTab, build)
+	if dpsPipeline then dpsPipeline.officialBreakdowns = projectOfficialBreakdowns(actor) end
 	local sections, seen = {}, {}
 	local dynamicSubSections = {}
 
@@ -1152,16 +788,23 @@ local function projectBreakdown(build, fastMode)
 					local subKey = tostring(subSection.id or subSection.label or subIndex)
 					local subLabel = stripColourCodes(stringValue(subSection.label, subSection.id, "小节"))
 					local subRows = {}
+					local columnLabels = {}
 
 					for rowIndex, rowData in ipairs(subSection.data or {}) do
 						if type(rowData) == "table" and checkCalculationFlag(calcsTab, rowData) then
-							local rowLabel = stripColourCodes(stringValue(rowData.label, ""))
-							for columnIndex, columnData in ipairs(rowData) do
-								if type(columnData) == "table" and checkCalculationFlag(calcsTab, columnData) then
+							local rowLabel = stripColourCodes(stringValue(rowData.label, "")) or ""
+							if rowLabel == "" then
+								for columnIndex, columnData in ipairs(rowData) do
+									if type(columnData) == "table" and checkCalculationFlag(calcsTab, columnData) then
+										local headerText = formatDisplayValue(columnData, actor)
+										if headerText ~= "" then columnLabels[columnIndex] = headerText end
+									end
+								end
+							else
+								for columnIndex, columnData in ipairs(rowData) do
+									if type(columnData) == "table" and checkCalculationFlag(calcsTab, columnData) then
 									local valText = formatDisplayValue(columnData, actor)
-									local breakdownLines = {}
-									local breakdownTables = {}
-									local rowSources = nil
+									local detailSections = {}
 
 									local detailList = {}
 									if type(columnData.breakdown) == "string" or columnData.modName or columnData.modType then
@@ -1171,43 +814,26 @@ local function projectBreakdown(build, fastMode)
 
 									for detailIndex, sectionData in ipairs(detailList) do
 										if type(sectionData) == "table" and checkCalculationFlag(calcsTab, sectionData) then
+											local breakdownLines = {}
 											local content = {}
 											if type(sectionData.breakdown) == "string" then
 												local bData = breakdownFor(actor, sectionData.breakdown)
 												if bData then
 													for _, bLine in ipairs(bData) do
-														if type(bLine) == "string" then
-															breakdownLines[#breakdownLines + 1] = stripColourCodes(bLine)
-														end
-													end
-													if #breakdownLines == 0 and type(bData.radius) == "number" then
-														local metres = bData.radius / 10
-														breakdownLines[#breakdownLines + 1] = string.format("%.1fm (基础范围)", metres)
-														breakdownLines[#breakdownLines + 1] = string.format("= %.1fm", metres)
+														if type(bLine) == "string" then breakdownLines[#breakdownLines + 1] = stripColourCodes(bLine) end
 													end
 													content = projectBreakdownTables(bData, sectionData, build)
-													for _, tab in ipairs(content) do
-														breakdownTables[#breakdownTables + 1] = tab
-													end
-												end
-												if #breakdownLines == 0 then
-													if (sectionData.breakdown == "PresenceRadius" or rowData.label == "Presence Radius") and actor.output.PresenceRadiusMetres then
-														breakdownLines[#breakdownLines + 1] = string.format("%.1fm (基础在场半径)", actor.output.PresenceRadiusMetres)
-														breakdownLines[#breakdownLines + 1] = string.format("= %.1fm", actor.output.PresenceRadiusMetres)
-													elseif (sectionData.breakdown == "SurroundedRadius" or rowData.label == "Surrounded Radius") and actor.output.SurroundedRadiusMetres then
-														breakdownLines[#breakdownLines + 1] = string.format("%.1fm (基础包围判定半径)", actor.output.SurroundedRadiusMetres)
-														breakdownLines[#breakdownLines + 1] = string.format("= %.1fm", actor.output.SurroundedRadiusMetres)
-													elseif (sectionData.breakdown == "PresenceMod" or rowData.label == "Presence Mod") and actor.output.PresenceMod then
-														breakdownLines[#breakdownLines + 1] = string.format("x %.2f (在场效果倍率)", actor.output.PresenceMod)
-													elseif (sectionData.breakdown == "SurroundedMod" or rowData.label == "Surrounded Mod") and actor.output.SurroundedMod then
-														breakdownLines[#breakdownLines + 1] = string.format("x %.2f (包围判定倍率)", actor.output.SurroundedMod)
-													end
 												end
 											end
 											local sources = projectModSources(actor, sectionData, build)
-											if sources then
-												rowSources = rowSources or {}
-												for _, s in ipairs(sources) do rowSources[#rowSources + 1] = s end
+											if #breakdownLines > 0 or #content > 0 or sources then
+												detailSections[#detailSections + 1] = {
+													key = tostring(detailIndex),
+													label = stripColourCodes(stringValue(sectionData.label, "")),
+													breakdownLines = #breakdownLines > 0 and breakdownLines or nil,
+													breakdownTables = #content > 0 and content or nil,
+													sources = sources,
+												}
 											end
 
 											if not fastMode and (#content > 0 or sources) then
@@ -1226,16 +852,17 @@ local function projectBreakdown(build, fastMode)
 										end
 									end
 
-									if valText ~= "" or #breakdownLines > 0 or rowSources then
+									if valText ~= "" or #detailSections > 0 then
 										subRows[#subRows + 1] = {
-											label = rowLabel ~= "" and rowLabel or (stripColourCodes(stringValue(columnData.label, "属性"))),
+											cellId = table.concat({ sectionIndex, subIndex, rowIndex, columnIndex }, ":"),
+											label = rowLabel,
+											columnLabel = columnLabels[columnIndex],
 											value = valText,
-											breakdownLines = #breakdownLines > 0 and breakdownLines or nil,
-											breakdownTables = #breakdownTables > 0 and breakdownTables or nil,
-											sources = rowSources,
+											details = #detailSections > 0 and detailSections or nil,
 										}
 									end
 								end
+							end
 							end
 						end
 					end
@@ -3751,6 +3378,7 @@ function Adapter:calculate(action, request)
 		success = true,
 		action = action,
 		output = outputScalars(build.calcsTab.mainOutput),
+		buffMode = stringValue(type(build.calcsTab.input) == "table" and build.calcsTab.input.misc_buffMode),
 		skillBreakdown = projectBreakdown(build),
 	}
 end
