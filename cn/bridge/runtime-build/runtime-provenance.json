@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Offline Windows x64 rebuild inputs for Builds/luajit only.",
+  "legacyDirectoryDependency": false,
+  "entryPoint": "cn/bridge/runtime-build/build-runtime.ps1",
+  "toolchain": {
+    "platform": "Windows x64",
+    "compiler": "Visual Studio 2022 C++ Build Tools",
+    "environment": "vcvarsall.bat x64"
+  },
+  "luaJit": {
+    "upstream": "https://github.com/LuaJIT/LuaJIT",
+    "commit": "2460b3ff93a1c955de3d62cfc825de7d68dc272e",
+    "releaseVersionTimestamp": "1784580905",
+    "sourceSha512": "f7b35a4690b5bfc847dc9f94288cc7c51b7a3bd84a793b5841889ecc7dc2d60b67b3b9f31f3e713a0c8867a719c27b129289f6d90d64dccf54595e270c6c2977",
+    "license": "MIT",
+    "vendoredSource": "cn/bridge/runtime-build/third_party/luajit",
+    "appliedPatches": [
+      {
+        "path": "cn/bridge/runtime-build/patches/msvcbuild.patch",
+        "sha256": "AA25401A0153A225A8A6B3FB20F9AA8D34A51FF4EF2CDC37F6F38ECA9B3546B5"
+      },
+      {
+        "path": "cn/bridge/runtime-build/patches/pob-wide-crt.patch",
+        "sha256": "D5B316CAA38CEF487F1AB7BDC43D05241426A17341E1608134307CDC43418BF7"
+      }
+    ]
+  },
+  "luaUtf8": {
+    "upstream": "https://github.com/starwing/luautf8",
+    "commit": "bdd3d7fb6ef22334fde028ba792d3a16309a4de8",
+    "license": "MIT",
+    "vendoredSource": "cn/bridge/runtime-build/third_party/luautf8",
+    "requiredFiles": {
+      "lutf8lib.c": "30267BC570FCDEECAA5EF3CD0A7C05136EAFE1707133D7C8149F9D1C2DE8E6A4",
+      "unidata.h": "05EBA3412EA58B326B2C0329D4F736182543E465F0EFA363EB089968C086B05E",
+      "LICENSE": "54B920463CFFEA968BEB858DAB6DAC48AD8D52EF80DCFE2306296390A3BFB225"
+    }
+  }
+}
