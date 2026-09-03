@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "completeness": "complete",
+  "generator": {
+    "command": "node cn/pipeline/generate-content.mjs",
+    "version": 6
+  },
+  "upstream": {
+    "commit": "5d173cbf8c9cf394a975cbb813f19d0b6dc67ea6"
+  },
+  "dictionary": {
+    "gzip_sha256": "2af6460f94ef0fc6ef9826e7ca8b06f485013b4828993e0480391b9138bcc779",
+    "payload_sha256": "18f613924fe3a8092bc00194ff1082309484c454773f76566674db1feba4057a",
+    "schema_path": "tools/upstream-builder/poe2dict/vendor/schema.min.json",
+    "schema_sha256": "0d0844dd3a049cb806cb9be6299e6427c86a8c48f355f3fe878100fe254d8688",
+    "schema_version": 7
+  },
+  "inputs": [
+    {
+      "id": "dictionary.ninja-poe2.poe2-runtime-gzip",
+      "path": "cn/pipeline/sources/dictionary/ninja-poe2/poe2.json.gz",
+      "sha256": "2af6460f94ef0fc6ef9826e7ca8b06f485013b4828993e0480391b9138bcc779"
+    },
+    {
+      "id": "override.zh-CN.terms",
+      "path": "cn/pipeline/overrides/zh-CN/terms.json",
+      "sha256": "4b76c8909da4f9ccc7a5a6fb074155fb3607f84106dfd9caf6732284f271af4f"
+    },
+    {
+      "id": "override.zh-CN.glossary",
+      "path": "cn/pipeline/overrides/zh-CN/glossary.json",
+      "sha256": "148d868c835903ca4c425df84a3797fad8e238d617e1185c76284515a25e9b95"
+    },
+    {
+      "id": "upstream.crafting.runes",
+      "path": "src/Data/ModRunes.lua",
+      "sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387"
+    },
+    {
+      "id": "upstream.crafting.essences",
+      "path": "src/Data/Essence.lua",
+      "sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74"
+    },
+    {
+      "id": "upstream.crafting.item-mods",
+      "path": "src/Data/ModItem.lua",
+      "sha256": "66f955cff7f2b64ac4ec5939614b52d908f42e3df61e5a3b49f7d89fb40254fd"
+    },
+    {
+      "id": "upstream.crafting.jewel-mods",
+      "path": "src/Data/ModJewel.lua",
+      "sha256": "e034b36c111f4f422722d755843da23fece538d1f282746e349711baf5767bf3"
+    },
+    {
+      "id": "upstream.crafting.item-bases",
+      "path": "src/Data/Bases",
+      "sha256": "0e1ebd7ea2557888d087715485af72415fdd4846e65cbc4e382baacb67501c62"
+    },
+    {
+      "id": "crafting.slot-tag-map",
+      "path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "sha256": "12bfc005944b0818833e5cb52f9c6184c6da782746510c79e5b87eeb35d8de81"
+    },
+    {
+      "id": "crafting.seed.zh-CN",
+      "path": "cn/pipeline/sources/crafting/seed.zh-CN.json",
+      "sha256": "fa7a75717b70199ecec4c2adb48591f870a654364ff7912e340eb9df4721ab1f"
+    },
+    {
+      "id": "legacy.web.affixes",
+      "path": "cn/pipeline/sources/web/legacy-seed/affixes.json",
+      "sha256": "0e064310007602a2dc9488d70f58043db9d6eecaafa32069e3494401ef451bcd"
+    },
+    {
+      "id": "legacy.web.bases",
+      "path": "cn/pipeline/sources/web/legacy-seed/bases.json",
+      "sha256": "15efcde824beefc6acfbe2dd7d5b7b9e999f7687a131c9a82bdbd3dcb0d3a65b"
+    },
+    {
+      "id": "legacy.web.gems",
+      "path": "cn/pipeline/sources/web/legacy-seed/gems.json",
+      "sha256": "c1a34b8d431318c600a841d0bc994aedf6088d4eaa555564eb87c9609926e7b6"
+    },
+    {
+      "id": "legacy.web.tree",
+      "path": "cn/pipeline/sources/web/legacy-seed/tree_0_5.json",
+      "sha256": "fe8c7e59d80911295e26a00d427446b55148150a93e3ac9fba023b3e405cbce6"
+    },
+    {
+      "id": "legacy.web.uniques",
+      "path": "cn/pipeline/sources/web/legacy-seed/uniques.json",
+      "sha256": "aab2cf8bba4b6feb578b8009222302eeacd5a07d35326657a41cd519033e13fb"
+    },
+    {
+      "id": "legacy.web.crafting",
+      "path": "cn/pipeline/sources/web/legacy-seed/craftingData.json",
+      "sha256": "31a62874a3a3b766cd15efb6a6a3b2a114da470c46379057021ad0cbc886e88d"
+    }
+  ],
+  "outputs": [
+    {
+      "id": "web.translation",
+      "path": "cn/generated/web-data/translations.json",
+      "sha256": "505dde2f3a9463ada0b70f22b4595a196519bc282d8c21a923d227fd50b2c998",
+      "input_ids": [
+        "dictionary.ninja-poe2.poe2-runtime-gzip",
+        "override.zh-CN.terms",
+        "override.zh-CN.glossary"
+      ],
+      "record_count": 71092
+    },
+    {
+      "id": "web.crafting",
+      "path": "cn/generated/web-data/crafting.json",
+      "sha256": "574e0431cbb0713ce383eb7b25fa8a0790374d06e85143b33e6b257ee8709901",
+      "input_ids": [
+        "upstream.crafting.runes",
+        "upstream.crafting.essences",
+        "upstream.crafting.item-mods",
+        "upstream.crafting.jewel-mods",
+        "upstream.crafting.item-bases",
+        "crafting.slot-tag-map",
+        "crafting.seed.zh-CN"
+      ],
+      "record_count": 390
+    },
+    {
+      "id": "web.crafting-authority-v2",
+      "path": "cn/generated/web-data/crafting-authority-v2.json",
+      "sha256": "9bd09cad6ae87d911352424e0a20628c9846f5d379d9b5a53be7ed09716c38c2",
+      "input_ids": [
+        "upstream.crafting.runes",
+        "upstream.crafting.essences",
+        "upstream.crafting.item-mods",
+        "upstream.crafting.jewel-mods",
+        "upstream.crafting.item-bases",
+        "crafting.slot-tag-map",
+        "crafting.seed.zh-CN"
+      ],
+      "record_count": 5064
+    },
+    {
+      "id": "web.legacy.affixes",
+      "path": "cn/generated/web-data/affixes.json",
+      "sha256": "548baf0eaa233013db670c1cc3beeccc2ceadad9c995e5c6dde45bdcc383fe69",
+      "input_ids": [
+        "legacy.web.affixes"
+      ],
+      "record_count": 3
+    },
+    {
+      "id": "web.legacy.bases",
+      "path": "cn/generated/web-data/bases.json",
+      "sha256": "eb45f938ab2848ce4cf38a96d8593300128897e972502a6d814c55141c1f3c9c",
+      "input_ids": [
+        "legacy.web.bases"
+      ],
+      "record_count": 1833
+    },
+    {
+      "id": "web.legacy.gems",
+      "path": "cn/generated/web-data/gems.json",
+      "sha256": "3b7d82a56855da29695b23e96da1fe476754483c8af040d6c8f510692f3f12fa",
+      "input_ids": [
+        "legacy.web.gems"
+      ],
+      "record_count": 961
+    },
+    {
+      "id": "web.legacy.tree",
+      "path": "cn/generated/web-data/tree_0_5.json",
+      "sha256": "35cbc268b2c18ea1917681c0739e6147a1c59a6bc7351c7b6341af5f0e8c15d4",
+      "input_ids": [
+        "legacy.web.tree"
+      ],
+      "record_count": 6
+    },
+    {
+      "id": "web.legacy.uniques",
+      "path": "cn/generated/web-data/uniques.json",
+      "sha256": "d7d095285106c2156c0fa7d9a2c6e88a494ac36ff3b2c06c411e0a2d3a2831b1",
+      "input_ids": [
+        "legacy.web.uniques"
+      ],
+      "record_count": 443
+    },
+    {
+      "id": "web.legacy.crafting",
+      "path": "cn/generated/web-data/crafting-legacy.json",
+      "sha256": "3c2e603297a39e9cc6cf26340e2bccd1ce93f0f27b5ba71a949b286a56cbff67",
+      "input_ids": [
+        "legacy.web.crafting"
+      ],
+      "record_count": 5
+    }
+  ],
+  "untranslated": {
+    "count": 0,
+    "allowlist": {
+      "items": [],
+      "stats": [],
+      "tooltip": [],
+      "ui": [],
+      "terms": []
+    }
+  },
+  "crafting": {
+    "seed_sha256": "fa7a75717b70199ecec4c2adb48591f870a654364ff7912e340eb9df4721ab1f",
+    "slot_tag_map_sha256": "12bfc005944b0818833e5cb52f9c6184c6da782746510c79e5b87eeb35d8de81",
+    "item_mods_sha256": "66f955cff7f2b64ac4ec5939614b52d908f42e3df61e5a3b49f7d89fb40254fd",
+    "jewel_mods_sha256": "e034b36c111f4f422722d755843da23fece538d1f282746e349711baf5767bf3",
+    "item_bases_sha256": "0e1ebd7ea2557888d087715485af72415fdd4846e65cbc4e382baacb67501c62",
+    "reviewed_at_utc_plus_8": "2026-08-27T00:00:00+08:00",
+    "coverage": {
+      "runes": {
+        "authority": 287,
+        "seed": 287,
+        "missing": 0,
+        "unknown": 0
+      },
+      "essences": {
+        "authority": 82,
+        "seed": 82,
+        "missing": 0,
+        "unknown": 0
+      },
+      "itemMods": {
+        "authority": 2927
+      },
+      "itemBases": {
+        "authority": 1768
+      },
+      "slotTagMap": {
+        "authority": 21,
+        "seed": 21,
+        "missing": 0,
+        "unknown": 0
+      }
+    }
+  }
+}

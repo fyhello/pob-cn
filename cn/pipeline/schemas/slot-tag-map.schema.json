@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "source_kind", "source_description", "reviewed_at_utc_plus_8", "reviewed_by", "review_evidence", "entries"],
+  "additionalProperties": false,
+  "properties": { "schema_version": { "const": 1 }, "source_kind": { "const": "CN_SOURCE" }, "source_description": { "type": "string", "minLength": 1 }, "reviewed_at_utc_plus_8": { "type": "string", "minLength": 1 }, "reviewed_by": { "type": "string", "minLength": 1 }, "review_evidence": { "type": "string", "minLength": 1 }, "entries": { "type": "array", "minItems": 1 } }
+}

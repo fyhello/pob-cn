@@ -1,0 +1,19 @@
+{
+  "name": "pob-cn-bootstrap-tests",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "cn/web"
+  ],
+  "scripts": {
+    "test:bootstrap": "node cn/tests/lua/run-bootstrap-lifecycle.mjs",
+    "test:i18n": "node cn/tests/lua/run-i18n-loader.mjs",
+    "generate:content": "node cn/pipeline/generate-content.mjs",
+    "test:m3": "node --test cn/tests/m3/manifest-gate.spec.mjs cn/tests/m3/strict-data-integrity.spec.mjs cn/tests/m3/strict-single-dictionary.spec.mjs cn/tests/m3/zero-untranslated-leak.spec.mjs cn/tests/m3/translate-calc-formula.spec.mjs cn/tests/bridge/*.spec.mjs cn/tests/web/*.spec.mjs",
+    "web:typecheck": "node cn/web/typecheck.mjs",
+    "web:build": "npm --prefix cn/web run build"
+  },
+  "devDependencies": {
+    "lua-wasm-bindings": "0.5.3"
+  }
+}

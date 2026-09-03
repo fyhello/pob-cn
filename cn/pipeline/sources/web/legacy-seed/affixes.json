@@ -1,0 +1,728 @@
+{
+  "prefixes": [
+    {
+      "id": "life_flat",
+      "category": "生命",
+      "name_cn": "最大生命",
+      "name_en": "Maximum Life",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "+(140-159) 最大生命",
+          "raw": "+150 to maximum Life",
+          "min": 140,
+          "max": 159
+        },
+        {
+          "tier": "T2",
+          "level": 72,
+          "label_cn": "+(120-139) 最大生命",
+          "raw": "+130 to maximum Life",
+          "min": 120,
+          "max": 139
+        },
+        {
+          "tier": "T3",
+          "level": 60,
+          "label_cn": "+(100-119) 最大生命",
+          "raw": "+110 to maximum Life",
+          "min": 100,
+          "max": 119
+        },
+        {
+          "tier": "T4",
+          "level": 45,
+          "label_cn": "+(80-99) 最大生命",
+          "raw": "+90 to maximum Life",
+          "min": 80,
+          "max": 99
+        },
+        {
+          "tier": "T5",
+          "level": 30,
+          "label_cn": "+(60-79) 最大生命",
+          "raw": "+70 to maximum Life",
+          "min": 60,
+          "max": 79
+        }
+      ]
+    },
+    {
+      "id": "mana_flat",
+      "category": "魔力",
+      "name_cn": "最大魔力",
+      "name_en": "Maximum Mana",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 80,
+          "label_cn": "+(110-129) 最大魔力",
+          "raw": "+120 to maximum Mana",
+          "min": 110,
+          "max": 129
+        },
+        {
+          "tier": "T2",
+          "level": 68,
+          "label_cn": "+(90-109) 最大魔力",
+          "raw": "+100 to maximum Mana",
+          "min": 90,
+          "max": 109
+        },
+        {
+          "tier": "T3",
+          "level": 55,
+          "label_cn": "+(70-89) 最大魔力",
+          "raw": "+80 to maximum Mana",
+          "min": 70,
+          "max": 89
+        }
+      ]
+    },
+    {
+      "id": "armour_percent",
+      "category": "防御",
+      "name_cn": "护甲提高 %",
+      "name_en": "Increased Armour",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "护甲提高 (100-110)%",
+          "raw": "105% increased Armour",
+          "min": 100,
+          "max": 110
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "护甲提高 (85-99)%",
+          "raw": "90% increased Armour",
+          "min": 85,
+          "max": 99
+        },
+        {
+          "tier": "T3",
+          "level": 58,
+          "label_cn": "护甲提高 (70-84)%",
+          "raw": "75% increased Armour",
+          "min": 70,
+          "max": 84
+        }
+      ]
+    },
+    {
+      "id": "evasion_percent",
+      "category": "防御",
+      "name_cn": "闪避值提高 %",
+      "name_en": "Increased Evasion",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "闪避值提高 (100-110)%",
+          "raw": "105% increased Evasion Rating",
+          "min": 100,
+          "max": 110
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "闪避值提高 (85-99)%",
+          "raw": "90% increased Evasion Rating",
+          "min": 85,
+          "max": 99
+        },
+        {
+          "tier": "T3",
+          "level": 58,
+          "label_cn": "闪避值提高 (70-84)%",
+          "raw": "75% increased Evasion Rating",
+          "min": 70,
+          "max": 84
+        }
+      ]
+    },
+    {
+      "id": "es_percent",
+      "category": "防御",
+      "name_cn": "能量护盾提高 %",
+      "name_en": "Increased Energy Shield",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "能量护盾提高 (100-110)%",
+          "raw": "105% increased Energy Shield",
+          "min": 100,
+          "max": 110
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "能量护盾提高 (85-99)%",
+          "raw": "90% increased Energy Shield",
+          "min": 85,
+          "max": 99
+        },
+        {
+          "tier": "T3",
+          "level": 58,
+          "label_cn": "能量护盾提高 (70-84)%",
+          "raw": "75% increased Energy Shield",
+          "min": 70,
+          "max": 84
+        }
+      ]
+    },
+    {
+      "id": "spell_damage_percent",
+      "category": "法术伤害",
+      "name_cn": "法术伤害提高 %",
+      "name_en": "Increased Spell Damage",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 84,
+          "label_cn": "法术伤害提高 (90-109)%",
+          "raw": "100% increased Spell Damage",
+          "min": 90,
+          "max": 109
+        },
+        {
+          "tier": "T2",
+          "level": 72,
+          "label_cn": "法术伤害提高 (75-89)%",
+          "raw": "80% increased Spell Damage",
+          "min": 75,
+          "max": 89
+        },
+        {
+          "tier": "T3",
+          "level": 60,
+          "label_cn": "法术伤害提高 (60-74)%",
+          "raw": "65% increased Spell Damage",
+          "min": 60,
+          "max": 74
+        }
+      ]
+    },
+    {
+      "id": "all_spell_gem_levels",
+      "category": "技能等级",
+      "name_cn": "所有法术技能等级",
+      "name_en": "All Spell Skill Gem Levels",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "所有法术技能等级 +2",
+          "raw": "+2 to Level of all Spell Skill Gems",
+          "min": 2,
+          "max": 2
+        },
+        {
+          "tier": "T2",
+          "level": 55,
+          "label_cn": "所有法术技能等级 +1",
+          "raw": "+1 to Level of all Spell Skill Gems",
+          "min": 1,
+          "max": 1
+        }
+      ]
+    },
+    {
+      "id": "added_phys_weapon",
+      "category": "附加点伤",
+      "name_cn": "附加物理伤害",
+      "name_en": "Added Physical Damage",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "附加 (25-35) 至 (50-65) 物理伤害",
+          "raw": "Adds 30 to 60 Physical Damage",
+          "min": 30,
+          "max": 60
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "附加 (20-28) 至 (40-50) 物理伤害",
+          "raw": "Adds 24 to 45 Physical Damage",
+          "min": 24,
+          "max": 45
+        },
+        {
+          "tier": "T3",
+          "level": 58,
+          "label_cn": "附加 (15-22) 至 (30-38) 物理伤害",
+          "raw": "Adds 18 to 35 Physical Damage",
+          "min": 18,
+          "max": 35
+        }
+      ]
+    },
+    {
+      "id": "ward_flat",
+      "category": "符文结界",
+      "name_cn": "符文结界上限",
+      "name_en": "Maximum Runic Ward",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "+(400-500) 符文结界上限",
+          "raw": "+450 to maximum Runic Ward",
+          "min": 400,
+          "max": 500
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "+(300-399) 符文结界上限",
+          "raw": "+350 to maximum Runic Ward",
+          "min": 300,
+          "max": 399
+        },
+        {
+          "tier": "T3",
+          "level": 58,
+          "label_cn": "+(200-299) 符文结界上限",
+          "raw": "+250 to maximum Runic Ward",
+          "min": 200,
+          "max": 299
+        }
+      ]
+    }
+  ],
+  "suffixes": [
+    {
+      "id": "fire_res",
+      "category": "元素抗性",
+      "name_cn": "火焰抗性",
+      "name_en": "Fire Resistance",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "+(46-48)% 火焰抗性",
+          "raw": "+48% to Fire Resistance",
+          "min": 46,
+          "max": 48
+        },
+        {
+          "tier": "T2",
+          "level": 72,
+          "label_cn": "+(42-45)% 火焰抗性",
+          "raw": "+44% to Fire Resistance",
+          "min": 42,
+          "max": 45
+        },
+        {
+          "tier": "T3",
+          "level": 60,
+          "label_cn": "+(36-41)% 火焰抗性",
+          "raw": "+38% to Fire Resistance",
+          "min": 36,
+          "max": 41
+        },
+        {
+          "tier": "T4",
+          "level": 48,
+          "label_cn": "+(30-35)% 火焰抗性",
+          "raw": "+32% to Fire Resistance",
+          "min": 30,
+          "max": 35
+        }
+      ]
+    },
+    {
+      "id": "cold_res",
+      "category": "元素抗性",
+      "name_cn": "冰霜抗性",
+      "name_en": "Cold Resistance",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "+(46-48)% 冰霜抗性",
+          "raw": "+48% to Cold Resistance",
+          "min": 46,
+          "max": 48
+        },
+        {
+          "tier": "T2",
+          "level": 72,
+          "label_cn": "+(42-45)% 冰霜抗性",
+          "raw": "+44% to Cold Resistance",
+          "min": 42,
+          "max": 45
+        },
+        {
+          "tier": "T3",
+          "level": 60,
+          "label_cn": "+(36-41)% 冰霜抗性",
+          "raw": "+38% to Cold Resistance",
+          "min": 36,
+          "max": 41
+        }
+      ]
+    },
+    {
+      "id": "lightning_res",
+      "category": "元素抗性",
+      "name_cn": "闪电抗性",
+      "name_en": "Lightning Resistance",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "+(46-48)% 闪电抗性",
+          "raw": "+48% to Lightning Resistance",
+          "min": 46,
+          "max": 48
+        },
+        {
+          "tier": "T2",
+          "level": 72,
+          "label_cn": "+(42-45)% 闪电抗性",
+          "raw": "+44% to Lightning Resistance",
+          "min": 42,
+          "max": 45
+        },
+        {
+          "tier": "T3",
+          "level": 60,
+          "label_cn": "+(36-41)% 闪电抗性",
+          "raw": "+38% to Lightning Resistance",
+          "min": 36,
+          "max": 41
+        }
+      ]
+    },
+    {
+      "id": "chaos_res",
+      "category": "抗性",
+      "name_cn": "混沌抗性",
+      "name_en": "Chaos Resistance",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 81,
+          "label_cn": "+(31-35)% 混沌抗性",
+          "raw": "+35% to Chaos Resistance",
+          "min": 31,
+          "max": 35
+        },
+        {
+          "tier": "T2",
+          "level": 65,
+          "label_cn": "+(26-30)% 混沌抗性",
+          "raw": "+28% to Chaos Resistance",
+          "min": 26,
+          "max": 30
+        },
+        {
+          "tier": "T3",
+          "level": 50,
+          "label_cn": "+(21-25)% 混沌抗性",
+          "raw": "+23% to Chaos Resistance",
+          "min": 21,
+          "max": 25
+        }
+      ]
+    },
+    {
+      "id": "all_res",
+      "category": "元素抗性",
+      "name_cn": "全元素抗性",
+      "name_en": "All Elemental Resistances",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 78,
+          "label_cn": "+(16-18)% 全元素抗性",
+          "raw": "+18% to all Elemental Resistances",
+          "min": 16,
+          "max": 18
+        },
+        {
+          "tier": "T2",
+          "level": 60,
+          "label_cn": "+(13-15)% 全元素抗性",
+          "raw": "+14% to all Elemental Resistances",
+          "min": 13,
+          "max": 15
+        }
+      ]
+    },
+    {
+      "id": "str_stat",
+      "category": "基础属性",
+      "name_cn": "力量",
+      "name_en": "Strength",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "+(51-55) 力量",
+          "raw": "+55 to Strength",
+          "min": 51,
+          "max": 55
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "+(43-50) 力量",
+          "raw": "+48 to Strength",
+          "min": 43,
+          "max": 50
+        },
+        {
+          "tier": "T3",
+          "level": 55,
+          "label_cn": "+(38-42) 力量",
+          "raw": "+40 to Strength",
+          "min": 38,
+          "max": 42
+        }
+      ]
+    },
+    {
+      "id": "dex_stat",
+      "category": "基础属性",
+      "name_cn": "敏捷",
+      "name_en": "Dexterity",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "+(51-55) 敏捷",
+          "raw": "+55 to Dexterity",
+          "min": 51,
+          "max": 55
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "+(43-50) 敏捷",
+          "raw": "+48 to Dexterity",
+          "min": 43,
+          "max": 50
+        }
+      ]
+    },
+    {
+      "id": "int_stat",
+      "category": "基础属性",
+      "name_cn": "智慧",
+      "name_en": "Intelligence",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "+(51-55) 智慧",
+          "raw": "+55 to Intelligence",
+          "min": 51,
+          "max": 55
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "+(43-50) 智慧",
+          "raw": "+48 to Intelligence",
+          "min": 43,
+          "max": 50
+        }
+      ]
+    },
+    {
+      "id": "cast_speed",
+      "category": "速度",
+      "name_cn": "施法速度提高 %",
+      "name_en": "Increased Cast Speed",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "施法速度提高 (26-29)%",
+          "raw": "28% increased Cast Speed",
+          "min": 26,
+          "max": 29
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "施法速度提高 (23-25)%",
+          "raw": "24% increased Cast Speed",
+          "min": 23,
+          "max": 25
+        },
+        {
+          "tier": "T3",
+          "level": 55,
+          "label_cn": "施法速度提高 (19-22)%",
+          "raw": "20% increased Cast Speed",
+          "min": 19,
+          "max": 22
+        }
+      ]
+    },
+    {
+      "id": "attack_speed",
+      "category": "速度",
+      "name_cn": "攻击速度提高 %",
+      "name_en": "Increased Attack Speed",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "攻击速度提高 (26-29)%",
+          "raw": "28% increased Attack Speed",
+          "min": 26,
+          "max": 29
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "攻击速度提高 (23-25)%",
+          "raw": "24% increased Attack Speed",
+          "min": 23,
+          "max": 25
+        }
+      ]
+    },
+    {
+      "id": "crit_chance",
+      "category": "暴击",
+      "name_cn": "暴击率提高 %",
+      "name_en": "Increased Critical Strike Chance",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 80,
+          "label_cn": "暴击率提高 (35-38)%",
+          "raw": "38% increased Critical Strike Chance",
+          "min": 35,
+          "max": 38
+        },
+        {
+          "tier": "T2",
+          "level": 65,
+          "label_cn": "暴击率提高 (30-34)%",
+          "raw": "32% increased Critical Strike Chance",
+          "min": 30,
+          "max": 34
+        }
+      ]
+    },
+    {
+      "id": "crit_multi",
+      "category": "暴击",
+      "name_cn": "暴击伤害加成",
+      "name_en": "Critical Strike Multiplier",
+      "tiers": [
+        {
+          "tier": "T1",
+          "level": 82,
+          "label_cn": "+(35-38)% 暴击伤害加成",
+          "raw": "+38% to Global Critical Strike Multiplier",
+          "min": 35,
+          "max": 38
+        },
+        {
+          "tier": "T2",
+          "level": 70,
+          "label_cn": "+(30-34)% 暴击伤害加成",
+          "raw": "+32% to Global Critical Strike Multiplier",
+          "min": 30,
+          "max": 34
+        },
+        {
+          "tier": "T3",
+          "level": 55,
+          "label_cn": "+(25-29)% 暴击伤害加成",
+          "raw": "+27% to Global Critical Strike Multiplier",
+          "min": 25,
+          "max": 29
+        }
+      ]
+    }
+  ],
+  "runes": [
+    {
+      "name": "Warding Rune of Reinforcement",
+      "name_cn": "坚固防护符文",
+      "type": "Armour",
+      "desc_cn": "符文结界提高 20%"
+    },
+    {
+      "name": "Warding Rune of Hollowing",
+      "name_cn": "空洞防护符文",
+      "type": "Armour",
+      "desc_cn": "+150 符文结界上限"
+    },
+    {
+      "name": "Perfect Iron Rune",
+      "name_cn": "完美铁质符文",
+      "type": "General",
+      "desc_cn": "物理伤害提高 25%"
+    },
+    {
+      "name": "Iron Rune",
+      "name_cn": "铁质符文",
+      "type": "General",
+      "desc_cn": "物理伤害提高 15%"
+    },
+    {
+      "name": "Fire Rune",
+      "name_cn": "火焰符文",
+      "type": "General",
+      "desc_cn": "附加 10-20 火焰伤害"
+    },
+    {
+      "name": "Cold Rune",
+      "name_cn": "冰霜符文",
+      "type": "General",
+      "desc_cn": "附加 10-20 冰霜伤害"
+    },
+    {
+      "name": "Lightning Rune",
+      "name_cn": "闪电符文",
+      "type": "General",
+      "desc_cn": "附加 2-35 闪电伤害"
+    },
+    {
+      "name": "Chaos Rune",
+      "name_cn": "混沌符文",
+      "type": "General",
+      "desc_cn": "附加 8-16 混沌伤害"
+    },
+    {
+      "name": "Life Rune",
+      "name_cn": "生命符文",
+      "type": "General",
+      "desc_cn": "+40 最大生命"
+    },
+    {
+      "name": "Mana Rune",
+      "name_cn": "魔力符文",
+      "type": "General",
+      "desc_cn": "+40 最大魔力"
+    },
+    {
+      "name": "Farrul's Rune of the Chase",
+      "name_cn": "法鲁尔的追猎符文",
+      "type": "Weapon",
+      "desc_cn": "攻击速度提高 12%"
+    },
+    {
+      "name": "Craiceann's Rune of Resolve",
+      "name_cn": "卡里森的坚决符文",
+      "type": "Armour",
+      "desc_cn": "最大元素抗性 +1%"
+    }
+  ]
+}

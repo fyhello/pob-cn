@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .glass-panel {
+    @apply bg-poe-panel/85 backdrop-blur-md border border-poe-border/80 shadow-2xl;
+  }
+  .glass-card {
+    @apply bg-poe-card/90 backdrop-blur-sm border border-poe-border/50 hover:border-poe-gold/50 transition-all duration-200;
+  }
+  .gold-gradient-text {
+    @apply bg-gradient-to-r from-[#e8c878] via-[#c8a85c] to-[#98783c] bg-clip-text text-transparent;
+  }
+  .btn-primary {
+    @apply px-3 py-1.5 bg-gradient-to-b from-[#2a2a35] to-[#1a1a22] hover:from-[#3a3a48] hover:to-[#22222e] border border-poe-border hover:border-poe-gold/60 text-gray-200 rounded text-sm font-medium transition-all shadow-md active:scale-95;
+  }
+  .btn-gold {
+    @apply px-4 py-1.5 bg-gradient-to-b from-[#c8a85c] to-[#967836] hover:from-[#d8b86c] hover:to-[#a68846] text-black font-semibold rounded text-sm transition-all shadow-lg active:scale-95;
+  }
+}

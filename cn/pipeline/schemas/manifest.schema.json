@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PoB-CN generated content manifest",
+  "type": "object",
+  "required": ["schema_version", "completeness", "generator", "upstream", "dictionary", "inputs", "outputs", "untranslated"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "completeness": { "enum": ["partial_crafting_seed_pending", "complete"] },
+    "generator": {
+      "type": "object",
+      "required": ["command", "version"],
+      "properties": { "command": { "const": "node cn/pipeline/generate-content.mjs" }, "version": { "type": "integer", "minimum": 1 } }
+    },
+    "upstream": { "type": "object", "required": ["commit"], "properties": { "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" } } },
+    "dictionary": { "type": "object" },
+    "inputs": { "type": "array", "minItems": 1 },
+    "outputs": { "type": "array", "minItems": 1 },
+    "untranslated": { "type": "object", "required": ["count", "allowlist"] }
+  }
+}

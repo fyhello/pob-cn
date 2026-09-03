@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "ownership_yml_path": "cn/config/ownership.yml",
+  "ownership_yml_sha256": "2b87676e84c874db0a3479bdfe30f1ecb54cc0990f7f16676b64940b1c1a1c21",
+  "generated_rules": [
+    { "output": "cn/generated/web-data/**", "producer": "node cn/pipeline/generate-content.mjs" },
+    { "output": "cn/generated/manifest.json", "producer": "node cn/pipeline/generate-content.mjs" }
+  ],
+  "local_excludes": [
+    ".worktrees/**",
+    "Settings.xml",
+    "**/imgui.ini",
+    "Builds/**",
+    "node_modules/**",
+    "tools/last_imported_build.xml",
+    "**/*.cfg",
+    "**/*.exe",
+    "**/*.dll",
+    ".git/**",
+    "**/*.tmp",
+    "**/*.temp",
+    "**/.DS_Store"
+  ]
+}

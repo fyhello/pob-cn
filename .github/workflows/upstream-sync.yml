@@ -1,0 +1,29 @@
+name: Upstream Candidate Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      external_evidence_path:
+        description: Repository-relative path to reviewed external evidence JSON
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  candidate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate evidence and create candidate branch
+        shell: pwsh
+        run: >-
+          ./cn/pipeline/sync/new-upstream-sync.ps1
+          -RepoRoot ${{ github.workspace }}
+          -ExternalEvidencePath ${{ github.workspace }}/${{ inputs.external_evidence_path }}

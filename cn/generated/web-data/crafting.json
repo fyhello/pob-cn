@@ -1,0 +1,2739 @@
+{
+  "schema_version": 1,
+  "runes": [
+    {
+      "id": "Adept Rune",
+      "text": "行家符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Adept Rune"
+    },
+    {
+      "id": "Aldur's Legacy",
+      "text": "奥杜尔的遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Aldur's Legacy"
+    },
+    {
+      "id": "Amanamu's Gaze",
+      "text": "埃曼纳姆的凝视",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Amanamu's Gaze"
+    },
+    {
+      "id": "Ancient Rune of Animosity",
+      "text": "憎恨之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Animosity"
+    },
+    {
+      "id": "Ancient Rune of Control",
+      "text": "操控之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Control"
+    },
+    {
+      "id": "Ancient Rune of Decay",
+      "text": "腐朽之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Decay"
+    },
+    {
+      "id": "Ancient Rune of Detonation",
+      "text": "引爆之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Detonation"
+    },
+    {
+      "id": "Ancient Rune of Discovery",
+      "text": "披露之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Discovery"
+    },
+    {
+      "id": "Ancient Rune of Dueling",
+      "text": "决斗之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Dueling"
+    },
+    {
+      "id": "Ancient Rune of Prowess",
+      "text": "英勇之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Prowess"
+    },
+    {
+      "id": "Ancient Rune of Retaliation",
+      "text": "报复之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Retaliation"
+    },
+    {
+      "id": "Ancient Rune of Shattering",
+      "text": "碎离之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Shattering"
+    },
+    {
+      "id": "Ancient Rune of Splinters",
+      "text": "碎片之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Splinters"
+    },
+    {
+      "id": "Ancient Rune of the Horde",
+      "text": "部落之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of the Horde"
+    },
+    {
+      "id": "Ancient Rune of the Titan",
+      "text": "泰坦之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of the Titan"
+    },
+    {
+      "id": "Ancient Rune of Witchcraft",
+      "text": "巫术之远古符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ancient Rune of Witchcraft"
+    },
+    {
+      "id": "Astrid's Creativity",
+      "text": "阿斯特丽德的创造",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Astrid's Creativity"
+    },
+    {
+      "id": "Atmohua's Soul Core of Retreat",
+      "text": "阿特莫瓦的退却灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Atmohua's Soul Core of Retreat"
+    },
+    {
+      "id": "Bear Idol",
+      "text": "巨熊雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Bear Idol"
+    },
+    {
+      "id": "Betrayal of Aldur",
+      "text": "奥杜尔之背叛",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Betrayal of Aldur"
+    },
+    {
+      "id": "Boar Idol",
+      "text": "野猪雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Boar Idol"
+    },
+    {
+      "id": "Body Rune",
+      "text": "身躯符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Body Rune"
+    },
+    {
+      "id": "Breath of Aldur",
+      "text": "奥杜尔之呼吸",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Breath of Aldur"
+    },
+    {
+      "id": "Cadigan's Epiphany",
+      "text": "卡迪甘的顿悟",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Cadigan's Epiphany"
+    },
+    {
+      "id": "Carved Cunning",
+      "text": "雕琢诡诈",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Carved Cunning"
+    },
+    {
+      "id": "Carved Majesty",
+      "text": "雕琢威严",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Carved Majesty"
+    },
+    {
+      "id": "Carved Mischief",
+      "text": "雕琢祸心",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Carved Mischief"
+    },
+    {
+      "id": "Carved Tenacity",
+      "text": "雕琢坚韧",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Carved Tenacity"
+    },
+    {
+      "id": "Cat Idol",
+      "text": "灵猫雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Cat Idol"
+    },
+    {
+      "id": "Charging Rune",
+      "text": "充能符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Charging Rune"
+    },
+    {
+      "id": "Cholotl's Soul Core of War",
+      "text": "查罗特的战争灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Cholotl's Soul Core of War"
+    },
+    {
+      "id": "Citaqualotl's Soul Core of Foulness",
+      "text": "奇塔夸雷特的腐秽灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Citaqualotl's Soul Core of Foulness"
+    },
+    {
+      "id": "Citaqualotl's Thesis",
+      "text": "奇塔夸雷特的圣典",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Citaqualotl's Thesis"
+    },
+    {
+      "id": "Countess Seske's Rune of Archery",
+      "text": "塞丝克伯爵夫人的箭术符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Countess Seske's Rune of Archery"
+    },
+    {
+      "id": "Courtesan Mannan's Rune of Cruelty",
+      "text": "交际花曼南的残酷符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Courtesan Mannan's Rune of Cruelty"
+    },
+    {
+      "id": "Craiceann's Rune of Recovery",
+      "text": "克林斯昂的回复符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Craiceann's Rune of Recovery"
+    },
+    {
+      "id": "Craiceann's Rune of Warding",
+      "text": "克林斯昂的守护符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Craiceann's Rune of Warding"
+    },
+    {
+      "id": "Desert Rune",
+      "text": "沙漠符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Desert Rune"
+    },
+    {
+      "id": "Emergent Instinct",
+      "text": "新生本能",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Emergent Instinct"
+    },
+    {
+      "id": "Emergent Possibility",
+      "text": "新生可能",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Emergent Possibility"
+    },
+    {
+      "id": "Emergent Protection",
+      "text": "新生防护",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Emergent Protection"
+    },
+    {
+      "id": "Emergent Vigour",
+      "text": "新生活力",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Emergent Vigour"
+    },
+    {
+      "id": "Estazunti's Soul Core of Convalescence",
+      "text": "埃斯塔祖提的康复灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Estazunti's Soul Core of Convalescence"
+    },
+    {
+      "id": "Farrul's Rune of Grace",
+      "text": "法瑞尔的优雅符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Farrul's Rune of Grace"
+    },
+    {
+      "id": "Farrul's Rune of the Chase",
+      "text": "法瑞尔的追逐符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Farrul's Rune of the Chase"
+    },
+    {
+      "id": "Farrul's Rune of the Hunt",
+      "text": "法瑞尔的狩猎符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Farrul's Rune of the Hunt"
+    },
+    {
+      "id": "Fenumus' Rune of Agony",
+      "text": "费努姆斯的痛苦符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Fenumus' Rune of Agony"
+    },
+    {
+      "id": "Fenumus' Rune of Draining",
+      "text": "费努姆斯的流失符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Fenumus' Rune of Draining"
+    },
+    {
+      "id": "Fenumus' Rune of Spinning",
+      "text": "费努姆斯的飞旋符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Fenumus' Rune of Spinning"
+    },
+    {
+      "id": "Fox Idol",
+      "text": "狐狸雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Fox Idol"
+    },
+    {
+      "id": "Glacial Rune",
+      "text": "冰川符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Glacial Rune"
+    },
+    {
+      "id": "Greater Adept Rune",
+      "text": "高级行家符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Adept Rune"
+    },
+    {
+      "id": "Greater Body Rune",
+      "text": "高级身躯符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Body Rune"
+    },
+    {
+      "id": "Greater Charging Rune",
+      "text": "高级充能符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Charging Rune"
+    },
+    {
+      "id": "Greater Desert Rune",
+      "text": "高级沙漠符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Desert Rune"
+    },
+    {
+      "id": "Greater Glacial Rune",
+      "text": "高级冰川符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Glacial Rune"
+    },
+    {
+      "id": "Greater Inspiration Rune",
+      "text": "高级启迪符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Inspiration Rune"
+    },
+    {
+      "id": "Greater Iron Rune",
+      "text": "高级钢铁符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Iron Rune"
+    },
+    {
+      "id": "Greater Mind Rune",
+      "text": "高级心灵符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Mind Rune"
+    },
+    {
+      "id": "Greater Rebirth Rune",
+      "text": "高级重生符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Rebirth Rune"
+    },
+    {
+      "id": "Greater Resolve Rune",
+      "text": "高级坚毅符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Resolve Rune"
+    },
+    {
+      "id": "Greater Robust Rune",
+      "text": "高级健壮符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Robust Rune"
+    },
+    {
+      "id": "Greater Rune of Alacrity",
+      "text": "高级迅捷符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Rune of Alacrity"
+    },
+    {
+      "id": "Greater Rune of Leadership",
+      "text": "高级领袖符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Rune of Leadership"
+    },
+    {
+      "id": "Greater Rune of Nobility",
+      "text": "高级尊贵符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Rune of Nobility"
+    },
+    {
+      "id": "Greater Rune of Tithing",
+      "text": "高级奉纳符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Rune of Tithing"
+    },
+    {
+      "id": "Greater Stone Rune",
+      "text": "高级磐石符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Stone Rune"
+    },
+    {
+      "id": "Greater Storm Rune",
+      "text": "高级风暴符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Storm Rune"
+    },
+    {
+      "id": "Greater Tempered Rune",
+      "text": "高级淬炼符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Tempered Rune"
+    },
+    {
+      "id": "Greater Vision Rune",
+      "text": "高级幻象符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Vision Rune"
+    },
+    {
+      "id": "Greater Ward Rune",
+      "text": "高级结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Greater Ward Rune"
+    },
+    {
+      "id": "Guatelitzi's Soul Core of Endurance",
+      "text": "瓜铁雷兹的耐力灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Guatelitzi's Soul Core of Endurance"
+    },
+    {
+      "id": "Guatelitzi's Thesis",
+      "text": "瓜铁雷兹的圣典",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Guatelitzi's Thesis"
+    },
+    {
+      "id": "Hawk Idol",
+      "text": "鹰隼雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Hawk Idol"
+    },
+    {
+      "id": "Hayoxi's Soul Core of Heatproofing",
+      "text": "海幽夏的耐热灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Hayoxi's Soul Core of Heatproofing"
+    },
+    {
+      "id": "Hedgewitch Assandra's Rune of Wisdom",
+      "text": "女巫阿桑德拉的智慧符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Hedgewitch Assandra's Rune of Wisdom"
+    },
+    {
+      "id": "Idol of Alira",
+      "text": "阿莉亚之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Alira"
+    },
+    {
+      "id": "Idol of Eeshta",
+      "text": "埃什塔之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Eeshta"
+    },
+    {
+      "id": "Idol of Egrin",
+      "text": "艾格林之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Egrin"
+    },
+    {
+      "id": "Idol of Eramir",
+      "text": "艾米尔之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Eramir"
+    },
+    {
+      "id": "Idol of Greust",
+      "text": "古斯特之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Greust"
+    },
+    {
+      "id": "Idol of Grold",
+      "text": "格罗尔德之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Grold"
+    },
+    {
+      "id": "Idol of Kraityn",
+      "text": "克雷顿之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Kraityn"
+    },
+    {
+      "id": "Idol of Maxarius",
+      "text": "玛萨留斯之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Maxarius"
+    },
+    {
+      "id": "Idol of Oak",
+      "text": "欧克之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Oak"
+    },
+    {
+      "id": "Idol of Ralakesh",
+      "text": "拉克斯之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Ralakesh"
+    },
+    {
+      "id": "Idol of Silk",
+      "text": "流丝之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Silk"
+    },
+    {
+      "id": "Idol of Sirrius",
+      "text": "西里乌斯之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Sirrius"
+    },
+    {
+      "id": "Idol of the Martyr",
+      "text": "殉道者之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of the Martyr"
+    },
+    {
+      "id": "Idol of the Pharisee",
+      "text": "法利赛之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of the Pharisee"
+    },
+    {
+      "id": "Idol of the Sycophant",
+      "text": "谄媚者之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of the Sycophant"
+    },
+    {
+      "id": "Idol of Thruldana",
+      "text": "舒尔达纳之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Thruldana"
+    },
+    {
+      "id": "Idol of Yeena",
+      "text": "伊娜之雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Idol of Yeena"
+    },
+    {
+      "id": "Inspiration Rune",
+      "text": "启迪符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Inspiration Rune"
+    },
+    {
+      "id": "Ire of Aldur",
+      "text": "奥杜尔之忿怒",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ire of Aldur"
+    },
+    {
+      "id": "Iron Rune",
+      "text": "钢铁符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Iron Rune"
+    },
+    {
+      "id": "Jiquani's Thesis",
+      "text": "佳华尼的圣典",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Jiquani's Thesis"
+    },
+    {
+      "id": "Katla's Gloom",
+      "text": "卡塔拉的阴霾",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Katla's Gloom"
+    },
+    {
+      "id": "Kolr's Hunt",
+      "text": "克尔的狩猎",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Kolr's Hunt"
+    },
+    {
+      "id": "Kurgal's Gaze",
+      "text": "古加尔的凝视",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Kurgal's Gaze"
+    },
+    {
+      "id": "Lady Hestra's Rune of Winter",
+      "text": "赫丝特拉女士的寒冬符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lady Hestra's Rune of Winter"
+    },
+    {
+      "id": "Legacy of A Worthy Foe",
+      "text": "劲敌之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of A Worthy Foe"
+    },
+    {
+      "id": "Legacy of Adonia's Ego",
+      "text": "阿多尼娅的自我之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Adonia's Ego"
+    },
+    {
+      "id": "Legacy of Alkem Eira",
+      "text": "神谕之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Alkem Eira"
+    },
+    {
+      "id": "Legacy of Amor Mandragora",
+      "text": "爱神曼陀罗之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Amor Mandragora"
+    },
+    {
+      "id": "Legacy of Ashrend",
+      "text": "拂烬之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Ashrend"
+    },
+    {
+      "id": "Legacy of Blackbraid",
+      "text": "黑髻之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Blackbraid"
+    },
+    {
+      "id": "Legacy of Brain Rattler",
+      "text": "脑乱者之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Brain Rattler"
+    },
+    {
+      "id": "Legacy of Bramblejack",
+      "text": "刺棘宝甲之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Bramblejack"
+    },
+    {
+      "id": "Legacy of Briarpatch",
+      "text": "荆皮护靴之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Briarpatch"
+    },
+    {
+      "id": "Legacy of Briskwrap",
+      "text": "荒途之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Briskwrap"
+    },
+    {
+      "id": "Legacy of Bristleboar",
+      "text": "棘体猪肤之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Bristleboar"
+    },
+    {
+      "id": "Legacy of Brynhand's Mark",
+      "text": "布琳翰德印记之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Brynhand's Mark"
+    },
+    {
+      "id": "Legacy of Bushwhack",
+      "text": "踏林长靴之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Bushwhack"
+    },
+    {
+      "id": "Legacy of Candlemaker",
+      "text": "塑烛者之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Candlemaker"
+    },
+    {
+      "id": "Legacy of Chernobog's Pillar",
+      "text": "五芒屏障之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Chernobog's Pillar"
+    },
+    {
+      "id": "Legacy of Crown of Thorns",
+      "text": "刺棘之冠之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Crown of Thorns"
+    },
+    {
+      "id": "Legacy of Cursecarver",
+      "text": "刻咒之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Cursecarver"
+    },
+    {
+      "id": "Legacy of Deathblow",
+      "text": "死神的袭击之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Deathblow"
+    },
+    {
+      "id": "Legacy of Deidbell",
+      "text": "丧钟之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Deidbell"
+    },
+    {
+      "id": "Legacy of Dionadair",
+      "text": "御身守卫之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Dionadair"
+    },
+    {
+      "id": "Legacy of Duality",
+      "text": "二元一体之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Duality"
+    },
+    {
+      "id": "Legacy of Dunkelhalt",
+      "text": "黑暗止步之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Dunkelhalt"
+    },
+    {
+      "id": "Legacy of Dusk Vigil",
+      "text": "暮色守望之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Dusk Vigil"
+    },
+    {
+      "id": "Legacy of Edyrns Tusks",
+      "text": "艾丁的獠牙之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Edyrns Tusks"
+    },
+    {
+      "id": "Legacy of Elevore",
+      "text": "艾尔弗雷之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Elevore"
+    },
+    {
+      "id": "Legacy of Erian's Cobble",
+      "text": "阿里安的拼凑之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Erian's Cobble"
+    },
+    {
+      "id": "Legacy of Ezomyte Peak",
+      "text": "艾兹麦的荣光之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Ezomyte Peak"
+    },
+    {
+      "id": "Legacy of Facebreaker",
+      "text": "毁面者之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Facebreaker"
+    },
+    {
+      "id": "Legacy of Foxshade",
+      "text": "狐毛铠之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Foxshade"
+    },
+    {
+      "id": "Legacy of Greymake",
+      "text": "苍髯皓首之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Greymake"
+    },
+    {
+      "id": "Legacy of Hoghunt",
+      "text": "猎猪大棒之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Hoghunt"
+    },
+    {
+      "id": "Legacy of Horns of Bynden",
+      "text": "柏安登的犄角之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Horns of Bynden"
+    },
+    {
+      "id": "Legacy of Hrimnor's Hymn",
+      "text": "雷姆诺的夺命凶器之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Hrimnor's Hymn"
+    },
+    {
+      "id": "Legacy of Ironbound",
+      "text": "铁箍战弓之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Ironbound"
+    },
+    {
+      "id": "Legacy of Keeper of the Arc",
+      "text": "弧光守护者之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Keeper of the Arc"
+    },
+    {
+      "id": "Legacy of Kingsguard",
+      "text": "皇家卫甲之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Kingsguard"
+    },
+    {
+      "id": "Legacy of Legionstride",
+      "text": "军团的进击之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Legionstride"
+    },
+    {
+      "id": "Legacy of Lifesprig",
+      "text": "生机之记之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Lifesprig"
+    },
+    {
+      "id": "Legacy of Mjolner",
+      "text": "雷神之锤遗志",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Mjolner"
+    },
+    {
+      "id": "Legacy of Northpaw",
+      "text": "北境凶爪之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Northpaw"
+    },
+    {
+      "id": "Legacy of Oaksworn",
+      "text": "橡木盟誓之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Oaksworn"
+    },
+    {
+      "id": "Legacy of Obern's Bastion",
+      "text": "欧本的壁垒之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Obern's Bastion"
+    },
+    {
+      "id": "Legacy of Olrovasara",
+      "text": "欧罗瓦萨拉之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Olrovasara"
+    },
+    {
+      "id": "Legacy of Quill Rain",
+      "text": "骤雨之弦之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Quill Rain"
+    },
+    {
+      "id": "Legacy of Rondel de Ezo",
+      "text": "艾佐的诗篇之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Rondel de Ezo"
+    },
+    {
+      "id": "Legacy of Runeseeker's Call",
+      "text": "符文猎手的呼唤之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Runeseeker's Call"
+    },
+    {
+      "id": "Legacy of Serle's Grit",
+      "text": "瑟尔的坚毅之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Serle's Grit"
+    },
+    {
+      "id": "Legacy of Spiteful Floret",
+      "text": "怨毒之花之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Spiteful Floret"
+    },
+    {
+      "id": "Legacy of Starkonja's Head",
+      "text": "斯塔空加之首之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Starkonja's Head"
+    },
+    {
+      "id": "Legacy of Svalinn",
+      "text": "斯瓦林之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Svalinn"
+    },
+    {
+      "id": "Legacy of The Blood Thorn",
+      "text": "血棘之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of The Blood Thorn"
+    },
+    {
+      "id": "Legacy of The Knight-errant",
+      "text": "豪侠骑士之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of The Knight-errant"
+    },
+    {
+      "id": "Legacy of The Sentry",
+      "text": "哨望之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of The Sentry"
+    },
+    {
+      "id": "Legacy of The Smiling Knight",
+      "text": "笑面骑士之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of The Smiling Knight"
+    },
+    {
+      "id": "Legacy of The Unleashed",
+      "text": "破禁者之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of The Unleashed"
+    },
+    {
+      "id": "Legacy of The Vile Knight",
+      "text": "厄难骑士之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of The Vile Knight"
+    },
+    {
+      "id": "Legacy of Trampletoe",
+      "text": "踏趾靴之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Trampletoe"
+    },
+    {
+      "id": "Legacy of Trenchtimbre",
+      "text": "战壕砥柱之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Trenchtimbre"
+    },
+    {
+      "id": "Legacy of Twisted Empyrean",
+      "text": "扭曲天穹之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Twisted Empyrean"
+    },
+    {
+      "id": "Legacy of Tyranny's Grip",
+      "text": "暴政之握之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Tyranny's Grip"
+    },
+    {
+      "id": "Legacy of Wanderlust",
+      "text": "苦行之履之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Wanderlust"
+    },
+    {
+      "id": "Legacy of Wings of Caelyn",
+      "text": "凯琳飞翼之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Wings of Caelyn"
+    },
+    {
+      "id": "Legacy of Wulfsbane",
+      "text": "伍夫之难之遗产",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Legacy of Wulfsbane"
+    },
+    {
+      "id": "Lesser Adept Rune",
+      "text": "次级行家符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Adept Rune"
+    },
+    {
+      "id": "Lesser Body Rune",
+      "text": "次级身躯符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Body Rune"
+    },
+    {
+      "id": "Lesser Charging Rune",
+      "text": "次级充能符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Charging Rune"
+    },
+    {
+      "id": "Lesser Desert Rune",
+      "text": "次级沙漠符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Desert Rune"
+    },
+    {
+      "id": "Lesser Glacial Rune",
+      "text": "次级冰川符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Glacial Rune"
+    },
+    {
+      "id": "Lesser Inspiration Rune",
+      "text": "次级启迪符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Inspiration Rune"
+    },
+    {
+      "id": "Lesser Iron Rune",
+      "text": "次级钢铁符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Iron Rune"
+    },
+    {
+      "id": "Lesser Mind Rune",
+      "text": "次级心灵符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Mind Rune"
+    },
+    {
+      "id": "Lesser Rebirth Rune",
+      "text": "次级重生符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Rebirth Rune"
+    },
+    {
+      "id": "Lesser Resolve Rune",
+      "text": "次级坚毅符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Resolve Rune"
+    },
+    {
+      "id": "Lesser Robust Rune",
+      "text": "次级健壮符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Robust Rune"
+    },
+    {
+      "id": "Lesser Stone Rune",
+      "text": "次级磐石符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Stone Rune"
+    },
+    {
+      "id": "Lesser Storm Rune",
+      "text": "次级风暴符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Storm Rune"
+    },
+    {
+      "id": "Lesser Tempered Rune",
+      "text": "次级淬炼符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Tempered Rune"
+    },
+    {
+      "id": "Lesser Vision Rune",
+      "text": "次级幻象符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Vision Rune"
+    },
+    {
+      "id": "Lesser Ward Rune",
+      "text": "次级结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Lesser Ward Rune"
+    },
+    {
+      "id": "Masterwork Rune",
+      "text": "大师符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Masterwork Rune"
+    },
+    {
+      "id": "Medved's Tending",
+      "text": "梅德维德的照料",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Medved's Tending"
+    },
+    {
+      "id": "Mind Rune",
+      "text": "心灵符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Mind Rune"
+    },
+    {
+      "id": "Opiloti's Soul Core of Assault",
+      "text": "欧佩罗蒂的突袭灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Opiloti's Soul Core of Assault"
+    },
+    {
+      "id": "Owl Idol",
+      "text": "猫头鹰雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Owl Idol"
+    },
+    {
+      "id": "Ox Idol",
+      "text": "公牛雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ox Idol"
+    },
+    {
+      "id": "Panther Idol",
+      "text": "黑豹雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Panther Idol"
+    },
+    {
+      "id": "Passion of Aldur",
+      "text": "奥杜尔之热情",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Passion of Aldur"
+    },
+    {
+      "id": "Perfect Adept Rune",
+      "text": "完美行家符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Adept Rune"
+    },
+    {
+      "id": "Perfect Body Rune",
+      "text": "完美身躯符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Body Rune"
+    },
+    {
+      "id": "Perfect Charging Rune",
+      "text": "完美充能符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Charging Rune"
+    },
+    {
+      "id": "Perfect Desert Rune",
+      "text": "完美沙漠符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Desert Rune"
+    },
+    {
+      "id": "Perfect Glacial Rune",
+      "text": "完美冰川符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Glacial Rune"
+    },
+    {
+      "id": "Perfect Inspiration Rune",
+      "text": "完美启迪符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Inspiration Rune"
+    },
+    {
+      "id": "Perfect Iron Rune",
+      "text": "完美钢铁符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Iron Rune"
+    },
+    {
+      "id": "Perfect Mind Rune",
+      "text": "完美心灵符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Mind Rune"
+    },
+    {
+      "id": "Perfect Rebirth Rune",
+      "text": "完美重生符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Rebirth Rune"
+    },
+    {
+      "id": "Perfect Resolve Rune",
+      "text": "完美坚毅符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Resolve Rune"
+    },
+    {
+      "id": "Perfect Robust Rune",
+      "text": "完美健壮符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Robust Rune"
+    },
+    {
+      "id": "Perfect Stone Rune",
+      "text": "完美磐石符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Stone Rune"
+    },
+    {
+      "id": "Perfect Storm Rune",
+      "text": "完美风暴符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Storm Rune"
+    },
+    {
+      "id": "Perfect Vision Rune",
+      "text": "完美幻象符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Vision Rune"
+    },
+    {
+      "id": "Perfect Ward Rune",
+      "text": "完美结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Perfect Ward Rune"
+    },
+    {
+      "id": "Primate Idol",
+      "text": "狂猿雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Primate Idol"
+    },
+    {
+      "id": "Quipolatl's Soul Core of Flow",
+      "text": "奎波拉特尔的波流灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Quipolatl's Soul Core of Flow"
+    },
+    {
+      "id": "Quipolatl's Thesis",
+      "text": "奎波拉特尔的圣典",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Quipolatl's Thesis"
+    },
+    {
+      "id": "Rabbit Idol",
+      "text": "狡兔雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rabbit Idol"
+    },
+    {
+      "id": "Raven-Touched Shard",
+      "text": "渡鸦之触碎片",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Raven-Touched Shard"
+    },
+    {
+      "id": "Rebirth Rune",
+      "text": "重生符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rebirth Rune"
+    },
+    {
+      "id": "Resolve Rune",
+      "text": "坚毅符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Resolve Rune"
+    },
+    {
+      "id": "Robust Rune",
+      "text": "健壮符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Robust Rune"
+    },
+    {
+      "id": "Rune of Accumulation",
+      "text": "积累符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Accumulation"
+    },
+    {
+      "id": "Rune of Acrobatics",
+      "text": "杂技符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Acrobatics"
+    },
+    {
+      "id": "Rune of Confrontation",
+      "text": "冲突符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Confrontation"
+    },
+    {
+      "id": "Rune of Consistency",
+      "text": "连贯符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Consistency"
+    },
+    {
+      "id": "Rune of Culmination",
+      "text": "巅峰符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Culmination"
+    },
+    {
+      "id": "Rune of Foundations",
+      "text": "根基符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Foundations"
+    },
+    {
+      "id": "Rune of Reach",
+      "text": "延伸符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Reach"
+    },
+    {
+      "id": "Rune of Renown",
+      "text": "声望符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Renown"
+    },
+    {
+      "id": "Rune of the Blossom",
+      "text": "绽放符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of the Blossom"
+    },
+    {
+      "id": "Rune of the Hunt",
+      "text": "狩猎符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of the Hunt"
+    },
+    {
+      "id": "Rune of the Prism",
+      "text": "棱镜符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of the Prism"
+    },
+    {
+      "id": "Rune of Vital Flame",
+      "text": "命焰符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Vital Flame"
+    },
+    {
+      "id": "Rune of Vitality",
+      "text": "活力符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Rune of Vitality"
+    },
+    {
+      "id": "Saqawal's Rune of Erosion",
+      "text": "萨奇沃的碎砾符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Saqawal's Rune of Erosion"
+    },
+    {
+      "id": "Saqawal's Rune of Memory",
+      "text": "萨奇沃的回忆符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Saqawal's Rune of Memory"
+    },
+    {
+      "id": "Saqawal's Rune of the Sky",
+      "text": "萨奇沃的苍空符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Saqawal's Rune of the Sky"
+    },
+    {
+      "id": "Serle's Triumph",
+      "text": "瑟尔的凯旋",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Serle's Triumph"
+    },
+    {
+      "id": "Snake Idol",
+      "text": "毒蛇雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Snake Idol"
+    },
+    {
+      "id": "Soul Core of Atmohua",
+      "text": "阿特莫瓦的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Atmohua"
+    },
+    {
+      "id": "Soul Core of Azcapa",
+      "text": "阿兹卡帕的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Azcapa"
+    },
+    {
+      "id": "Soul Core of Cholotl",
+      "text": "查罗特的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Cholotl"
+    },
+    {
+      "id": "Soul Core of Citaqualotl",
+      "text": "奇塔夸雷特的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Citaqualotl"
+    },
+    {
+      "id": "Soul Core of Jiquani",
+      "text": "佳华尼的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Jiquani"
+    },
+    {
+      "id": "Soul Core of Opiloti",
+      "text": "欧佩罗蒂的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Opiloti"
+    },
+    {
+      "id": "Soul Core of Puhuarte",
+      "text": "普华特的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Puhuarte"
+    },
+    {
+      "id": "Soul Core of Quipolatl",
+      "text": "奎波拉特尔的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Quipolatl"
+    },
+    {
+      "id": "Soul Core of Tacati",
+      "text": "塔卡提的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Tacati"
+    },
+    {
+      "id": "Soul Core of Ticaba",
+      "text": "提卡巴的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Ticaba"
+    },
+    {
+      "id": "Soul Core of Topotante",
+      "text": "托钵塔特的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Topotante"
+    },
+    {
+      "id": "Soul Core of Tzamoto",
+      "text": "提扎墨脱的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Tzamoto"
+    },
+    {
+      "id": "Soul Core of Xopec",
+      "text": "肖佩克的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Xopec"
+    },
+    {
+      "id": "Soul Core of Zalatl",
+      "text": "扎拉迪的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Zalatl"
+    },
+    {
+      "id": "Soul Core of Zantipi",
+      "text": "赞提佩的灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Soul Core of Zantipi"
+    },
+    {
+      "id": "Stag Idol",
+      "text": "雄鹿雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Stag Idol"
+    },
+    {
+      "id": "Stoat Idol",
+      "text": "白鼬雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Stoat Idol"
+    },
+    {
+      "id": "Stone Rune",
+      "text": "磐石符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Stone Rune"
+    },
+    {
+      "id": "Storm Rune",
+      "text": "风暴符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Storm Rune"
+    },
+    {
+      "id": "Tacati's Soul Core of Affliction",
+      "text": "塔卡提的折磨灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Tacati's Soul Core of Affliction"
+    },
+    {
+      "id": "Tecrod's Gaze",
+      "text": "特克罗的凝视",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Tecrod's Gaze"
+    },
+    {
+      "id": "Tempered Rune",
+      "text": "淬炼符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Tempered Rune"
+    },
+    {
+      "id": "Thane Girt's Rune of Wildness",
+      "text": "吉尔特领主的荒野符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Thane Girt's Rune of Wildness"
+    },
+    {
+      "id": "Thane Grannell's Rune of Mastery",
+      "text": "格兰内尔领主的掌控符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Thane Grannell's Rune of Mastery"
+    },
+    {
+      "id": "Thane Leld's Rune of Spring",
+      "text": "雷尔德领主的春光符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Thane Leld's Rune of Spring"
+    },
+    {
+      "id": "Thane Myrk's Rune of Summer",
+      "text": "默克领主的仲夏符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Thane Myrk's Rune of Summer"
+    },
+    {
+      "id": "The Greatwolf's Rune of Claws",
+      "text": "巨狼之利爪符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#The Greatwolf's Rune of Claws"
+    },
+    {
+      "id": "The Greatwolf's Rune of Willpower",
+      "text": "巨狼之意志符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#The Greatwolf's Rune of Willpower"
+    },
+    {
+      "id": "Thrud's Might",
+      "text": "斯鲁德的神力",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Thrud's Might"
+    },
+    {
+      "id": "Topotante's Soul Core of Dampening",
+      "text": "托钵塔特的抑制灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Topotante's Soul Core of Dampening"
+    },
+    {
+      "id": "Tzamoto's Soul Core of Ferocity",
+      "text": "提扎墨脱的狂暴灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Tzamoto's Soul Core of Ferocity"
+    },
+    {
+      "id": "Uhtred's Sidereus",
+      "text": "乌崔德的星辰",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Uhtred's Sidereus"
+    },
+    {
+      "id": "Ulaman's Gaze",
+      "text": "乌拉曼的凝视",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ulaman's Gaze"
+    },
+    {
+      "id": "Uromoti's Soul Core of Attenuation",
+      "text": "武罗摩提的弱化灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Uromoti's Soul Core of Attenuation"
+    },
+    {
+      "id": "Vision Rune",
+      "text": "幻象符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Vision Rune"
+    },
+    {
+      "id": "Vorana's Carnage",
+      "text": "沃拉娜的屠戮",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Vorana's Carnage"
+    },
+    {
+      "id": "Ward Rune",
+      "text": "结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Ward Rune"
+    },
+    {
+      "id": "Warding Rune of Annihilation",
+      "text": "湮灭之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Annihilation"
+    },
+    {
+      "id": "Warding Rune of Armature",
+      "text": "电枢之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Armature"
+    },
+    {
+      "id": "Warding Rune of Bodyguards",
+      "text": "护卫之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Bodyguards"
+    },
+    {
+      "id": "Warding Rune of Courage",
+      "text": "勇气之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Courage"
+    },
+    {
+      "id": "Warding Rune of Desperation",
+      "text": "迫急之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Desperation"
+    },
+    {
+      "id": "Warding Rune of Disintegration",
+      "text": "瓦解之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Disintegration"
+    },
+    {
+      "id": "Warding Rune of Equinox",
+      "text": "分点之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Equinox"
+    },
+    {
+      "id": "Warding Rune of Glancing",
+      "text": "瞥视之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Glancing"
+    },
+    {
+      "id": "Warding Rune of Heart",
+      "text": "心脏之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Heart"
+    },
+    {
+      "id": "Warding Rune of Hollowing",
+      "text": "虚化之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Hollowing"
+    },
+    {
+      "id": "Warding Rune of Nourishment",
+      "text": "滋养之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Nourishment"
+    },
+    {
+      "id": "Warding Rune of Obsession",
+      "text": "痴迷之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Obsession"
+    },
+    {
+      "id": "Warding Rune of Protection",
+      "text": "保护之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Protection"
+    },
+    {
+      "id": "Warding Rune of Reinforcement",
+      "text": "巩固之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Reinforcement"
+    },
+    {
+      "id": "Warding Rune of Salvaging",
+      "text": "回收之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Salvaging"
+    },
+    {
+      "id": "Warding Rune of Stability",
+      "text": "稳定之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Stability"
+    },
+    {
+      "id": "Warding Rune of Symbiosis",
+      "text": "共生之结界符文",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Warding Rune of Symbiosis"
+    },
+    {
+      "id": "Wolf Idol",
+      "text": "恶狼雕像",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Wolf Idol"
+    },
+    {
+      "id": "Xipocado's Soul Core of Dominion",
+      "text": "夏波卡多的统御灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Xipocado's Soul Core of Dominion"
+    },
+    {
+      "id": "Xopec's Soul Core of Power",
+      "text": "肖佩克的力量灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Xopec's Soul Core of Power"
+    },
+    {
+      "id": "Zalatl's Soul Core of Insulation",
+      "text": "扎拉迪的绝缘灵核",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#Zalatl's Soul Core of Insulation"
+    }
+  ],
+  "essences": [
+    {
+      "id": "Metadata/Items/Currency/CurrencyCorruptedEssenceAbyss",
+      "text": "精华：the 深渊",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyCorruptedEssenceAbyss"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyCorruptedEssenceBreach",
+      "text": "精华：the 裂隙",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyCorruptedEssenceBreach"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyCorruptedEssenceDelirium",
+      "text": "精华：谵妄",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyCorruptedEssenceDelirium"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyCorruptedEssenceHorror",
+      "text": "精华：恐惧",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyCorruptedEssenceHorror"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyCorruptedEssenceHysteria",
+      "text": "精华：歇斯底里",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyCorruptedEssenceHysteria"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyCorruptedEssenceInsanity",
+      "text": "精华：疯狂",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyCorruptedEssenceInsanity"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceAlly",
+      "text": "精华：统御",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceAlly"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceAttack",
+      "text": "精华：战斗",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceAttack"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceAttribute",
+      "text": "精华：无尽",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceAttribute"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceCaster",
+      "text": "精华：巫术",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceCaster"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceChaos",
+      "text": "精华：毁灭",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceChaos"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceCold",
+      "text": "精华：冰霜",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceCold"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceColdResist",
+      "text": "精华：解冻",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceColdResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceCritical",
+      "text": "精华：觅寻",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceCritical"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceDefences",
+      "text": "精华：强化",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceDefences"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceFire",
+      "text": "精华：烈焰",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceFire"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceFireResist",
+      "text": "精华：绝缘",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceFireResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceLife",
+      "text": "精华：肉体",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceLife"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceLightning",
+      "text": "精华：闪电",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceLightning"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceLightningResist",
+      "text": "精华：接地",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceLightningResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceMana",
+      "text": "精华：心智",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceMana"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssencePhysical",
+      "text": "精华：研磨",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssencePhysical"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceRarity",
+      "text": "精华：富足",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceRarity"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceSpeed",
+      "text": "精华：迅捷",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceSpeed"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyEssenceSpeedCaster",
+      "text": "精华：轻灵",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyEssenceSpeedCaster"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceAlly",
+      "text": "高阶精华：统御",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceAlly"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceAttack",
+      "text": "高阶精华：战斗",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceAttack"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceAttribute",
+      "text": "高阶精华：无尽",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceAttribute"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceCaster",
+      "text": "高阶精华：巫术",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceCaster"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceChaos",
+      "text": "高阶精华：毁灭",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceChaos"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceCold",
+      "text": "高阶精华：冰霜",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceCold"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceColdResist",
+      "text": "高阶精华：解冻",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceColdResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceCritical",
+      "text": "高阶精华：觅寻",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceCritical"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceDefences",
+      "text": "高阶精华：强化",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceDefences"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceFire",
+      "text": "高阶精华：烈焰",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceFire"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceFireResist",
+      "text": "高阶精华：绝缘",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceFireResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceLife",
+      "text": "高阶精华：肉体",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceLife"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceLightning",
+      "text": "高阶精华：闪电",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceLightning"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceLightningResist",
+      "text": "高阶精华：接地",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceLightningResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceMana",
+      "text": "高阶精华：心智",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceMana"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssencePhysical",
+      "text": "高阶精华：研磨",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssencePhysical"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceRarity",
+      "text": "高阶精华：富足",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceRarity"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceSpeed",
+      "text": "高阶精华：迅捷",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceSpeed"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyGreaterEssenceSpeedCaster",
+      "text": "高阶精华：轻灵",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyGreaterEssenceSpeedCaster"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceAlly",
+      "text": "初阶精华：统御",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceAlly"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceAttack",
+      "text": "初阶精华：战斗",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceAttack"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceAttribute",
+      "text": "初阶精华：无尽",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceAttribute"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceCaster",
+      "text": "初阶精华：巫术",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceCaster"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceChaos",
+      "text": "初阶精华：毁灭",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceChaos"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceCold",
+      "text": "初阶精华：冰霜",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceCold"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceColdResist",
+      "text": "初阶精华：解冻",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceColdResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceCritical",
+      "text": "初阶精华：觅寻",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceCritical"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceDefences",
+      "text": "初阶精华：强化",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceDefences"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceFire",
+      "text": "初阶精华：烈焰",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceFire"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceFireResist",
+      "text": "初阶精华：绝缘",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceFireResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceLife",
+      "text": "初阶精华：肉体",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceLife"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceLightning",
+      "text": "初阶精华：闪电",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceLightning"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceLightningResist",
+      "text": "初阶精华：接地",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceLightningResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceMana",
+      "text": "初阶精华：心智",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceMana"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssencePhysical",
+      "text": "初阶精华：研磨",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssencePhysical"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceRarity",
+      "text": "初阶精华：富足",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceRarity"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceSpeed",
+      "text": "初阶精华：迅捷",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceSpeed"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyLesserEssenceSpeedCaster",
+      "text": "初阶精华：轻灵",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyLesserEssenceSpeedCaster"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceAlly",
+      "text": "完美精华：统御",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceAlly"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceAttack",
+      "text": "完美精华：战斗",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceAttack"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceAttribute",
+      "text": "完美精华：无尽",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceAttribute"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceCaster",
+      "text": "完美精华：巫术",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceCaster"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceChaos",
+      "text": "完美精华：毁灭",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceChaos"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceCold",
+      "text": "完美精华：冰霜",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceCold"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceColdResist",
+      "text": "完美精华：解冻",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceColdResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceCritical",
+      "text": "完美精华：觅寻",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceCritical"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceDefences",
+      "text": "完美精华：强化",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceDefences"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceFire",
+      "text": "完美精华：烈焰",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceFire"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceFireResist",
+      "text": "完美精华：绝缘",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceFireResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceLife",
+      "text": "完美精华：肉体",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceLife"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceLightning",
+      "text": "完美精华：闪电",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceLightning"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceLightningResist",
+      "text": "完美精华：接地",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceLightningResist"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceMana",
+      "text": "完美精华：心智",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceMana"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssencePhysical",
+      "text": "完美精华：研磨",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssencePhysical"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceRarity",
+      "text": "完美精华：富足",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceRarity"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceSpeed",
+      "text": "完美精华：迅捷",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceSpeed"
+    },
+    {
+      "id": "Metadata/Items/Currency/CurrencyPerfectEssenceSpeedCaster",
+      "text": "完美精华：轻灵",
+      "source_path": "src/Data/Essence.lua",
+      "source_sha256": "950219488fed20cc3ca1bad17953f577c4361c6b65e371ce9ae3f9cbbae95f74",
+      "source_locator": "src/Data/Essence.lua#Metadata/Items/Currency/CurrencyPerfectEssenceSpeedCaster"
+    }
+  ],
+  "slotTagMap": [
+    {
+      "id": "armour",
+      "text": "护甲",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:armour"
+    },
+    {
+      "id": "body armour",
+      "text": "胸甲",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:body armour"
+    },
+    {
+      "id": "boots",
+      "text": "鞋子",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:boots"
+    },
+    {
+      "id": "bow",
+      "text": "弓",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:bow"
+    },
+    {
+      "id": "buckler",
+      "text": "圆盾",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:buckler"
+    },
+    {
+      "id": "caster",
+      "text": "施法者",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:caster"
+    },
+    {
+      "id": "crossbow",
+      "text": "弩",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:crossbow"
+    },
+    {
+      "id": "focus",
+      "text": "法器",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:focus"
+    },
+    {
+      "id": "gloves",
+      "text": "手套",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:gloves"
+    },
+    {
+      "id": "helmet",
+      "text": "头盔",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:helmet"
+    },
+    {
+      "id": "martial weapon wand or staff",
+      "text": "武器、法杖或权杖",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:martial weapon wand or staff"
+    },
+    {
+      "id": "one hand mace",
+      "text": "单手锤",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:one hand mace"
+    },
+    {
+      "id": "quarterstaff",
+      "text": "长杖",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:quarterstaff"
+    },
+    {
+      "id": "sceptre",
+      "text": "灵杖",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:sceptre"
+    },
+    {
+      "id": "shield",
+      "text": "盾牌",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:shield"
+    },
+    {
+      "id": "spear",
+      "text": "长矛",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:spear"
+    },
+    {
+      "id": "staff",
+      "text": "法杖",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:staff"
+    },
+    {
+      "id": "talisman",
+      "text": "护符",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:talisman"
+    },
+    {
+      "id": "two hand mace",
+      "text": "双手锤",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:two hand mace"
+    },
+    {
+      "id": "wand",
+      "text": "魔杖",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:wand"
+    },
+    {
+      "id": "weapon",
+      "text": "武器",
+      "source_path": "cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json",
+      "source_sha256": "4ab8ae94808b047834c84d98388b8acbc1e4107350cf3c68c1d23e881ba278c2",
+      "source_locator": "src/Data/ModRunes.lua#slot:weapon"
+    }
+  ]
+}

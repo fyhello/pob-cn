@@ -1,0 +1,72 @@
+schema_version: 1
+path_precedence:
+  - LOCAL
+  - GENERATED
+  - ADAPTER
+  - CN_SOURCE
+  - UPSTREAM
+
+ownership_categories:
+  UPSTREAM:
+    paths:
+      - "/**"
+    excludes:
+      - "/cn/**"
+      - "/docs/architecture/**"
+      - "/docs/migration/**"
+      - "/.github/**"
+    writer: "upstream synchronization workflow"
+    allowed_modifications: "Only a reviewed upstream synchronization branch may replace these files."
+
+  ADAPTER:
+    paths:
+      - "/src/Modules/Main.lua"
+    writer: "cn/bootstrap lifecycle adapter"
+    allowed_modifications: "Only the bootstrap_adapter_whitelist hunk may change, with a lifecycle regression test."
+
+  CN_SOURCE:
+    paths:
+      - "/cn/bootstrap/**"
+      - "/cn/lua/**"
+      - "/cn/bridge/**"
+      - "/cn/web/**"
+      - "/cn/pipeline/**"
+      - "/cn/tests/**"
+      - "/cn/config/**"
+      - "/docs/architecture/**"
+      - "/docs/migration/**"
+      - "/.github/workflows/**"
+    writer: "PoB-CN feature branches"
+    allowed_modifications: "Hand-authored source changes require an owned test or documented governance update."
+
+  GENERATED:
+    paths:
+      - "/cn/generated/web-data/**"
+      - "/cn/generated/manifest.json"
+    writer: "node cn/pipeline/generate-content.mjs"
+    allowed_modifications: "Direct editing is forbidden; regenerate from tracked inputs only."
+
+  LOCAL:
+    paths:
+      - "/.worktrees/**"
+      - "/Settings.xml"
+      - "/**/imgui.ini"
+      - "/Builds/**"
+      - "/node_modules/**"
+      - "/tools/last_imported_build.xml"
+      - "/**/*.cfg"
+      - "/**/*.exe"
+      - "/**/*.dll"
+    writer: "local developer or runtime"
+    allowed_modifications: "Never commit or migrate local, user, build, executable, or diagnostic artifacts."
+
+bootstrap_adapter_whitelist:
+  - path: "/src/Modules/Main.lua"
+    purpose: "The only permitted upstream-facing bootstrap call site."
+    required_test: "/cn/tests/lua/bootstrap_lifecycle_spec.lua"
+
+generated_output_producers:
+  - output: "/cn/generated/web-data/**"
+    producer: "node cn/pipeline/generate-content.mjs"
+  - output: "/cn/generated/manifest.json"
+    producer: "node cn/pipeline/generate-content.mjs"

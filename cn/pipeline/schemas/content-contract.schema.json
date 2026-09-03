@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PoB-CN generated content contract",
+  "type": "object",
+  "required": ["schema_version", "outputs"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "path", "stage", "consumer_id", "consumer_target", "consumer_owner", "field_mapping", "input_schema", "output_schema", "minimum_record_count", "id_coverage_rule", "source_ids"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 },
+          "stage": { "enum": ["M2-2", "M2-3", "M3", "M8"] },
+          "minimum_record_count": { "type": "integer", "minimum": 1 },
+          "source_ids": { "type": "array", "minItems": 3 }
+        }
+      }
+    }
+  }
+}

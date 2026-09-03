@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "outputs": [
+    {
+      "id": "web.translation",
+      "path": "cn/generated/web-data/translations.json",
+      "stage": "M8",
+      "consumer_id": "web.import-display-localizer",
+      "consumer_target": "cn/web/src/utils/webTranslation.ts",
+      "consumer_owner": "M8",
+      "field_mapping": {
+        "translation_id": {
+          "source": "locked dictionary items, stats, tooltip, ui and terms keys; reviewed overrides apply to terms",
+          "target": "same-domain JSON object key"
+        },
+        "zh_CN": {
+          "source": "locked dictionary zh-CN value plus reviewed terms override value",
+          "target": "same-domain JSON object value"
+        }
+      },
+      "input_schema": {
+        "dictionary": "gzip-json five-domain payload",
+        "overrides": "reviewed zh-CN JSON entries"
+      },
+      "output_schema": {
+        "format": "json-object",
+        "encoding": "utf-8",
+        "shape": "{ schema_version: 2, items: Record<string, string>, stats: Record<string, string>, tooltip: Record<string, string>, ui: Record<string, string>, terms: Record<string, string> }"
+      },
+      "minimum_record_count": 70227,
+      "id_coverage_rule": {
+        "type": "exact_locked_translation_domains_with_allowlist",
+        "source_id": "dictionary.ninja-poe2.poe2-runtime-gzip",
+        "domains": [
+          "items",
+          "stats",
+          "tooltip",
+          "ui",
+          "terms"
+        ],
+        "expected_counts": {
+          "items": 13609,
+          "stats": 29358,
+          "tooltip": 2592,
+          "ui": 499,
+          "terms": 24169
+        },
+        "allowlist": {
+          "items": [],
+          "stats": [],
+          "tooltip": [],
+          "ui": [],
+          "terms": []
+        }
+      },
+      "source_ids": [
+        "dictionary.ninja-poe2.poe2-runtime-gzip",
+        "override.zh-CN.terms",
+        "override.zh-CN.glossary"
+      ]
+    },
+    {
+      "id": "web.crafting",
+      "path": "cn/generated/web-data/crafting.json",
+      "stage": "M2-3",
+      "consumer_id": "web.crafting.loader",
+      "consumer_target": "cn/generated/web-data/crafting.json",
+      "consumer_owner": "M3",
+      "field_mapping": {
+        "id": {
+          "source": "reviewed crafting seed id",
+          "target": "crafting record id"
+        },
+        "text": {
+          "source": "reviewed zh-CN seed text",
+          "target": "crafting record text"
+        }
+      },
+      "input_schema": {
+        "seed": "reviewed crafting seed JSON",
+        "slot_tag_map": "reviewed CN slot map",
+        "authority": "locked upstream Lua"
+      },
+      "output_schema": {
+        "format": "json",
+        "encoding": "utf-8"
+      },
+      "minimum_record_count": 390,
+      "id_coverage_rule": {
+        "type": "exact_crafting_authority_ids",
+        "expected_count": 390
+      },
+      "source_ids": [
+        "upstream.crafting.runes",
+        "upstream.crafting.essences",
+        "upstream.crafting.item-mods",
+        "upstream.crafting.jewel-mods",
+        "upstream.crafting.item-bases",
+        "crafting.slot-tag-map",
+        "crafting.seed.zh-CN"
+      ]
+    },
+    {
+      "id": "web.crafting-authority-v2",
+      "path": "cn/generated/web-data/crafting-authority-v2.json",
+      "stage": "M2-3",
+      "consumer_id": "web.crafting.authority",
+      "consumer_target": "cn/generated/web-data/crafting-authority-v2.json",
+      "consumer_owner": "R9",
+      "field_mapping": {
+        "item_bases": {
+          "source": "locked upstream src/Data/Bases Lua collection",
+          "target": "strict crafting base authority"
+        },
+        "item_mods": {
+          "source": "locked upstream src/Data/ModItem.lua and src/Data/ModJewel.lua",
+          "target": "strict crafting modifier authority"
+        },
+        "source_provenance": {
+          "source": "upstream snapshot content hashes",
+          "target": "every base and modifier record"
+        }
+      },
+      "input_schema": {
+        "item_bases": "locked upstream Lua directory collection",
+        "item_mods": "locked upstream Lua table",
+        "runes_and_essences": "locked upstream Lua tables"
+      },
+      "output_schema": {
+        "format": "json",
+        "encoding": "utf-8",
+        "schema_version": 2
+      },
+      "minimum_record_count": 2800,
+      "id_coverage_rule": {
+        "type": "exact_crafting_authority_structure",
+        "base_source": "upstream.crafting.item-bases",
+        "modifier_sources": [
+          "upstream.crafting.item-mods",
+          "upstream.crafting.jewel-mods"
+        ]
+      },
+      "source_ids": [
+        "upstream.crafting.runes",
+        "upstream.crafting.essences",
+        "upstream.crafting.item-mods",
+        "upstream.crafting.jewel-mods",
+        "upstream.crafting.item-bases",
+        "crafting.slot-tag-map",
+        "crafting.seed.zh-CN"
+      ]
+    },
+    {
+      "id": "web.legacy.affixes",
+      "path": "cn/generated/web-data/affixes.json",
+      "stage": "M3",
+      "consumer_id": "web.seed-loader",
+      "consumer_target": "cn/web/src",
+      "consumer_owner": "M3",
+      "field_mapping": {
+        "payload": {
+          "source": "cn/pipeline/sources/web/legacy-seed/affixes.json",
+          "target": "cn/generated/web-data/affixes.json"
+        }
+      },
+      "input_schema": {
+        "format": "json"
+      },
+      "output_schema": {
+        "format": "json",
+        "encoding": "utf-8"
+      },
+      "minimum_record_count": 1,
+      "id_coverage_rule": {
+        "type": "exact_legacy_seed"
+      },
+      "source_ids": [
+        "legacy.web.affixes"
+      ]
+    },
+    {
+      "id": "web.legacy.bases",
+      "path": "cn/generated/web-data/bases.json",
+      "stage": "M3",
+      "consumer_id": "web.seed-loader",
+      "consumer_target": "cn/web/src",
+      "consumer_owner": "M3",
+      "field_mapping": {
+        "payload": {
+          "source": "cn/pipeline/sources/web/legacy-seed/bases.json",
+          "target": "cn/generated/web-data/bases.json"
+        }
+      },
+      "input_schema": {
+        "format": "json"
+      },
+      "output_schema": {
+        "format": "json",
+        "encoding": "utf-8"
+      },
+      "minimum_record_count": 1,
+      "id_coverage_rule": {
+        "type": "exact_legacy_seed"
+      },
+      "source_ids": [
+        "legacy.web.bases"
+      ]
+    },
+    {
+      "id": "web.legacy.gems",
+      "path": "cn/generated/web-data/gems.json",
+      "stage": "M3",
+      "consumer_id": "web.seed-loader",
+      "consumer_target": "cn/web/src",
+      "consumer_owner": "M3",
+      "field_mapping": {
+        "payload": {
+          "source": "cn/pipeline/sources/web/legacy-seed/gems.json",
+          "target": "cn/generated/web-data/gems.json"
+        }
+      },
+      "input_schema": {
+        "format": "json"
+      },
+      "output_schema": {
+        "format": "json",
+        "encoding": "utf-8"
+      },
+      "minimum_record_count": 1,
+      "id_coverage_rule": {
+        "type": "exact_legacy_seed"
+      },
+      "source_ids": [
+        "legacy.web.gems"
+      ]
+    },
+    {
+      "id": "web.legacy.tree",
+      "path": "cn/generated/web-data/tree_0_5.json",
+      "stage": "M3",
+      "consumer_id": "web.seed-loader",
+      "consumer_target": "cn/web/src",
+      "consumer_owner": "M3",
+      "field_mapping": {
+        "payload": {
+          "source": "cn/pipeline/sources/web/legacy-seed/tree_0_5.json",
+          "target": "cn/generated/web-data/tree_0_5.json"
+        }
+      },
+      "input_schema": {
+        "format": "json"
+      },
+      "output_schema": {
+        "format": "json",
+        "encoding": "utf-8"
+      },
+      "minimum_record_count": 1,
+      "id_coverage_rule": {
+        "type": "exact_legacy_seed"
+      },
+      "source_ids": [
+        "legacy.web.tree"
+      ]
+    },
+    {
+      "id": "web.legacy.uniques",
+      "path": "cn/generated/web-data/uniques.json",
+      "stage": "M3",
+      "consumer_id": "web.seed-loader",
+      "consumer_target": "cn/web/src",
+      "consumer_owner": "M3",
+      "field_mapping": {
+        "payload": {
+          "source": "cn/pipeline/sources/web/legacy-seed/uniques.json",
+          "target": "cn/generated/web-data/uniques.json"
+        }
+      },
+      "input_schema": {
+        "format": "json"
+      },
+      "output_schema": {
+        "format": "json",
+        "encoding": "utf-8"
+      },
+      "minimum_record_count": 1,
+      "id_coverage_rule": {
+        "type": "exact_legacy_seed"
+      },
+      "source_ids": [
+        "legacy.web.uniques"
+      ]
+    },
+    {
+      "id": "web.legacy.crafting",
+      "path": "cn/generated/web-data/crafting-legacy.json",
+      "stage": "M3",
+      "consumer_id": "web.seed-loader",
+      "consumer_target": "cn/web/src",
+      "consumer_owner": "M3",
+      "field_mapping": {
+        "payload": {
+          "source": "cn/pipeline/sources/web/legacy-seed/craftingData.json",
+          "target": "cn/generated/web-data/crafting-legacy.json"
+        }
+      },
+      "input_schema": {
+        "format": "json"
+      },
+      "output_schema": {
+        "format": "json",
+        "encoding": "utf-8"
+      },
+      "minimum_record_count": 1,
+      "id_coverage_rule": {
+        "type": "exact_legacy_seed"
+      },
+      "source_ids": [
+        "legacy.web.crafting"
+      ]
+    }
+  ]
+}

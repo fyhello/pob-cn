@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "reviewed_at_utc_plus_8", "reviewed_by", "runes", "essences", "slotTagMap"],
+  "additionalProperties": false,
+  "properties": { "schema_version": { "const": 1 }, "reviewed_at_utc_plus_8": { "type": "string" }, "reviewed_by": { "type": "string" }, "runes": { "type": "array", "minItems": 1 }, "essences": { "type": "array", "minItems": 1 }, "slotTagMap": { "type": "array", "minItems": 1 } }
+}

@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "source_kind": "CN_SOURCE",
+  "source_description": "由已锁定 ModRunes.lua 的装备槽位键人工审阅建立的中文术语表。",
+  "reviewed_at_utc_plus_8": "2026-08-27T00:00:00+08:00",
+  "reviewed_by": "POB-CN",
+  "review_evidence": "M2-3 locked upstream ModRunes.lua slot key review",
+  "entries": [
+    {
+      "id": "armour",
+      "text": "护甲",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:armour"
+    },
+    {
+      "id": "body armour",
+      "text": "胸甲",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:body armour"
+    },
+    {
+      "id": "boots",
+      "text": "鞋子",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:boots"
+    },
+    {
+      "id": "bow",
+      "text": "弓",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:bow"
+    },
+    {
+      "id": "buckler",
+      "text": "圆盾",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:buckler"
+    },
+    {
+      "id": "caster",
+      "text": "施法者",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:caster"
+    },
+    {
+      "id": "crossbow",
+      "text": "弩",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:crossbow"
+    },
+    {
+      "id": "focus",
+      "text": "法器",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:focus"
+    },
+    {
+      "id": "gloves",
+      "text": "手套",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:gloves"
+    },
+    {
+      "id": "helmet",
+      "text": "头盔",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:helmet"
+    },
+    {
+      "id": "martial weapon wand or staff",
+      "text": "武器、法杖或权杖",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:martial weapon wand or staff"
+    },
+    {
+      "id": "one hand mace",
+      "text": "单手锤",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:one hand mace"
+    },
+    {
+      "id": "quarterstaff",
+      "text": "长杖",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:quarterstaff"
+    },
+    {
+      "id": "sceptre",
+      "text": "灵杖",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:sceptre"
+    },
+    {
+      "id": "shield",
+      "text": "盾牌",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:shield"
+    },
+    {
+      "id": "spear",
+      "text": "长矛",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:spear"
+    },
+    {
+      "id": "staff",
+      "text": "法杖",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:staff"
+    },
+    {
+      "id": "talisman",
+      "text": "护符",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:talisman"
+    },
+    {
+      "id": "two hand mace",
+      "text": "双手锤",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:two hand mace"
+    },
+    {
+      "id": "wand",
+      "text": "魔杖",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:wand"
+    },
+    {
+      "id": "weapon",
+      "text": "武器",
+      "source_path": "src/Data/ModRunes.lua",
+      "source_sha256": "85d5f1d2d9e559fc62b79f46c8f9e7e0bfad4f666914dd2919570e558a6fb387",
+      "source_locator": "src/Data/ModRunes.lua#slot:weapon"
+    }
+  ]
+}

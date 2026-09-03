@@ -1,0 +1,29 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install project dependencies
+        run: npm ci
+      - name: Verify content pipeline
+        run: node --test cn/tests/pipeline/*.spec.mjs
+      - name: Verify bridge manifest gate
+        run: npm run test:m3
+      - name: Generate locked content
+        run: npm run generate:content
+      - name: Typecheck web client
+        run: npm run web:typecheck
+      - name: Build web client
+        run: npm run web:build

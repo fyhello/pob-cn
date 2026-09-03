@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "upstream": {
+    "url": "https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2.git",
+    "default_branch": "dev",
+    "commit": "5d173cbf8c9cf394a975cbb813f19d0b6dc67ea6",
+    "fetched_at_utc_plus_8": "2026-08-26T20:11:19+08:00"
+  },
+  "checkout": {
+    "mode": "complete_materialized_worktree",
+    "partial_clone": {
+      "enabled": true,
+      "filter": "blob:none",
+      "promisor_remote": "upstream"
+    },
+    "sparse_checkout": {
+      "enabled": false,
+      "paths": []
+    },
+    "core_autocrlf": false,
+    "validation_scope": {
+      "complete_source_accepted": true,
+      "build_accepted": false,
+      "release_accepted": false,
+      "restriction": "This worktree fully materializes upstream/dev content for M2-0 source evidence only. Build and release acceptance remain false."
+    }
+  },
+  "legacy_source": {
+    "path": "C:\\Users\\25147\\Documents\\AI-xiangmu\\ninja-poe2\\POB-cn",
+    "branch": "dev-cn",
+    "head_commit": "0f41abb9b72354e094a73bb2ac33a8bf0305f672"
+  },
+  "content_versions": {
+    "dictionary": {
+      "status": "LOCKED",
+      "version": null,
+      "source_commit": null,
+      "source_id": "dictionary.ninja-poe2.poe2-runtime-gzip",
+      "artifact": {
+        "in_repository": true,
+        "sha256": "2af6460f94ef0fc6ef9826e7ca8b06f485013b4828993e0480391b9138bcc779",
+        "size_bytes": 2558745,
+        "source_mtime_local": "2026-08-24 19:27:47"
+      },
+      "payload": {
+        "format": "gzip-json",
+        "uncompressed_sha256": "18f613924fe3a8092bc00194ff1082309484c454773f76566674db1feba4057a",
+        "uncompressed_size_bytes": 12205433,
+        "top_level_domain_counts": {
+          "items": 13609,
+          "stats": 29358,
+          "tooltip": 2592,
+          "ui": 499,
+          "terms": 24169
+        }
+      },
+      "schema": {
+        "status": "VENDORED_SCHEMA_IDENTIFIED",
+        "schema_version": 7,
+        "schema_url": null,
+        "path": "tools/upstream-builder/poe2dict/vendor/schema.min.json",
+        "sha256": "0d0844dd3a049cb806cb9be6299e6427c86a8c48f355f3fe878100fe254d8688"
+      },
+      "build_evidence": {
+        "generated_at": "2026-08-23T23:39:16.649746+08:00",
+        "tool_sha256": {
+          "tools/upstream-builder/update.py": "d916bfaf7ff906ed6235d766bb6ed3f99e151f7bd8bfaf9ce634dd89c91f3653",
+          "tools/upstream-builder/build.py": "bef358cae73bad0d569fb0cb930a8dab9415ce1fca76500c155f8b930b877e7e",
+          "tools/build-all.mjs": "c4501bcaadcd4e73d87c29e8398879ccf95285c40f26c0b8718f10f7cf0c38d9"
+        }
+      },
+      "compatibility_report": {
+        "path": "docs/architecture/compatibility/dictionary/2af6460f94ef0fc6ef9826e7ca8b06f485013b4828993e0480391b9138bcc779.md",
+        "sha256": "f47aac5b28bf51cfd9ea221144be1a959df339d840c99bd88dbd368a28954d77"
+      }
+    },
+    "game": {
+      "status": "UNPROBED",
+      "version": null,
+      "source_commit": null
+    },
+    "tree": {
+      "status": "UNPROBED",
+      "version": null,
+      "source_commit": null
+    }
+  }
+}

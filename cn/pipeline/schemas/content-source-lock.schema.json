@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PoB-CN content source lock",
+  "type": "object",
+  "required": ["schema_version", "inputs"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "stage", "path", "sha256", "format", "language", "provenance"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "stage": { "type": "string", "pattern": "^M2-[23]$" },
+          "path": { "type": "string", "pattern": "^(?!/|[A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  }
+}
