@@ -88,12 +88,12 @@ test('rejects absolute, drive, generated, bare JSON, symlink-like and duplicate 
 
 test('rejects a source symlink whose resolved target leaves the repository', async t => {
   const { root, lock } = await makeRepo(); t.after(() => rm(root, { recursive: true, force: true }));
-  const linkPath = join(root, 'cn/pipeline/sources/dictionary/ninja-poe2/link.json.gz');
-  try { await symlink(controlledArtifact, linkPath); } catch (error) {
+  const dictionaryPath = join(root, lock.inputs[0].path);
+  await rm(dictionaryPath);
+  try { await symlink(controlledArtifact, dictionaryPath); } catch (error) {
     if (error.code === 'EPERM') { t.skip('Windows symlink creation is disabled for this account'); return; }
     throw error;
   }
-  lock.inputs[0].path = 'cn/pipeline/sources/dictionary/ninja-poe2/link.json.gz';
   await assert.rejects(validateSourceLock(lock, root), /symlink|escapes/);
 });
 

@@ -4,11 +4,12 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { buildCompatibilityReport, validateExternalEvidence } from '../../pipeline/sync/sync-contract.mjs';
 
-const repoRoot = new URL('../../..', import.meta.url).pathname.slice(1).replaceAll('/', process.platform === 'win32' ? '\\' : '/');
+const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const dictionaryPaths = ['cn/pipeline/sources/dictionary/ninja-poe2/poe2.json.gz', 'cn/config/content-source-lock.json', 'cn/config/version-lock.json'];
 

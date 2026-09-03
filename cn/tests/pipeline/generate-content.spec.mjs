@@ -3,6 +3,7 @@ import { copyFile, mkdir, readFile, readdir, rm, mkdtemp, writeFile } from 'node
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { loadContentContract } from '../../pipeline/lib/content-contract.mjs';
@@ -11,7 +12,7 @@ import { loadPipelineOwnership, assertGeneratedOnlyBusinessChanges } from '../..
 import { diffBusinessSnapshots, formatBusinessSnapshotDiff, snapshotBusinessTree } from '../../pipeline/lib/repository-snapshot.mjs';
 import { assertManifestComplete, assertManifestCompleteFromRepo, validateManifest } from '../../pipeline/lib/manifest-validator.mjs';
 
-const repoRoot = new URL('../../..', import.meta.url).pathname.slice(1).replaceAll('/', process.platform === 'win32' ? '\\' : '/');
+const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 const fixtureFiles = [
   'cn/config/content-source-lock.json', 'cn/config/content-contract.json', 'cn/config/version-lock.json',
   'cn/config/pipeline-ownership.json', 'cn/config/ownership.yml', 'cn/config/upstream-content-snapshot.json',

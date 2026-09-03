@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { buildCraftingAuthority, validateCraftingSeed } from '../../pipeline/lib/crafting-authority.mjs';
 import { loadLockedInputs } from '../../pipeline/lib/source-lock.mjs';
 
-const repoRoot = resolve(new URL('../../..', import.meta.url).pathname.slice(1));
+const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 
 test('rejects crafting data without a reviewed seed', () => {
   assert.throws(() => validateCraftingSeed({ schema_version: 1 }), /crafting seed missing/);
