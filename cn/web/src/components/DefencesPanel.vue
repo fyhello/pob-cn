@@ -776,28 +776,21 @@
               官方推导计算步骤
             </h4>
             <div class="rounded-xl border border-white/10 bg-black/60 p-3 space-y-1.5 font-mono text-[11px]">
-              <template v-if="activeDrawer.breakdownLines && activeDrawer.breakdownLines.length > 0">
-                <div 
-                  v-for="(line, idx) in activeDrawer.breakdownLines" 
-                  :key="idx"
-                  :class="line.startsWith('=') ? 'text-emerald-300 font-bold border-t border-white/10 pt-1 mt-1' : 'text-gray-300'"
-                >
-                  {{ translateFormulaLine(line) }}
-                </div>
+              <template v-if="activeDrawer.details.length > 0">
+                <template v-for="detail in activeDrawer.details" :key="detail.key">
+                  <div v-if="detail.label" class="text-cyan-300 font-semibold border-t border-white/10 pt-1 mt-1">
+                    {{ translateFormulaLine(detail.label) }}
+                  </div>
+                  <div
+                    v-for="(line, idx) in detail.breakdownLines || []"
+                    :key="`${detail.key}_${idx}`"
+                    :class="line.startsWith('=') ? 'text-emerald-300 font-bold border-t border-white/10 pt-1 mt-1' : 'text-gray-300'"
+                  >
+                    {{ translateFormulaLine(line) }}
+                  </div>
+                </template>
               </template>
-              <template v-else-if="activeDrawer.value !== undefined && activeDrawer.value !== ''">
-                <div class="text-gray-300">
-                  基准机制设定: {{ activeDrawer.value }}
-                </div>
-                <div class="text-emerald-300 font-bold border-t border-white/10 pt-1 mt-1">
-                  = {{ activeDrawer.value }} (当前生效值)
-                </div>
-              </template>
-              <template v-else>
-                <div class="text-gray-400">
-                  官方基准机制生效中
-                </div>
-              </template>
+              <div v-else class="text-gray-400">-</div>
             </div>
           </div>
 
@@ -808,9 +801,9 @@
                 <div class="px-3 py-2 bg-poe-surface-elevated/60 border-b border-poe-border/60 text-xs font-bold text-gray-200 flex items-center justify-between">
                   <span class="flex items-center gap-1.5">
                     <Layers class="h-3.5 w-3.5 text-poe-gold" />
-                    {{ tab.label ? translateWebText(tab.label) : '官方装备部位与基准槽位明细' }}
+                    {{ tab.label ? translateWebText(tab.label) : '-' }}
                   </span>
-                  <span class="text-[10px] text-gray-400 font-mono">共 {{ tab.rows.length }} 项部位</span>
+                  <span class="text-[10px] text-gray-400 font-mono">共 {{ tab.rows.length }} 行</span>
                 </div>
                 <table class="w-full text-left text-xs font-mono">
                   <thead class="bg-black/60 text-gray-400 border-b border-poe-border/40">
@@ -839,6 +832,9 @@
                     </tr>
                   </tbody>
                 </table>
+                <div v-if="tab.footer" class="px-3 py-2 border-t border-white/10 text-[11px] text-gray-400 font-mono whitespace-pre-line">
+                  {{ translateFormulaLine(tab.footer) }}
+                </div>
               </div>
             </div>
           </div>
@@ -960,10 +956,19 @@ const subSections = computed(() => {
   return ((store as any).skillBreakdown && (store as any).skillBreakdown.dynamicSubSections) || {};
 });
 
+interface DynamicDetail {
+  key: string;
+  label?: string;
+  breakdownLines?: string[];
+  breakdownTables?: any[];
+  sources?: any[];
+}
+
 interface DrawerState {
   key: string;
   title: string;
   value?: string | number;
+  details: DynamicDetail[];
   breakdownLines: string[];
   breakdownTables?: any[];
   sources: any[];
@@ -1023,6 +1028,16 @@ function getRowValueClass(val: string | number | undefined): string {
   return 'text-gray-200';
 }
 
+function collectDrawerDetails(rows: any[]): Pick<DrawerState, 'details' | 'breakdownLines' | 'breakdownTables' | 'sources'> {
+  const details = rows.flatMap((row) => Array.isArray(row?.details) ? row.details : []) as DynamicDetail[];
+  return {
+    details,
+    breakdownLines: details.flatMap((detail) => Array.isArray(detail.breakdownLines) ? detail.breakdownLines : []),
+    breakdownTables: details.flatMap((detail) => Array.isArray(detail.breakdownTables) ? detail.breakdownTables : []),
+    sources: details.flatMap((detail) => Array.isArray(detail.sources) ? detail.sources : []),
+  };
+}
+
 function openSpecificResistBreakdown(type: 'Fire' | 'Cold' | 'Lightning' | 'Chaos' | 'Physical', title: string) {
   if (type === 'Physical') {
     const armourSec = findSubSection('Armour');
@@ -1039,6 +1054,7 @@ function openSpecificResistBreakdown(type: 'Fire' | 'Cold' | 'Lightning' | 'Chao
       activeDrawer.value = {
         key: 'PhysicalDamageReduction',
         title,
+        details: [],
         breakdownLines: [],
         breakdownTables: [],
         sources: []
@@ -1060,11 +1076,12 @@ function openSpecificResistBreakdown(type: 'Fire' | 'Cold' | 'Lightning' | 'Chao
   if (targetRow) {
     openRowBreakdown('Resists', targetRow, title);
   } else {
-    activeDrawer.value = {
-      key: `Resist_${type}`,
-      title,
-      breakdownLines: [],
-      breakdownTables: [],
+      activeDrawer.value = {
+        key: `Resist_${type}`,
+        title,
+        details: [],
+        breakdownLines: [],
+        breakdownTables: [],
       sources: []
     };
   }
@@ -1082,6 +1099,7 @@ function openMovementSpeedBreakdown(title: string = '有效移动速度拆解') 
     activeDrawer.value = {
       key: 'MovementSpeed',
       title,
+      details: [],
       breakdownLines: [],
       breakdownTables: [],
       sources: []
@@ -1096,53 +1114,25 @@ function openSectionBreakdown(sectionKey: string, title: string) {
   }
 
   const sec = findSubSection(sectionKey);
-  const lines: string[] = [];
-  const tables: any[] = [];
-  const sources: any[] = [];
-
-  if (sec && Array.isArray(sec.rows)) {
-    for (const row of sec.rows) {
-      if (Array.isArray(row.breakdownLines)) {
-        lines.push(...row.breakdownLines);
-      }
-      if (Array.isArray(row.breakdownTables)) {
-        tables.push(...row.breakdownTables);
-      }
-      if (Array.isArray(row.sources)) {
-        sources.push(...row.sources);
-      }
-    }
-  }
+  const detailState = collectDrawerDetails(Array.isArray(sec?.rows) ? sec.rows : []);
 
   activeDrawer.value = {
     key: sectionKey,
     title,
     value: sec?.headerValue,
-    breakdownLines: lines,
-    breakdownTables: tables,
-    sources
+    ...detailState,
   };
 }
 
 function openRowBreakdown(sectionKey: string, row: any, title: string) {
   if (!row) return;
-  const lines: string[] = Array.isArray(row.breakdownLines) && row.breakdownLines.length > 0 
-    ? [...row.breakdownLines] 
-    : [];
-  const tables: any[] = Array.isArray(row.breakdownTables) && row.breakdownTables.length > 0 
-    ? [...row.breakdownTables] 
-    : [];
-  const sources: any[] = Array.isArray(row.sources) && row.sources.length > 0 
-    ? [...row.sources] 
-    : [];
+  const detailState = collectDrawerDetails([row]);
 
   activeDrawer.value = {
     key: `${sectionKey}_${row.label}`,
     title,
     value: row.value,
-    breakdownLines: lines,
-    breakdownTables: tables,
-    sources
+    ...detailState,
   };
 }
 
