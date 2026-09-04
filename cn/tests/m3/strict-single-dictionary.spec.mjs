@@ -34,6 +34,26 @@ test('Strict Single Dictionary Gate: Only one unified translations.json allowed 
   assert.equal(trans.terms.INC, '提高', 'INC must translate through the unified dictionary');
   assert.equal(trans.terms.MORE, '总增', 'MORE must translate through the unified dictionary');
 
+  const expectedDefenceTerms = {
+    'Damage Avoidance': '伤害避免',
+    'Other Defences': '其他防御',
+    'Other Avoidance': '其他规避',
+    'Stun Duration': '晕眩持续时间',
+    'Other Ailment Defences': '其他异常状态防御',
+    'Damaging Hits': '伤害性击中',
+    'Maximum Hit Taken': '最大承受击中',
+    'Effective "Health" Pool': '有效生命池',
+    'Enemy Degens': '敌方持续伤害',
+    'Recoup and Hit Taken Over Time': '伤害吸纳与击中伤害延时结算',
+    'Dots and Build Degens': '持续伤害与构筑自损',
+    'Skill types': '技能类型',
+    'Notes': '备注',
+    'Source Name': '来源名称',
+  };
+  for (const [key, value] of Object.entries(expectedDefenceTerms)) {
+    assert.equal(trans.terms[key], value, `terms domain must contain official defence UI term ${key}: ${value}`);
+  }
+
   // 槽位
   const expectedSlots = {
     'Weapon 1': '主手武器',

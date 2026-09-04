@@ -619,7 +619,7 @@
 
         <!-- 3. 异常状态与特殊规避 (单个标准卡片) -->
         <div 
-          @click="openSectionBreakdown('OtherAvoidance', '异常状态与特殊规避拆解')"
+          @click="openSectionBreakdown('Other Avoidance', translateWebText('Other Avoidance'))"
           class="rounded-xl border border-poe-border/80 bg-[#0a0a10] p-4 space-y-2.5 cursor-pointer hover:border-emerald-500/50 transition-all group"
         >
           <div class="flex items-center justify-between border-b border-white/10 pb-2">
@@ -644,31 +644,96 @@
         </div>
 
       </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div
+          @click="openSectionBreakdown('Damage Avoidance', translateWebText('Damage Avoidance'))"
+          class="rounded-xl border border-poe-border/80 bg-[#0a0a10] p-4 space-y-2.5 cursor-pointer hover:border-sky-500/50 transition-all group"
+        >
+          <div class="flex items-center justify-between border-b border-white/10 pb-2">
+            <span class="text-xs font-bold text-gray-100">{{ translateWebText('Damage Avoidance') }}</span>
+            <span class="text-xs font-mono font-bold text-sky-400">{{ getSubSectionHeader('Damage Avoidance') || '-' }}</span>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div
+              v-for="(row, rIdx) in getSectionRows('Damage Avoidance')"
+              :key="rIdx"
+              @click.stop="openRowBreakdown('Damage Avoidance', row, translateRowLabel(row.label))"
+              class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+            >
+              <span>{{ translateRowLabel(row.label) }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          @click="openSectionBreakdown('Stun Duration', translateWebText('Stun Duration'))"
+          class="rounded-xl border border-poe-border/80 bg-[#0a0a10] p-4 space-y-2.5 cursor-pointer hover:border-sky-500/50 transition-all group"
+        >
+          <div class="flex items-center justify-between border-b border-white/10 pb-2">
+            <span class="text-xs font-bold text-gray-100">{{ translateWebText('Stun Duration') }}</span>
+            <span class="text-xs font-mono font-bold text-sky-400">{{ getSubSectionHeader('Stun Duration') || '-' }}</span>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div
+              v-for="(row, rIdx) in getSectionRows('Stun Duration')"
+              :key="rIdx"
+              @click.stop="openRowBreakdown('Stun Duration', row, translateRowLabel(row.label))"
+              class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+            >
+              <span>{{ translateRowLabel(row.label) }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          @click="openSectionBreakdown('Other Ailment Defences', translateWebText('Other Ailment Defences'))"
+          class="rounded-xl border border-poe-border/80 bg-[#0a0a10] p-4 space-y-2.5 cursor-pointer hover:border-sky-500/50 transition-all group"
+        >
+          <div class="flex items-center justify-between border-b border-white/10 pb-2">
+            <span class="text-xs font-bold text-gray-100">{{ translateWebText('Other Ailment Defences') }}</span>
+            <span class="text-xs font-mono font-bold text-sky-400">{{ getSubSectionHeader('Other Ailment Defences') || '-' }}</span>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div
+              v-for="(row, rIdx) in getSectionRows('Other Ailment Defences')"
+              :key="rIdx"
+              @click.stop="openRowBreakdown('Other Ailment Defences', row, translateRowLabel(row.label))"
+              class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+            >
+              <span>{{ translateRowLabel(row.label) }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 5. 板块四：机动性、属性需求与药剂控制状态 (精简 3 列并排) -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
       
-      <!-- 1. 其他效果 (1:1 官方 PoB Other Effects) -->
+      <!-- 1. Other Defences -->
       <div 
-        @click="openSectionBreakdown('Other Effects', '其他效果拆解')"
+        @click="openSectionBreakdown('Other Defences', translateWebText('Other Defences'))"
         class="rounded-xl border border-poe-border/80 bg-[#0a0a10] p-4 space-y-3 cursor-pointer hover:border-yellow-500/50 transition-all group"
       >
         <div class="flex items-center justify-between border-b border-white/10 pb-2">
           <div class="flex items-center gap-2">
             <Sparkles class="h-4 w-4 text-yellow-400" />
-            <h3 class="text-xs font-bold text-gray-200">其他效果</h3>
+            <h3 class="text-xs font-bold text-gray-200">{{ translateWebText('Other Defences') }}</h3>
           </div>
           <span class="text-xs font-mono font-bold text-yellow-400">
-            {{ getSubSectionHeader('Other Effects') || (getSectionRows('Other Effects').length ? '共 ' + getSectionRows('Other Effects').length + ' 项' : '-') }}
+            {{ getSubSectionHeader('Other Defences') || '-' }}
           </span>
         </div>
 
         <div class="space-y-1.5 text-xs">
           <div
-            v-for="(row, rIdx) in getSectionRows('Other Effects')"
+            v-for="(row, rIdx) in getSectionRows('Other Defences')"
             :key="rIdx"
-            @click.stop="openRowBreakdown('Other Effects', row, '其他效果: ' + translateRowLabel(row.label))"
+            @click.stop="openRowBreakdown('Other Defences', row, translateRowLabel(row.label))"
             class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
           >
             <span>{{ translateRowLabel(row.label) }}</span>
@@ -733,9 +798,92 @@
         </div>
       </div>
 
+      <div
+        v-for="sectionKey in ['Utility Flasks', 'Life Flasks', 'Mana Flasks', 'Charms', 'Rage']"
+        :key="sectionKey"
+        @click="openSectionBreakdown(sectionKey, translateWebText(sectionKey))"
+        class="rounded-xl border border-poe-border/80 bg-[#0a0a10] p-4 space-y-3 cursor-pointer hover:border-emerald-500/50 transition-all group"
+      >
+        <div class="flex items-center justify-between border-b border-white/10 pb-2">
+          <h3 class="text-xs font-bold text-gray-200">{{ translateWebText(sectionKey) }}</h3>
+          <span class="text-xs font-mono font-bold text-emerald-400">{{ getSubSectionHeader(sectionKey) || '-' }}</span>
+        </div>
+        <div class="space-y-1.5 text-xs">
+          <div
+            v-for="(row, rIdx) in getSectionRows(sectionKey)"
+            :key="rIdx"
+            @click.stop="openRowBreakdown(sectionKey, row, translateRowLabel(row.label))"
+            class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+          >
+            <span>{{ translateRowLabel(row.label) }}</span>
+            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="md:col-span-3 flex items-center gap-2 border-b border-white/10 pb-2">
+        <Activity class="h-4 w-4 text-emerald-400" />
+        <h3 class="text-sm font-bold text-gray-100 font-poe-title">{{ translateWebText('Charges') }}</h3>
+      </div>
+
+      <div
+        v-for="sectionKey in ['Endurance', 'Frenzy', 'Power']"
+        :key="sectionKey"
+        @click="openSectionBreakdown(sectionKey, translateWebText(sectionKey))"
+        class="rounded-xl border border-poe-border/80 bg-[#0a0a10] p-4 space-y-3 cursor-pointer hover:border-emerald-500/50 transition-all group"
+      >
+        <div class="flex items-center justify-between border-b border-white/10 pb-2">
+          <h3 class="text-xs font-bold text-gray-200">{{ translateWebText(sectionKey) }}</h3>
+          <span class="text-xs font-mono font-bold text-emerald-400">{{ getSubSectionHeader(sectionKey) || '-' }}</span>
+        </div>
+        <div class="space-y-1.5 text-xs">
+          <div
+            v-for="(row, rIdx) in getSectionRows(sectionKey)"
+            :key="rIdx"
+            @click.stop="openRowBreakdown(sectionKey, row, translateRowLabel(row.label))"
+            class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+          >
+            <span>{{ translateRowLabel(row.label) }}</span>
+            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+          </div>
+        </div>
+      </div>
+
     </section>
 
-    <!-- 6. 二级词缀溯源明细侧边抽屉 (100% 独立隔离专属行明细) -->
+    <section class="space-y-3">
+      <div class="flex items-center gap-2 border-b border-white/10 pb-2">
+        <Layers class="h-4 w-4 text-poe-gold" />
+        <h3 class="text-sm font-bold text-gray-100 font-poe-title">{{ translateWebText('Damage Taken') }}</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div
+          v-for="sectionKey in ['Damage Taken', 'Damaging Hits', 'Maximum Hit Taken', 'Recoup and Hit Taken Over Time', 'Dots and Build Degens', 'Enemy Degens']"
+          :key="sectionKey"
+          @click="openSectionBreakdown(sectionKey, translateWebText(sectionKey))"
+          class="rounded-xl border border-poe-border/80 bg-[#0a0a10] p-4 space-y-3 cursor-pointer hover:border-poe-gold/50 transition-all group"
+        >
+          <div class="flex items-center justify-between border-b border-white/10 pb-2">
+            <h3 class="text-xs font-bold text-gray-200">{{ translateWebText(sectionKey) }}</h3>
+            <span class="text-xs font-mono font-bold text-poe-gold">{{ getSubSectionHeader(sectionKey) || '-' }}</span>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div
+              v-for="(row, rIdx) in getSectionRows(sectionKey)"
+              :key="rIdx"
+              @click.stop="openRowBreakdown(sectionKey, row, translateRowLabel(row.label))"
+              class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+            >
+              <span>{{ translateRowLabel(row.label) }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. 二级词缀溯源明细侧边抽屉 (100% 独立隔离专属行明细) -->
     <div 
       v-if="activeDrawer" 
       class="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-50 flex justify-end"

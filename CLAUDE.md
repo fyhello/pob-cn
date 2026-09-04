@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **pob-cn** (3967 symbols, 5340 relationships, 151 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **pob-cn-clean-20260903** (4325 symbols, 6132 relationships, 199 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -24,10 +24,10 @@ This project is indexed by GitNexus as **pob-cn** (3967 symbols, 5340 relationsh
 
 | Resource | Use for |
 |----------|---------|
-| `gitnexus://repo/pob-cn/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/pob-cn/clusters` | All functional areas |
-| `gitnexus://repo/pob-cn/processes` | All execution flows |
-| `gitnexus://repo/pob-cn/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/pob-cn-clean-20260903/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/pob-cn-clean-20260903/clusters` | All functional areas |
+| `gitnexus://repo/pob-cn-clean-20260903/processes` | All execution flows |
+| `gitnexus://repo/pob-cn-clean-20260903/process/{name}` | Step-by-step execution trace |
 
 ## CLI
 

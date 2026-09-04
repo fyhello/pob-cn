@@ -852,3 +852,90 @@ test('commits official buffMode changes and reflects in build projection', async
   `);
   assert.equal(result, 'COMBAT:1');
 });
+
+test('projects each official radius visual through the native renderer without combining rows', async () => {
+  const result = await runLua(`
+    local actor = {
+      output = {
+        PresenceRadius = 999,
+        PresenceRadiusMetres = 8,
+        SurroundedRadius = 777,
+        SurroundedRadiusMetres = 3,
+      },
+      breakdown = {
+        PresenceRadius = { "^7Base radius: 8.0m", radius = 80 },
+        SurroundedRadius = { "^7Base radius: 3.0m", radius = 30 },
+      },
+    }
+    local renderedRadii = {}
+    function DrawImage() error("the official renderer was not intercepted") end
+    local build = {
+      calcsTab = {
+        calcsEnv = { player = actor },
+        sectionList = {
+          {
+            subSection = {
+              {
+                label = "Other Effects",
+                data = {
+                  {
+                    label = "Presence Radius",
+                  {
+                      format = "{1:output:PresenceRadiusMetres}m",
+                      { breakdown = "PresenceRadius" },
+                    },
+                  },
+                  {
+                    label = "Surrounded Radius",
+                    {
+                      format = "{1:output:SurroundedRadiusMetres}m",
+                      { breakdown = "SurroundedRadius" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        BuildOutput = function(self) self.mainOutput = {} end,
+      },
+    }
+    local runtime = {
+      build = build,
+      newBuild = function() end,
+      loadBuildFromXML = function() end,
+      main = {
+        RenderCircle = function(_, x, y, width, height, originX, originY, radius)
+          assert(x == 0 and y == 0 and width == 480 and height == 270)
+          assert(originX == 0 and originY == 0)
+          renderedRadii[#renderedRadii + 1] = radius
+          DrawImage(nil, radius, 10, 20, 1)
+        end,
+      },
+    }
+    local adapter = Adapter.new(runtime)
+    local projected = adapter:calculate("calculate")
+    assert(projected.success == true)
+    local subSection = projected.skillBreakdown.dynamicSubSections["Other Effects"]
+    local presence = subSection.rows[1]
+    local surrounded = subSection.rows[2]
+    assert(presence.value == "8m")
+    assert(presence.radiusVisual.key == "PresenceRadius")
+    assert(presence.radiusVisual.label == "Presence Radius")
+    assert(presence.radiusVisual.radius == 80)
+    assert(presence.radiusVisual.displayValue == "8m")
+    assert(presence.radiusVisual.scanlines[1].x == 80)
+    assert(surrounded.value == "3m")
+    assert(surrounded.radiusVisual.key == "SurroundedRadius")
+    assert(surrounded.radiusVisual.radius == 30)
+    assert(surrounded.radiusVisual.scanlines[1].x == 30)
+
+    actor.breakdown.PresenceRadius.radius = nil
+    local missing = adapter:calculate("calculate")
+    local missingSubSection = missing.skillBreakdown.dynamicSubSections["Other Effects"]
+    assert(missingSubSection.rows[1].radiusVisual == nil)
+    assert(missingSubSection.rows[2].radiusVisual.radius == 30)
+    return table.concat(renderedRadii, ":")
+  `);
+  assert.equal(result, '80:30:30');
+});

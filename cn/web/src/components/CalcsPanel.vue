@@ -140,36 +140,22 @@
         </div>
       </div>
 
-      <!-- 支柱 ②：增伤放大乘区 -->
+      <!-- 支柱 ②：点燃 -->
       <div 
-        @mouseenter="onCardMouseEnter('multipliers', $event)"
+        @mouseenter="onCardMouseEnter('igniteDPS', $event)"
         @mouseleave="onCardMouseLeave"
-        @click="onCardClick('multipliers', $event)"
+        @click="onCardClick('igniteDPS', $event)"
         :class="[
-          'p-4 rounded-xl border transition-all cursor-pointer select-none relative group flex flex-col justify-between space-y-3',
-          isPrimaryPinned('multipliers') ? 'bg-cyan-950/50 border-cyan-400 ring-2 ring-cyan-400/60 shadow-2xl' : 'bg-black/60 border-white/10 hover:border-cyan-500/60'
+          'p-3.5 rounded-xl border transition-all cursor-pointer select-none space-y-2 font-mono relative group',
+          isPrimaryPinned('igniteDPS') ? 'bg-amber-950/60 border-amber-400 ring-2 ring-amber-400/60 shadow-2xl' : 'bg-black/60 border-white/10 hover:border-amber-500/60'
         ]"
       >
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-cyan-300 flex items-center gap-1">
-            <span>② 增伤放大乘区</span>
-          </span>
-          <TrendingUp class="w-4 h-4 text-cyan-400" />
+        <div class="flex items-center justify-between text-xs font-bold text-amber-300">
+          <span>② 点燃</span>
+          <span class="px-1 py-0.5 rounded text-[9px] bg-amber-950 border border-amber-600/60">持续</span>
         </div>
-        <div class="space-y-1 font-mono">
-          <div class="text-xl font-black text-cyan-200">
-            {{ dpsData.incDamage > 0 ? '+' + dpsData.incDamage + '%' : '-' }} <span class="text-xs font-normal text-gray-400">/ {{ dpsData.moreDamage > 0 ? dpsData.moreDamage.toFixed(2) + 'x' : '-' }}</span>
-          </div>
-          <div class="text-[10px] text-cyan-400/80 truncate">
-            更多乘区: {{ dpsData.moreDamage > 0 ? dpsData.moreDamage.toFixed(2) + 'x' : '-' }}
-          </div>
-        </div>
-        <div class="flex items-center justify-between text-[11px] pt-2 border-t border-white/5 font-mono">
-          <span class="text-gray-400">天赋装备+辅助石乘区</span>
-          <span class="text-gray-500 group-hover:text-cyan-300 text-[10px]">
-            {{ isPrimaryPinned('multipliers') ? '已固定 📌' : '点击固定 · 悬停看明细' }}
-          </span>
-        </div>
+        <div class="text-xl font-black text-amber-300">{{ formatNumber(dpsData.igniteDPS) }}</div>
+        <div class="text-[10px] text-gray-400">点燃几率: {{ dpsData.igniteChance > 0 ? dpsData.igniteChance.toFixed(1) + '%' : '-' }} · 持续 {{ dpsData.igniteDuration > 0 ? dpsData.igniteDuration + 's' : '-' }}</div>
       </div>
 
       <!-- 支柱 ③：暴击期望系统 -->
@@ -239,22 +225,37 @@
 
     <!-- 5. 异常状态与资源消耗 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <!-- 点燃 (伤害型异常) -->
+      <!-- PoB 官方其他效果 -->
       <div 
-        @mouseenter="onCardMouseEnter('igniteDPS', $event)"
+        @mouseenter="onCardMouseEnter('otherEffects', $event)"
         @mouseleave="onCardMouseLeave"
-        @click="onCardClick('igniteDPS', $event)"
+        @click="onCardClick('otherEffects', $event)"
         :class="[
-          'p-3.5 rounded-xl border transition-all cursor-pointer select-none space-y-2 font-mono relative group',
-          isPrimaryPinned('igniteDPS') ? 'bg-amber-950/60 border-amber-400 ring-2 ring-amber-400/60 shadow-2xl' : 'bg-black/60 border-white/10 hover:border-amber-500/60'
+          'p-4 rounded-xl border transition-all cursor-pointer select-none relative group flex flex-col justify-between space-y-3',
+          isPrimaryPinned('otherEffects') ? 'bg-cyan-950/50 border-cyan-400 ring-2 ring-cyan-400/60 shadow-2xl' : 'bg-black/60 border-white/10 hover:border-cyan-500/60'
         ]"
       >
-        <div class="flex items-center justify-between text-xs font-bold text-amber-300">
-          <span>点燃</span>
-          <span class="px-1 py-0.5 rounded text-[9px] bg-amber-950 border border-amber-600/60">持续</span>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-cyan-300 flex items-center gap-1">
+            <span>{{ translateWebText('Other Effects') }}</span>
+          </span>
+          <Sparkles class="w-4 h-4 text-cyan-400" />
         </div>
-        <div class="text-xl font-black text-amber-300">{{ formatNumber(dpsData.igniteDPS) }}</div>
-        <div class="text-[10px] text-gray-400">点燃几率: {{ dpsData.igniteChance > 0 ? dpsData.igniteChance.toFixed(1) + '%' : '-' }} · 持续 {{ dpsData.igniteDuration > 0 ? dpsData.igniteDuration + 's' : '-' }}</div>
+        <div class="space-y-1 font-mono">
+          <div v-if="otherEffectsPreview" class="text-xl font-black text-cyan-200">
+            {{ otherEffectsPreview.value }}
+          </div>
+          <div v-else class="h-7" aria-hidden="true"></div>
+          <div v-if="otherEffectsPreview" class="text-[10px] text-cyan-400/80 truncate">
+            {{ translateCalcFormulaLine(otherEffectsPreview.label) }}
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-[11px] pt-2 border-t border-white/5 font-mono">
+          <span class="text-gray-400">{{ translateWebText('Other Effects') }}</span>
+          <span class="text-gray-500 group-hover:text-cyan-300 text-[10px]">
+            {{ isPrimaryPinned('otherEffects') ? '已固定 📌' : '点击固定 · 悬停看明细' }}
+          </span>
+        </div>
       </div>
 
       <!-- 非伤害型异常状态 (Shock / Chill / Freeze / Sap 等) -->
@@ -384,22 +385,24 @@
             </div>
           </div>
 
-          <!-- 核心数值胶囊 -->
-          <button
-            v-if="averageHitDetailRow?.details?.length"
-            type="button"
-            @mouseenter="onRowMouseEnter(averageHitDetailRow)"
-            @mouseleave="onRowMouseLeave"
-            @click="onRowClick(averageHitDetailRow, $event)"
-            class="w-full p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between mb-3 shrink-0 text-left transition-colors hover:bg-white/5 hover:border-poe-gold/50"
-          >
-            <span class="text-xs text-gray-400 font-semibold">PoB 官方最终计算结果:</span>
-            <span class="text-sm font-black font-mono text-poe-gold">{{ activeCard.formattedValue }} <span class="ml-1 text-[10px] text-gray-500 font-normal">{{ pinnedSecondaryRow === averageHitDetailRow ? '📌' : '▶' }}</span></span>
-          </button>
-          <div v-else class="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between mb-3 shrink-0">
-            <span class="text-xs text-gray-400 font-semibold">PoB 官方最终计算结果:</span>
-            <span class="text-sm font-black font-mono text-poe-gold">{{ activeCard.formattedValue }}</span>
-          </div>
+          <!-- 其他效果没有单一的官方总值，只显示原始官方行。 -->
+          <template v-if="activeCardKey !== 'otherEffects'">
+            <button
+              v-if="averageHitDetailRow?.details?.length"
+              type="button"
+              @mouseenter="onRowMouseEnter(averageHitDetailRow)"
+              @mouseleave="onRowMouseLeave"
+              @click="onRowClick(averageHitDetailRow, $event)"
+              class="w-full p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between mb-3 shrink-0 text-left transition-colors hover:bg-white/5 hover:border-poe-gold/50"
+            >
+              <span class="text-xs text-gray-400 font-semibold">PoB 官方最终计算结果:</span>
+              <span class="text-sm font-black font-mono text-poe-gold">{{ activeCard.formattedValue }} <span class="ml-1 text-[10px] text-gray-500 font-normal">{{ pinnedSecondaryRow === averageHitDetailRow ? '📌' : '▶' }}</span></span>
+            </button>
+            <div v-else class="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between mb-3 shrink-0">
+              <span class="text-xs text-gray-400 font-semibold">PoB 官方最终计算结果:</span>
+              <span class="text-sm font-black font-mono text-poe-gold">{{ activeCard.formattedValue }}</span>
+            </div>
+          </template>
 
           <!-- 主浮窗内容可滚动区 -->
           <div class="flex-1 overflow-y-auto space-y-3 pr-1">
@@ -513,7 +516,7 @@
 
         <!-- 6.2 🌟 二级专属推导浮窗 (同容器并排对齐，CSS 层面 100% 杜绝任何重叠遮挡！) -->
         <div 
-          v-if="effectiveSecondaryRow?.details?.length"
+          v-if="effectiveSecondaryRow?.details?.length || isHitDamageSummarySelected || effectiveSecondaryRow?.radiusVisual"
           @mouseenter="onSecondaryPopoverMouseEnter"
           @mouseleave="onSecondaryPopoverMouseLeave"
           :style="{ maxHeight: popoverMaxHeight }"
@@ -522,7 +525,8 @@
             isSecondaryPinnedActive ? 'border-2 border-poe-gold ring-2 ring-poe-gold/30' : 'border-poe-gold/60'
           ]"
         >
-          <!-- 二级头部 -->
+          <template v-if="effectiveSecondaryRow">
+            <!-- 二级头部 -->
           <div class="flex items-center justify-between border-b border-white/10 pb-2 select-none">
             <div>
               <div class="text-xs font-bold text-amber-300 font-poe-title flex items-center gap-1.5">
@@ -560,8 +564,36 @@
             </div>
           </div>
 
-          <template v-for="detail in effectiveSecondaryRow.details" :key="detail.key">
-            <div v-if="detail.label" class="text-[10px] text-cyan-300 font-semibold font-mono border-t border-white/10 pt-2">
+          <PresenceRangeDiagram v-if="activeRadiusVisual" :visual="activeRadiusVisual" />
+
+          <template v-if="isHitDamageSummarySelected">
+            <div class="overflow-hidden rounded-lg border border-white/10 bg-black/60 font-mono text-xs">
+              <div
+                v-for="row in hitDamageSummaryTypeRows"
+                :key="row.cellId || `${row.columnLabel}-${row.label}`"
+                class="flex items-center justify-between gap-3 border-b border-white/10 px-2.5 py-2 last:border-b-0"
+              >
+                <span class="min-w-0 text-cyan-300">{{ translateCalcFormulaLine(row.columnLabel || row.label) }}</span>
+                <span class="shrink-0 font-bold text-gray-100">{{ row.value }}</span>
+              </div>
+            </div>
+            <div v-if="hitDamageSummaryTotalRow" class="flex items-center justify-between gap-3 rounded-lg border border-poe-gold/30 bg-amber-950/20 px-2.5 py-2 font-mono text-xs">
+              <span class="min-w-0 text-amber-300">{{ translateCalcFormulaLine(hitDamageSummaryTotalRow.columnLabel || hitDamageSummaryTotalRow.label) }}</span>
+              <span class="shrink-0 font-bold text-poe-gold">{{ hitDamageSummaryTotalRow.value }}</span>
+            </div>
+            <button
+              v-if="hitDamageSummaryAverageRow"
+              type="button"
+              @click="onRowClick(hitDamageSummaryAverageRow, $event)"
+              class="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/60 px-2.5 py-2 text-left font-mono text-xs transition-colors hover:border-poe-gold/50 hover:bg-white/5"
+            >
+              <span class="min-w-0 text-cyan-300">{{ translateCalcFormulaLine(hitDamageSummaryAverageRow.label) }}</span>
+              <span class="shrink-0 font-bold text-gray-100">{{ hitDamageSummaryAverageRow.value }} <span v-if="hitDamageSummaryAverageRow.details?.length" class="ml-0.5 text-[9px] font-normal text-gray-500">▶</span></span>
+            </button>
+          </template>
+          <template v-else>
+            <template v-for="detail in effectiveSecondaryRow.details" :key="detail.key">
+              <div v-if="detail.label" class="text-[10px] text-cyan-300 font-semibold font-mono border-t border-white/10 pt-2">
               {{ translateCalcFormulaLine(detail.label) }}
             </div>
             <div v-if="detail.breakdownLines?.length" class="space-y-1 font-mono text-[11px]">
@@ -591,7 +623,9 @@
                 </div>
                 <span class="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded bg-black/60 border border-white/10" :class="Number(src.value) >= 0 ? 'text-emerald-400' : 'text-red-400'">{{ typeof src.value === 'number' ? (src.value > 0 ? `+${src.value}` : src.value) : src.value }}</span>
               </div>
-            </div>
+              </div>
+            </template>
+          </template>
           </template>
         </div>
       </div>
@@ -670,10 +704,11 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import { Calculator, Flame, Wand2, Activity, Zap, Sparkles, TrendingUp, Droplet, ShieldAlert, Pin } from 'lucide-vue-next';
+import { Calculator, Flame, Wand2, Activity, Zap, Sparkles, Droplet, ShieldAlert, Pin } from 'lucide-vue-next';
 import { useBuildStore } from '../stores/buildStore';
 import { translateWebText, translateCalcFormulaLine, translateWebItemLine, translateSourceType } from '../utils/webTranslation';
 import PoEItemTooltip from './PoEItemTooltip.vue';
+import PresenceRangeDiagram, { type OfficialRadiusVisual } from './PresenceRangeDiagram.vue';
 
 const store = useBuildStore();
 defineProps<{ embedded?: boolean }>();
@@ -842,6 +877,7 @@ interface DynamicRow {
   columnLabel?: string;
   value: string;
   details?: DynamicDetail[];
+  radiusVisual?: OfficialRadiusVisual;
 }
 
 interface DynamicDetail {
@@ -906,6 +942,12 @@ const activeSubSection = computed<DynamicSubSection | null>(() => {
   return dyn[targetKey] || null;
 });
 
+const otherEffectsPreview = computed<DynamicRow | null>(() => {
+  const dyn = store.skillBreakdown?.dynamicSubSections || (store.skillBreakdown?.dpsPipeline as any)?.dynamicSubSections;
+  const section = dyn?.['Other Effects'] as DynamicSubSection | undefined;
+  return section?.rows.find(row => row.value !== '') ?? null;
+});
+
 const averageHitDetailRow = computed<DynamicRow | null>(() => {
   if (activeCardKey.value !== 'baseDamage') return null;
   return activeSubSection.value?.rows.find(row => row.label.endsWith('Average Hit') && row.details?.length) || null;
@@ -918,6 +960,38 @@ const hitDamageSummaryColumns = [
   'Skill Hit Damage',
 ] as const;
 
+function isAllTypesSkillHitDamageRow(row?: DynamicRow | null): boolean {
+  return activeCardKey.value === 'baseDamage'
+    && row?.columnLabel === 'All Types:'
+    && row.label === 'Skill Hit Damage';
+}
+
+const hitDamageSummaryTypeRows = computed<DynamicRow[]>(() => {
+  if (activeCardKey.value !== 'baseDamage') return [];
+  return (activeSubSection.value?.rows || []).filter(row =>
+    row.label === 'Skill Hit Damage' && !!row.columnLabel && row.columnLabel !== 'All Types:'
+  );
+});
+
+const hitDamageSummaryTotalRow = computed<DynamicRow | null>(() => {
+  if (activeCardKey.value !== 'baseDamage') return null;
+  return activeSubSection.value?.rows.find(isAllTypesSkillHitDamageRow) || null;
+});
+
+const hitDamageSummaryAverageRow = computed<DynamicRow | null>(() => {
+  if (activeCardKey.value !== 'baseDamage') return null;
+  return activeSubSection.value?.rows.find(row =>
+    row.columnLabel === 'All Types:' && row.label === 'Skill Average Hit'
+  ) || null;
+});
+
+const isHitDamageSummarySelected = computed(() => isAllTypesSkillHitDamageRow(effectiveSecondaryRow.value));
+
+const activeRadiusVisual = computed<OfficialRadiusVisual | null>(() => {
+  if (activeCardKey.value !== 'otherEffects') return null;
+  return effectiveSecondaryRow.value?.radiusVisual || null;
+});
+
 const hitDamageSummaryGroups = computed(() => {
   if (activeCardKey.value !== 'baseDamage') return [];
   const rows = activeSubSection.value?.rows || [];
@@ -929,28 +1003,13 @@ const hitDamageSummaryGroups = computed(() => {
     group.rows.push(row);
     groups.set(label, group);
   }
-  const typeDamageDetails = Array.from(groups.values())
-    .filter(group => group.label !== 'All Types:')
-    .map(group => group.rows.find(row => row.label === 'Skill Hit Damage'))
-    .filter((row): row is DynamicRow => !!row?.details?.length)
-    .flatMap(row => row.details!.map(detail => ({
-      ...detail,
-      label: detail.label || row.columnLabel,
-    })));
-
   return Array.from(groups.values())
     .map(group => ({
       ...group,
       columns: hitDamageSummaryColumns.map(key => ({
         key,
         label: key,
-        row: (() => {
-          const row = group.rows.find(candidate => candidate.label === key);
-          if (group.label === 'All Types:' && key === 'Skill Hit Damage' && row && typeDamageDetails.length > 0) {
-            return { ...row, details: typeDamageDetails };
-          }
-          return row;
-        })(),
+        row: group.rows.find(candidate => candidate.label === key),
       })),
     }))
     .filter(group => group.columns.some(column => column.row));
@@ -1165,7 +1224,7 @@ function onRowMouseLeave() {
 function onRowClick(row: DynamicRow | null | undefined, e: MouseEvent) {
   e.stopPropagation();
   if (!row) return;
-  if (!row.details?.length) return;
+  if (!row.details?.length && !isAllTypesSkillHitDamageRow(row) && !row.radiusVisual) return;
 
   // 🛡️ 若点击行固定 2 级浮窗，同时锁定 1 级浮窗，防止光标移开后意外关闭
   if (hoveredCardKey.value && !pinnedCardKey.value) {
@@ -1320,9 +1379,6 @@ const dpsData = computed(() => {
     critMultiBase: pipe?.critMultiBase ?? 0,
     critMultiInc: pipe?.critMultiInc ?? 0,
     critMultiMore: pipe?.critMultiMore ?? 0,
-    incDamage: pipe?.incDamage ?? 0,
-    moreDamage: pipe?.moreDamage ?? 0,
-    multiplierSources: pipe?.multiplierSources || [],
     critChanceSources: pipe?.critChanceSources || [],
     critMultiSources: pipe?.critMultiSources || [],
     igniteDPS: pipe?.igniteDPS ?? stats?.IgniteDPS ?? 0,
@@ -1389,13 +1445,12 @@ const allCardsMap = computed(() => {
     formattedValue: d.avgHit > 0 ? `${formatNumber(d.avgHit)} 均伤` : '-',
   });
 
-  // 6. 支柱 ②：增伤放大乘区
-  map.set('multipliers', {
-    key: 'multipliers',
-    label: '② 增伤放大乘区',
-    subLabel: '伤害提高与更多乘区汇总',
-    formattedValue: (d.incDamage > 0 || d.moreDamage > 0) ? `+${d.incDamage}% / ${d.moreDamage.toFixed(2)}x` : '-',
-    breakdownLines: d.officialBreakdowns?.Multipliers || undefined,
+  // 6. 支柱 ②：官方 Other Effects 原始行
+  map.set('otherEffects', {
+    key: 'otherEffects',
+    subSectionKey: 'Other Effects',
+    label: `② ${translateWebText('Other Effects')}`,
+    formattedValue: '',
   });
 
   // 7. 支柱 ③：暴击期望系统

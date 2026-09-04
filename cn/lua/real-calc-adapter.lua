@@ -769,7 +769,38 @@ local function projectOfficialBreakdowns(actor)
 	return projected
 end
 
-local function projectBreakdown(build, fastMode)
+local function projectOfficialRadiusVisual(runtime, actor, breakdownKey, label, displayValue)
+	if type(breakdownKey) ~= "string" or not breakdownKey:match("Radius$") then return nil end
+	local breakdown = breakdownFor(actor, breakdownKey)
+	local radius = type(breakdown) == "table" and breakdown.radius or nil
+	if type(radius) ~= "number" then return nil end
+	local main = type(runtime) == "table" and runtime.main or nil
+	if type(main) ~= "table" or type(main.RenderCircle) ~= "function" or type(DrawImage) ~= "function" then return nil end
+
+	-- CalcBreakdownControl renders the native RADIUS section at 1920/4 by
+	-- 1080/4. Reuse its already-loaded RenderCircle implementation and capture
+	-- its draw calls so the web layer only replays upstream presentation pixels.
+	local nativeDrawImage = DrawImage
+	local scanlines = {}
+	DrawImage = function(imageHandle, x, y, width, height)
+		if imageHandle == nil and height == 1 then
+			scanlines[#scanlines + 1] = { x = x, y = y, width = width }
+		end
+	end
+	local rendered = pcall(main.RenderCircle, main, 0, 0, 480, 270, 0, 0, radius)
+	DrawImage = nativeDrawImage
+	if not rendered then return nil end
+
+	return {
+		key = breakdownKey,
+		label = label,
+		radius = radius,
+		displayValue = displayValue,
+		scanlines = scanlines,
+	}
+end
+
+local function projectBreakdown(build, fastMode, runtime)
 	local calcsTab = type(build.calcsTab) == "table" and build.calcsTab or nil
 	local env = calcsTab and type(calcsTab.calcsEnv) == "table" and calcsTab.calcsEnv or nil
 	local input = calcsTab and type(calcsTab.input) == "table" and calcsTab.input or {}
@@ -805,6 +836,7 @@ local function projectBreakdown(build, fastMode)
 									if type(columnData) == "table" and checkCalculationFlag(calcsTab, columnData) then
 									local valText = formatDisplayValue(columnData, actor)
 									local detailSections = {}
+									local rowRadiusVisual = nil
 
 									local detailList = {}
 									if type(columnData.breakdown) == "string" or columnData.modName or columnData.modType then
@@ -814,6 +846,8 @@ local function projectBreakdown(build, fastMode)
 
 									for detailIndex, sectionData in ipairs(detailList) do
 										if type(sectionData) == "table" and checkCalculationFlag(calcsTab, sectionData) then
+											local radiusVisual = projectOfficialRadiusVisual(runtime, actor, sectionData.breakdown, rowLabel, valText)
+											if radiusVisual then rowRadiusVisual = radiusVisual end
 											local breakdownLines = {}
 											local content = {}
 											if type(sectionData.breakdown) == "string" then
@@ -853,14 +887,15 @@ local function projectBreakdown(build, fastMode)
 									end
 
 									if valText ~= "" or #detailSections > 0 then
-										subRows[#subRows + 1] = {
-											cellId = table.concat({ sectionIndex, subIndex, rowIndex, columnIndex }, ":"),
-											label = rowLabel,
-											columnLabel = columnLabels[columnIndex],
-											value = valText,
-											details = #detailSections > 0 and detailSections or nil,
-										}
-									end
+											subRows[#subRows + 1] = {
+												cellId = table.concat({ sectionIndex, subIndex, rowIndex, columnIndex }, ":"),
+												label = rowLabel,
+												columnLabel = columnLabels[columnIndex],
+												value = valText,
+												details = #detailSections > 0 and detailSections or nil,
+												radiusVisual = rowRadiusVisual,
+											}
+										end
 								end
 							end
 							end
@@ -970,7 +1005,7 @@ local function projectBuild(build, requestedName, output, runtime, fastMode, ski
 			configSets = {},
 		},
 		output = outputScalars(output),
-		skillBreakdown = skillBreakdown or projectBreakdown(build, fastMode),
+		skillBreakdown = skillBreakdown or projectBreakdown(build, fastMode, runtime),
 		calcsSkillGroup = tonumber(type(build.calcsTab) == "table" and type(build.calcsTab.input) == "table" and build.calcsTab.input.skill_number) or 1,
 		buffMode = stringValue(type(build.calcsTab) == "table" and type(build.calcsTab.input) == "table" and build.calcsTab.input.misc_buffMode, "EFFECTIVE"),
 		config = projectConfig(build, runtime),
@@ -3379,7 +3414,7 @@ function Adapter:calculate(action, request)
 		action = action,
 		output = outputScalars(build.calcsTab.mainOutput),
 		buffMode = stringValue(type(build.calcsTab.input) == "table" and build.calcsTab.input.misc_buffMode),
-		skillBreakdown = projectBreakdown(build),
+		skillBreakdown = projectBreakdown(build, nil, self.runtime),
 	}
 end
 

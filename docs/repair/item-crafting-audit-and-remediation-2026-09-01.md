@@ -451,6 +451,13 @@ P3 可以进入用户实测：连续点天赋不再按点击数线性触发完�
 
 **效果边界：** P5 仅消除仍存活 Bridge 中、精确同一 canonical 文档的浏览器刷新重复 `loadXML`。它不缩短装备、技能或天赋 mutation 中官方 `BuildOutput` 的时间，不放宽 revision conflict，也不承诺在 Bridge 重启后的首次恢复提速。正式服务重启后需以用户大构筑的首次冷恢复与同会话 F5 各采样一次，才可记录真实收益。
 
+13. **生存与防御官方一级/二级明细覆盖修复（2026-09-04）：** 本项只修复 `DefencesPanel.vue` 对已由官方 `CalcSections.lua` 和 Adapter `dynamicSubSections` 提供的展示键映射；未修改 Lua 计算、Bridge、Store、路由、持久化、构筑 XML、技能伤害页面或原有五系承伤矩阵。
+   - **根因与纠正。** 页面此前把官方 `Other Defences` 错写为不存在的 `Other Effects`，并把 `Other Avoidance` 错写为 `OtherAvoidance`，导致卡片和二级抽屉必然取空。现统一改为精确的官方原始键；展示文本一律通过 `translateWebText` 和唯一词典取得。
+   - **一级覆盖。** 在不重排既有卡片的前提下，补齐 `Damage Avoidance`、`Stun Duration`、`Other Ailment Defences`、`Utility Flasks`、`Life Flasks`、`Mana Flasks`、`Charms`、`Rage`、`Endurance`、`Frenzy`、`Power`，以及后置的 `Damage Taken`、`Damaging Hits`、`Maximum Hit Taken`、`Recoup and Hit Taken Over Time`、`Dots and Build Degens`、`Enemy Degens`。`Effective "Health" Pool` 继续只由既有 `EHP` 的受控查找路径映射，避免同一官方分区重复展示。
+   - **二级契约。** 每张卡片及其行点击仍只复用既有 `openSectionBreakdown` / `openRowBreakdown`，二级抽屉只消费同 revision 的官方 `details`、`breakdownLines`、`breakdownTables`、`sources`；没有前端公式、静态数值、来源兜底或本地数据映射。
+   - **唯一词典。** 新增并锁定到 `translations.json` 的 `terms` 域：`Damage Avoidance`、`Other Defences`、`Other Avoidance`、`Stun Duration`、`Other Ailment Defences`、`Damaging Hits`、`Maximum Hit Taken`、`Effective "Health" Pool`、`Enemy Degens`、`Recoup and Hit Taken Over Time`、`Dots and Build Degens`、`Skill types`、`Notes`、`Source Name`。未建立第二套词典。
+   - **验收。** 新增 `defences-panel-official-mapping.spec.mjs`，锁定所有上述动态键、`Effective "Health" Pool` 的受控路径及两个废弃键不可再被打开。最终 `npm run web:typecheck` 通过；`node --test cn/tests/web/defences-panel-official-mapping.spec.mjs cn/tests/m3/strict-single-dictionary.spec.mjs cn/tests/m3/strict-data-integrity.spec.mjs` 为 `9 pass / 0 fail`；`git diff --check` 通过。
+
 ## 非目标
 
 - 不模拟游戏内随机制作、掉落、货币消耗、概率或交易市场。
