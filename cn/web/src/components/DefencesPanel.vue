@@ -111,7 +111,7 @@
             <ChevronRight class="h-3.5 w-3.5 text-gray-500 group-hover:text-poe-gold transition-colors" />
           </div>
           <div class="mt-2 text-2xl font-extrabold font-mono text-poe-gold">
-            x {{ formatNumber(output.EffectiveMovementSpeedMod || output.MovementSpeedMod, 3) }}
+            x {{ formatNumber(output.EffectiveMovementSpeedMod, 3) }}
           </div>
           <div class="text-[10px] text-gray-400 mt-0.5">综合装备惩罚与动作速度</div>
         </div>
@@ -162,7 +162,7 @@
                 <td class="py-2.5 px-3 text-gray-100 font-bold">{{ formatNumber(output.PhysicalTakenHit) }}</td>
                 <td class="py-2.5 px-3 text-poe-gold font-bold text-sm">{{ formatNumber(output.PhysicalMaximumHitTaken) }}</td>
                 <td class="py-2.5 px-3 text-gray-300">x {{ formatNumber(output.PhysicalBaseTakenHitMult, 2) }}</td>
-                <td class="py-2.5 px-3 text-emerald-300 font-bold">{{ formatNumber(output.PhysicalDotEHP || output.PhysicalTotalHitPool) }}</td>
+                <td class="py-2.5 px-3 text-emerald-300 font-bold">{{ formatNumber(output.PhysicalDotEHP) }}</td>
               </tr>
 
               <!-- 闪电 -->
@@ -240,7 +240,7 @@
               <!-- 汇总行 -->
               <tr class="bg-black/60 font-bold border-t border-white/10">
                 <td class="py-2.5 px-3 font-sans text-white">总计 / 综合</td>
-                <td class="py-2.5 px-3 text-gray-200">{{ formatNumber(output.totalEnemyDamageIn || output.totalEnemyDamage) }}</td>
+                <td class="py-2.5 px-3 text-gray-200">{{ formatNumber(output.totalEnemyDamageIn) }}</td>
                 <td class="py-2.5 px-3 text-gray-200">{{ formatNumber(output.totalTakenDamage) }}</td>
                 <td class="py-2.5 px-3 text-amber-300">-</td>
                 <td class="py-2.5 px-3 text-white">{{ formatNumber(output.totalTakenHit) }}</td>
@@ -276,7 +276,7 @@
               <span class="w-2.5 h-2.5 rounded-full bg-gray-400 group-hover:ring-2 group-hover:ring-gray-300 transition-all"></span>物理减免
             </span>
             <div class="flex items-center gap-1.5">
-              <span class="font-bold text-gray-100">{{ formatNumber(output.PhysicalDamageReduction || 0) }}%</span>
+              <span class="font-bold text-gray-100">{{ formatPercentage(output.PhysicalDamageReduction) }}</span>
               <ChevronRight class="w-3.5 h-3.5 text-gray-500 group-hover:text-gray-300 opacity-60 group-hover:opacity-100 transition-all" />
             </div>
           </div>
@@ -291,8 +291,8 @@
             </span>
             <div class="flex items-center gap-1.5 text-right">
               <div>
-                <span class="font-bold text-red-400 group-hover:text-red-300 transition-colors">{{ formatNumber(output.FireResist) }}%</span>
-                <span class="text-[10px] text-gray-400 ml-1.5 font-mono">({{ formatNumber(output.FireResistOverCap || 0) }}%)</span>
+                <span class="font-bold text-red-400 group-hover:text-red-300 transition-colors">{{ formatPercentage(output.FireResist) }}</span>
+                <span v-if="output.FireResistOverCap !== undefined" class="text-[10px] text-gray-400 ml-1.5 font-mono">({{ formatPercentage(output.FireResistOverCap) }})</span>
               </div>
               <ChevronRight class="w-3.5 h-3.5 text-red-900 group-hover:text-red-400 opacity-60 group-hover:opacity-100 transition-all" />
             </div>
@@ -308,8 +308,8 @@
             </span>
             <div class="flex items-center gap-1.5 text-right">
               <div>
-                <span class="font-bold text-sky-400 group-hover:text-sky-300 transition-colors">{{ formatNumber(output.ColdResist) }}%</span>
-                <span class="text-[10px] text-gray-400 ml-1.5 font-mono">({{ formatNumber(output.ColdResistOverCap || 0) }}%)</span>
+                <span class="font-bold text-sky-400 group-hover:text-sky-300 transition-colors">{{ formatPercentage(output.ColdResist) }}</span>
+                <span v-if="output.ColdResistOverCap !== undefined" class="text-[10px] text-gray-400 ml-1.5 font-mono">({{ formatPercentage(output.ColdResistOverCap) }})</span>
               </div>
               <ChevronRight class="w-3.5 h-3.5 text-sky-900 group-hover:text-sky-400 opacity-60 group-hover:opacity-100 transition-all" />
             </div>
@@ -325,8 +325,8 @@
             </span>
             <div class="flex items-center gap-1.5 text-right">
               <div>
-                <span class="font-bold text-amber-400 group-hover:text-amber-300 transition-colors">{{ formatNumber(output.LightningResist) }}%</span>
-                <span class="text-[10px] text-gray-400 ml-1.5 font-mono">({{ formatNumber(output.LightningResistOverCap || 0) }}%)</span>
+                <span class="font-bold text-amber-400 group-hover:text-amber-300 transition-colors">{{ formatPercentage(output.LightningResist) }}</span>
+                <span v-if="output.LightningResistOverCap !== undefined" class="text-[10px] text-gray-400 ml-1.5 font-mono">({{ formatPercentage(output.LightningResistOverCap) }})</span>
               </div>
               <ChevronRight class="w-3.5 h-3.5 text-amber-900 group-hover:text-amber-400 opacity-60 group-hover:opacity-100 transition-all" />
             </div>
@@ -342,8 +342,8 @@
             </span>
             <div class="flex items-center gap-1.5 text-right">
               <div>
-                <span class="font-bold text-purple-400 group-hover:text-purple-300 transition-colors">{{ formatNumber(output.ChaosResist) }}%</span>
-                <span class="text-[10px] text-gray-400 ml-1.5 font-mono">({{ formatNumber(output.ChaosResistOverCap || 0) }}%)</span>
+                <span class="font-bold text-purple-400 group-hover:text-purple-300 transition-colors">{{ formatPercentage(output.ChaosResist) }}</span>
+                <span v-if="output.ChaosResistOverCap !== undefined" class="text-[10px] text-gray-400 ml-1.5 font-mono">({{ formatPercentage(output.ChaosResistOverCap) }})</span>
               </div>
               <ChevronRight class="w-3.5 h-3.5 text-purple-900 group-hover:text-purple-400 opacity-60 group-hover:opacity-100 transition-all" />
             </div>
@@ -432,7 +432,7 @@
               <span class="text-xs font-bold text-gray-100">能量护盾与结界</span>
             </div>
             <span class="text-xs font-mono font-bold text-sky-300">
-              {{ getSubSectionHeader('Energy Shield') || ('护盾: ' + formatNumber(output.MaximumEnergyShield || output.EnergyShield)) }}
+              {{ getSubSectionHeader('Energy Shield') || ('护盾: ' + formatNumber(output.EnergyShield)) }}
             </span>
           </div>
 
@@ -559,9 +559,9 @@
               <span class="text-xs font-bold text-gray-100">格挡与躲避</span>
             </div>
             <div class="flex items-center gap-2 text-xs font-mono font-bold">
-              <span class="text-sky-400">格挡: {{ formatNumber(output.EffectiveBlockChance || output.BlockChance, 0) }}%</span>
+              <span class="text-sky-400">格挡: {{ formatPercentage(output.EffectiveBlockChance, 0) }}</span>
               <span class="text-gray-600">|</span>
-              <span class="text-emerald-400">躲避: {{ getSubSectionHeader('Dodge') || '0%/0%' }}</span>
+              <span class="text-emerald-400">躲避: {{ getSubSectionHeader('Dodge') || '-' }}</span>
             </div>
           </div>
 
@@ -600,7 +600,7 @@
               <span class="text-xs font-bold text-gray-100">偏斜</span>
             </div>
             <span class="text-xs font-mono font-bold text-purple-400">
-              偏斜: {{ getSubSectionHeader('Deflection') || '0%' }}
+              偏斜: {{ getSubSectionHeader('Deflection') || '-' }}
             </span>
           </div>
 
@@ -660,15 +660,15 @@
             <h3 class="text-xs font-bold text-gray-200">其他效果</h3>
           </div>
           <span class="text-xs font-mono font-bold text-yellow-400">
-            {{ getSubSectionHeader('Other Effects') || (getSectionRows('Other Effects').length ? '共 ' + getSectionRows('Other Effects').length + ' 项' : '基础') }}
+            {{ getSubSectionHeader('Other Effects') || (getSectionRows('Other Effects').length ? '共 ' + getSectionRows('Other Effects').length + ' 项' : '-') }}
           </span>
         </div>
 
         <div class="space-y-1.5 text-xs">
-          <div 
-            v-for="(row, rIdx) in (getSectionRows('Other Effects').length ? getSectionRows('Other Effects') : getSectionRows('Other Defences'))" 
+          <div
+            v-for="(row, rIdx) in getSectionRows('Other Effects')"
             :key="rIdx"
-            @click.stop="openRowBreakdown(getSectionRows('Other Effects').length ? 'Other Effects' : 'Other Defences', row, '其他效果: ' + translateRowLabel(row.label))"
+            @click.stop="openRowBreakdown('Other Effects', row, '其他效果: ' + translateRowLabel(row.label))"
             class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
           >
             <span>{{ translateRowLabel(row.label) }}</span>
@@ -716,7 +716,7 @@
             <h3 class="text-xs font-bold text-gray-200">药剂与充能获取</h3>
           </div>
           <span class="text-xs font-mono font-bold text-emerald-400">
-            {{ getSubSectionHeader('Flasks') || '+0%, 0.00/s' }}
+            {{ getSubSectionHeader('Flasks') || '-' }}
           </span>
         </div>
 
@@ -848,7 +848,7 @@
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-sky-400 flex items-center gap-1.5">
                 <Target class="h-3.5 w-3.5 text-sky-400" />
-                词缀与机制来源明细表 ({{ activeDrawer.sources.length > 0 ? activeDrawer.sources.length : 1 }} 条)
+                词缀与机制来源明细表 ({{ activeDrawer.sources.length }} 条)
               </h4>
               <span class="text-[10px] text-gray-500">1:1 对齐官方客户端明细表结构</span>
             </div>
@@ -874,26 +874,27 @@
                       <!-- 1. 数值 (图 3: 提高 30% / 图 4: +1 基础) -->
                       <td class="py-2.5 px-3 font-bold text-xs">
                         <span :class="getSourceValueClass(src.value)">
-                          {{ formatOfficialSourceValue(src) }}
+                          {{ displayOfficialSourceValue(src.value) }}
                         </span>
                       </td>
 
                       <!-- 2. 作用属性 (Stat: 火焰抗性上限 / 最大元素抗性 等) -->
                       <td class="py-2.5 px-2.5 text-[11px] font-sans text-gray-300">
-                        {{ getModStatLabel(src) }}
+                        <div>{{ displayOfficialSourceStat(src.name) }}</div>
+                        <div v-if="src.modType" class="mt-0.5 text-[10px] text-gray-500">{{ displayOfficialSourceModType(src.modType) }}</div>
                       </td>
 
                       <!-- 3. 来源 (图 3: 天赋树 / 图 4: 物品) -->
                       <td class="py-2.5 px-2.5 text-[11px] font-sans">
                         <span :class="getSourceBadgeClass(src.sourceType)">
-                          {{ getSourceTypeLabel(src.sourceType) }}
+                          {{ displayOfficialSourceType(src.sourceType) }}
                         </span>
                       </td>
 
                       <!-- 4. 来源名称 (图 3: 守护者的核心 / 图 4: 斯瓦林) -->
                       <td class="py-2.5 px-3 font-sans space-y-1">
                         <div class="font-bold text-gray-200 text-xs">
-                          {{ formatSourceName(src) }}
+                          {{ displayOfficialSourceName(src) }}
                         </div>
                         <div v-if="src.sourceRef && src.sourceRef.rawLines" class="text-[10px] text-gray-400 font-mono space-y-0.5">
                           <div 
@@ -911,38 +912,9 @@
               </div>
             </div>
 
-            <!-- 2. 无外部词缀加成时的官方底层基准行 -->
+            <!-- 2. PoB did not return a source row for this official breakdown -->
             <div v-else class="rounded-xl border border-white/10 bg-black/40 overflow-hidden">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs border-collapse font-sans">
-                  <thead>
-                    <tr class="border-b border-white/10 text-[11px] text-gray-400 bg-black/60">
-                      <th class="py-2 px-3 font-semibold w-24">数值</th>
-                      <th class="py-2 px-2.5 font-semibold w-28">作用属性</th>
-                      <th class="py-2 px-2.5 font-semibold w-20">来源</th>
-                      <th class="py-2 px-3 font-semibold">来源名称</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-white/5 font-mono">
-                    <tr class="hover:bg-white/5 transition-colors">
-                      <td class="py-2.5 px-3 font-bold text-xs text-poe-gold">
-                        {{ activeDrawer.value || '基准' }}
-                      </td>
-                      <td class="py-2.5 px-2.5 text-gray-300">
-                        {{ activeDrawer.title.replace('其他效果: ', '').replace('拆解', '') }}
-                      </td>
-                      <td class="py-2.5 px-2.5">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-poe-gold/10 text-poe-gold border border-poe-gold/30">
-                          基础机制
-                        </span>
-                      </td>
-                      <td class="py-2.5 px-3 text-gray-400 font-sans">
-                        游戏底层默认基准设定 (未受额外词缀修饰)
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <div class="px-3 py-2.5 text-xs text-gray-500 font-mono">-</div>
             </div>
           </div>
 
@@ -965,7 +937,8 @@ import {
   translateCalcFormulaLine, 
   translateWebItemName, 
   translateWebItemLine, 
-  translateWebText 
+  translateWebText,
+  translateSourceType
 } from '../utils/webTranslation';
 
 const store = useBuildStore();
@@ -1013,17 +986,17 @@ function getSubSectionHeader(sectionKey: string): string | null {
     return sec.headerValue;
   }
   if (sectionKey === 'Block') {
-    const val = output.value.EffectiveBlockChance || output.value.BlockChance;
+    const val = output.value.EffectiveBlockChance;
     return val !== undefined ? `${formatNumber(val, 0)}%` : null;
   }
   if (sectionKey === 'Dodge') {
-    const atk = output.value.AttackDodgeChance || 0;
-    const spl = output.value.SpellDodgeChance || 0;
-    return `${atk}%/${spl}%`;
+    const atk = output.value.AttackDodgeChance;
+    const spl = output.value.SpellDodgeChance;
+    return atk !== undefined && spl !== undefined ? `${formatNumber(atk, 0)}%/${formatNumber(spl, 0)}%` : null;
   }
   if (sectionKey === 'Deflection') {
-    const def = output.value.DeflectChance || 0;
-    return `${def}%`;
+    const def = output.value.DeflectChance;
+    return def !== undefined ? `${formatNumber(def, 0)}%` : null;
   }
   return null;
 }
@@ -1188,82 +1161,40 @@ function translateText(text: string): string {
   return translateWebText(text) || text;
 }
 
-function formatSourceName(src: any): string {
-  const raw = src.sourceName || src.source || '';
-  if (!raw) return '机制基础';
-  const cleanName = raw
-    .replace(/^Item:\d+:/, '')
-    .replace(/^Tree:\d+:/, '')
-    .replace(/^Quest:\s*/, '')
-    .replace(/^Skill:\d+:/, '')
-    .trim();
-  return translateWebItemName(cleanName) || translateWebText(cleanName) || cleanName;
+function displayOfficialSourceName(src: any): string {
+  const raw = typeof src?.sourceName === 'string' && src.sourceName ? src.sourceName : src?.source;
+  return typeof raw === 'string' && raw ? (translateCalcFormulaLine(raw) || raw) : '-';
 }
 
-function getSourceTypeLabel(type: string | undefined): string {
-  if (!type) return '机制';
-  if (type === 'Item') return '物品';
-  if (type === 'Tree') return '天赋树';
-  if (type === 'Jewel') return '珠宝';
-  if (type === 'Quest') return '任务';
-  if (type === 'Skill' || type === 'Gem') return '技能';
-  return translateWebText(type) || type;
+function displayOfficialSourceType(type: unknown): string {
+  const raw = typeof type === 'string' ? type : '';
+  return raw ? (translateSourceType(raw) || raw) : '-';
 }
 
-function getModStatLabel(src: any): string {
-  if (src.name) {
-    const translated = translateWebText(src.name);
-    if (translated) return translated;
-  }
-  const type = src.modType;
-  return type === 'BASE' ? '基础' : type === 'INC' ? '提高' : type === 'MORE' ? '总增' : type || '防御';
+function displayOfficialSourceStat(name: unknown): string {
+  const raw = typeof name === 'string' ? name : '';
+  return raw ? (translateCalcFormulaLine(raw) || raw) : '-';
 }
 
-function formatOfficialSourceValue(src: any): string {
-  const val = src.value;
-  if (val === undefined || val === null || val === '') return '-';
-  const num = Number(val);
-  const modType = src.modType;
-  if (!isNaN(num)) {
-    if (modType === 'INC') {
-      return num >= 0 ? `提高 ${num}%` : `降低 ${Math.abs(num)}%`;
-    }
-    if (modType === 'MORE') {
-      return num >= 0 ? `${num}% 总增` : `${Math.abs(num)}% 总降`;
-    }
-    if (modType === 'BASE') {
-      const sign = num > 0 ? '+' : '';
-      return `${sign}${num} 基础`;
-    }
-  }
-  return String(val);
+function displayOfficialSourceModType(type: unknown): string {
+  const raw = typeof type === 'string' ? type : '';
+  return raw ? (translateWebText(raw) || raw) : '-';
 }
 
-function getSourceValueClass(val: any): string {
-  const num = Number(val);
-  if (!isNaN(num)) {
-    if (num > 0) return 'text-emerald-400 font-bold';
-    if (num < 0) return 'text-red-400 font-bold';
-  }
+function displayOfficialSourceValue(value: unknown): string {
+  return value === undefined || value === null || value === '' ? '-' : String(value);
+}
+
+function getSourceValueClass(val: unknown): string {
+  const raw = displayOfficialSourceValue(val);
+  if (raw.startsWith('-')) return 'text-red-400 font-bold';
+  if (raw !== '0' && raw !== '-') return 'text-emerald-400 font-bold';
   return 'text-gray-200';
 }
 
 function getFilteredSourceLines(rawLines: string[] | undefined): string[] {
   if (!Array.isArray(rawLines)) return [];
-  return rawLines
-    .filter(l => 
-      !l.startsWith('Rarity:') &&
-      !l.startsWith('Unique ID:') && 
-      !l.startsWith('Item Level:') && 
-      !l.startsWith('Quality:') && 
-      !l.startsWith('Sockets:') &&
-      !l.startsWith('LevelReq:') &&
-      !l.startsWith('Implicits:') &&
-      !l.startsWith('Armour:') &&
-      !l.startsWith('Ward:') &&
-      !l.startsWith('Corrupted')
-    )
-    .slice(0, 3);
+  return rawLines;
 }
 
 function getSourceBadgeClass(type: string | undefined): string {
@@ -1282,6 +1213,11 @@ function formatNumber(num: number | string | undefined, precision: number = 0): 
     return val.toLocaleString('zh-CN', { minimumFractionDigits: precision, maximumFractionDigits: precision });
   }
   return Math.round(val).toLocaleString('zh-CN');
+}
+
+function formatPercentage(num: number | string | undefined, precision: number = 0): string {
+  const formatted = formatNumber(num, precision);
+  return formatted === '-' ? formatted : `${formatted}%`;
 }
 </script>
 

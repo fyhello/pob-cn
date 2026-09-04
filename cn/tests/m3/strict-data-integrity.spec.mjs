@@ -34,6 +34,16 @@ test('Strict Data Integrity: calculation adapter compatibility projection is a p
   assert.match(projection, /manaCostPerSecond\s*=\s*out\.ManaCostPerSecond/, 'mana cost per second must remain a direct official output field');
 });
 
+test('Strict Data Integrity: source projection does not invent a modifier type', async () => {
+  const adapterPath = join(repoRoot, 'cn', 'lua', 'real-calc-adapter.lua');
+  const content = await readFile(adapterPath, 'utf8');
+  const start = content.indexOf('local function projectModSources');
+  const end = content.indexOf('local function projectDpsPipeline', start);
+  assert.ok(start >= 0 && end > start, 'source projection boundaries must exist');
+  const projection = content.slice(start, end);
+  assert.doesNotMatch(projection, /stringValue\(mod\.type,\s*"BASE"\)/, 'a missing official modifier type must remain absent');
+});
+
 test('Strict Data Integrity: presentation never substitutes a different stat or an invented non-zero value', async () => {
   const [calcs, defences, sideStats, store] = await Promise.all([
     readFile(join(repoRoot, 'cn', 'web', 'src', 'components', 'CalcsPanel.vue'), 'utf8'),
@@ -43,6 +53,15 @@ test('Strict Data Integrity: presentation never substitutes a different stat or 
   ]);
 
   assert.doesNotMatch(defences, /\|\|\s*(?:965|386|4246|2124\.93|1)(?!\d|\.)/, 'defence values must not use non-zero numeric fallbacks');
+  assert.doesNotMatch(defences, /EffectiveMovementSpeedMod\s*\|\|\s*output\.MovementSpeedMod/, 'effective movement speed must never fall back to base movement speed');
+  assert.doesNotMatch(defences, /PhysicalDotEHP\s*\|\|\s*output\.PhysicalTotalHitPool/, 'dot EHP must never fall back to a hit pool');
+  assert.doesNotMatch(defences, /EffectiveBlockChance\s*\|\|\s*output\.BlockChance/, 'effective block must never fall back to base block');
+  assert.doesNotMatch(defences, /totalEnemyDamageIn\s*\|\|\s*output\.totalEnemyDamage/, 'incoming damage must never fall back to a different total');
+  assert.doesNotMatch(defences, /(?:PhysicalDamageReduction|(?:Fire|Cold|Lightning|Chaos)ResistOverCap|AttackDodgeChance|SpellDodgeChance|DeflectChance)\s*\|\|\s*0/, 'absent defence fields must not be rendered as zero');
+  assert.doesNotMatch(defences, /sources\.length\s*:\s*1|游戏底层默认基准设定|机制基础/, 'defence sources must only render rows returned by PoB Tabulate');
+  assert.doesNotMatch(defences, /function\s+(?:getSourceTypeLabel|getModStatLabel|formatOfficialSourceValue)\s*\(/, 'defence sources must not contain a private translator or value interpreter');
+  assert.doesNotMatch(defences, /\.slice\(0,\s*3\)/, 'defence source lines must not be truncated');
+  assert.match(defences, /translateSourceType/, 'defence source types must use the shared dictionary translator');
   assert.doesNotMatch(defences, /return\s+(?:80|30);/, 'range display must not invent a radius when the official value is absent');
   assert.doesNotMatch(sideStats, /\|\|\s*100\b/, 'side statistics must not use a 100% fallback');
   assert.doesNotMatch(calcs, /hitDPS:\s*pipe\?\.hitDPS\s*\?\?\s*stats\?\.HitDPS\s*\?\?\s*stats\?\.TotalDPS/, 'hit DPS must not fall back to total DPS');

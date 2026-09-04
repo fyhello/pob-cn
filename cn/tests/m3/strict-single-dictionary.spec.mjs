@@ -30,6 +30,9 @@ test('Strict Single Dictionary Gate: Only one unified translations.json allowed 
   assert.equal(trans.terms['Jewel Socket'], '珠宝插槽', 'Jewel Socket must translate to 珠宝插槽');
   assert.equal(trans.terms['Heartbreaking'], '心悸', 'Heartbreaking must translate to 心悸');
   assert.equal(trans.terms['Critical Strike Multiplier'], '暴击伤害倍率', 'Critical Strike Multiplier must translate to 暴击伤害倍率');
+  assert.equal(trans.terms.BASE, '基础', 'BASE must translate through the unified dictionary');
+  assert.equal(trans.terms.INC, '提高', 'INC must translate through the unified dictionary');
+  assert.equal(trans.terms.MORE, '总增', 'MORE must translate through the unified dictionary');
 
   // 槽位
   const expectedSlots = {

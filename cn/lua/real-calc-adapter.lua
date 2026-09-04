@@ -680,7 +680,7 @@ local function projectModSources(actor, sectionData, build)
 
 			table.insert(sources, {
 				value = valueNum or valStr,
-				modType = stripColourCodes(stringValue(mod.type, "BASE")),
+				modType = stripColourCodes(stringValue(mod.type)),
 				name = stripColourCodes(stringValue(mod.name, "")),
 				source = srcDesc,
 				sourceName = srcName,
