@@ -44,7 +44,7 @@ test('fails closed when HeadlessWrapper does not expose its documented APIs', as
 
 test('calls only the HeadlessWrapper build APIs and returns calculated mainOutput scalars', async () => {
   const result = await runLua(`
-    local calls = { newBuild = 0, loadBuildFromXML = 0, buildOutput = 0, tabulate = 0 }
+    local calls = { newBuild = 0, loadBuildFromXML = 0, buildOutput = 0, tabulate = 0, buildRaw = 0, validSlot = 0, tooltip = 0 }
     local modDB = {
       Sum = function() return 0 end,
       More = function() return 1 end,
@@ -66,6 +66,11 @@ test('calls only the HeadlessWrapper build APIs and returns calculated mainOutpu
       },
       treeTab = { specList = { {} } },
       itemsTab = {
+        AddItemTooltip = function(_, tooltip)
+          calls.tooltip = calls.tooltip + 1
+          tooltip:AddLine(14, "Golden Wand")
+          tooltip:AddLine(14, "Wand")
+        end,
         itemSetOrderList = { 1 },
         items = {
           [1] = {
@@ -73,11 +78,19 @@ test('calls only the HeadlessWrapper build APIs and returns calculated mainOutpu
             title = "Golden Wand",
             base = { name = "Wand", type = "Wand" },
             rarity = "RARE",
-            raw = "Rarity: Rare\\nGolden Wand\\nWand",
+            raw = "",
+            BuildRaw = function()
+              calls.buildRaw = calls.buildRaw + 1
+              return "Rarity: Rare\\nGolden Wand\\nWand"
+            end,
           },
         },
         activeItemSet = { ["Weapon 1"] = { selItemId = 1 } },
         slots = { ["Weapon 1"] = {} },
+        IsItemValidForSlot = function()
+          calls.validSlot = calls.validSlot + 1
+          return true
+        end,
       },
       skillsTab = {
         skillSetOrderList = { 1 },
@@ -133,6 +146,9 @@ test('calls only the HeadlessWrapper build APIs and returns calculated mainOutpu
     assert(loaded.data.characterLevel == 92)
     assert(loaded.data.allocNodes[1] == 123)
     assert(loaded.data.itemLibrary[1].name == "Golden Wand")
+    assert(calls.tooltip == 0, "bulk projection must not construct any official tooltip")
+    assert(loaded.data.itemLibrary[1].tooltip == nil)
+    assert(#loaded.data.itemLibrary[1].displayLines > 0)
     assert(loaded.data.equippedItems["Weapon 1"].id == 1)
     assert(loaded.data.socketGroups[1].gems[1].name == "Spark")
     assert(calls.newBuild == 1)
@@ -140,9 +156,25 @@ test('calls only the HeadlessWrapper build APIs and returns calculated mainOutpu
     assert(calls.buildOutput == 2)
     -- Compatibility projection must not reconstruct damage or query sources.
     assert(calls.tabulate == 0)
+
+    local prepared = adapter:execute({ action = "loadXMLForMutation", xml = "<PathOfBuilding2 />", name = "golden" })
+    assert(prepared.success == true)
+    assert(prepared.data == nil)
+    assert(calls.loadBuildFromXML == 2)
+    assert(calls.buildOutput == 2)
+    assert(calls.tabulate == 0)
+
+    local committed = adapter:execute({ action = "commitBuildChanges", changes = { level = 93 } })
+    assert(committed.success == true)
+    assert(runtime.build.characterLevel == 93)
+    assert(calls.buildOutput == 3)
+    assert(calls.buildRaw == 2)
+    assert(calls.validSlot == 2)
+    assert(committed.data.build.itemLibrary[1].raw == loaded.data.itemLibrary[1].raw)
+    assert(committed.data.build.itemLibrary[1].validTargetSlots.equipment[1] == loaded.data.itemLibrary[1].validTargetSlots.equipment[1])
     return table.concat({ calls.newBuild, calls.loadBuildFromXML, calls.buildOutput, calls.tabulate }, ":")
   `);
-  assert.equal(result, '1:1:2:0');
+  assert.equal(result, '1:2:3:0');
 });
 
 test('projects DPS compatibility fields only from official actor output', async () => {
@@ -546,6 +578,42 @@ test('applies non-item calculation inputs without mutating official equipment or
   assert.equal(result, '147');
 });
 
+test('applies passive clicks through the official single-node APIs without rebuilding the full tree', async () => {
+  const result = await runLua(`
+    local calls = { alloc = 0, dealloc = 0, import = 0, updateSockets = 0 }
+    local first = { id = 1, alloc = true }
+    local second = { id = 2, alloc = false }
+    local build = {
+      spec = { nodes = { [1] = first, [2] = second }, allocNodes = { [1] = first } },
+      itemsTab = { UpdateSockets = function() calls.updateSockets = calls.updateSockets + 1 end },
+    }
+    function build.spec:AllocNode(node)
+      calls.alloc = calls.alloc + 1
+      node.alloc = true
+      self.allocNodes[node.id] = node
+    end
+    function build.spec:DeallocNode(node)
+      calls.dealloc = calls.dealloc + 1
+      node.alloc = false
+      self.allocNodes[node.id] = nil
+    end
+    function build.spec:ImportFromNodeList() calls.import = calls.import + 1 end
+    local adapter = Adapter.new({ build = build, newBuild = function() end, loadBuildFromXML = function() end })
+    local allocated = adapter:applyCalculationInputs(build, { passiveNode = { nodeId = 2, allocate = true } })
+    assert(allocated == true)
+    assert(second.alloc == true and build.spec.allocNodes[2] == second)
+    local deallocated = adapter:applyCalculationInputs(build, { passiveNode = { nodeId = 2, allocate = false } })
+    assert(deallocated == true)
+    assert(second.alloc == false and build.spec.allocNodes[2] == nil)
+    assert(calls.alloc == 1)
+    assert(calls.dealloc == 1)
+    assert(calls.import == 0)
+    assert(calls.updateSockets == 2)
+    return table.concat({ calls.alloc, calls.dealloc, calls.import, calls.updateSockets }, ':')
+  `);
+  assert.equal(result, '1:1:0:2');
+});
+
 test('ignores legacy local item payloads so they cannot affect official calculation output', async () => {
   const result = await runLua(`
     local buildCalls = 0
@@ -703,6 +771,70 @@ test('projects an official essence id so an existing crafted item can be edited 
   assert.equal(result, 'EssenceOfLife:0.25');
 });
 
+test('defers dynamic item comparison tooltips until a single official item is explicitly requested', async () => {
+  const result = await runLua(`
+    local calls = { addItemTooltip = 0, buildOutput = 0, saveDB = 0 }
+    local item = {
+      id = 7,
+      title = "Official Amulet",
+      baseName = "Amulet",
+      base = { name = "Amulet", type = "Amulet" },
+      rarity = "RARE",
+      raw = "Rarity: RARE\\nOfficial Amulet\\nAmulet",
+    }
+    local build = {
+      savers = {},
+      itemsTab = {
+        items = { [7] = item },
+        AddItemTooltip = function(_, tooltip, upstreamItem)
+          calls.addItemTooltip = calls.addItemTooltip + 1
+          assert(upstreamItem.id == 7)
+          tooltip:AddLine(14, "Official Amulet")
+          tooltip:AddLine(14, "Amulet")
+          tooltip:AddLine(14, "Equipping this item in Amulet will give you:")
+        end,
+      },
+      calcsTab = {
+        BuildOutput = function()
+          calls.buildOutput = calls.buildOutput + 1
+        end,
+      },
+    }
+    function build:SaveDB()
+      calls.saveDB = calls.saveDB + 1
+      return "<PathOfBuilding2 />"
+    end
+    local adapter = Adapter.new({ build = build, newBuild = function() end })
+
+    local projected = adapter:execute({ action = "projectOfficialItemTooltip", itemId = 7 })
+    assert(projected.success == true)
+    assert(projected.data.itemId == 7)
+    assert(projected.data.tooltip.header.title == "Official Amulet")
+    assert(projected.data.tooltip.header.base == "Amulet")
+    assert(projected.data.tooltip.bodyLines[1] == "Equipping this item in Amulet will give you:")
+    assert(calls.addItemTooltip == 1)
+    assert(calls.buildOutput == 0)
+    assert(calls.saveDB == 0)
+
+    local craftingProjection = assert(adapter:projectOfficialItem(item))
+    assert(craftingProjection.tooltip.header.title == "Official Amulet")
+    assert(calls.addItemTooltip == 2)
+
+    local missing = adapter:execute({ action = "projectOfficialItemTooltip", itemId = 8 })
+    assert(missing.success == false)
+    assert(missing.error.code == "POB_ITEM_TOOLTIP_NOT_FOUND")
+    local invalid = adapter:execute({ action = "projectOfficialItemTooltip", itemId = 0 })
+    assert(invalid.success == false)
+    assert(invalid.error.code == "POB_ITEM_TOOLTIP_ITEM_ID_INVALID")
+    return tostring(calls.addItemTooltip) .. ":" .. tostring(calls.buildOutput) .. ":" .. tostring(calls.saveDB)
+  `);
+  assert.equal(result, '2:0:0');
+
+  const adapter = await readFile(adapterPath, 'utf8');
+  assert.match(adapter, /projectItem\(item, nil, build\.data, itemsTab, false\)/);
+  assert.match(adapter, /function Adapter:projectOfficialItemTooltip\(itemId\)/);
+});
+
 test('fails closed when the official loader leaves a build awaiting conversion', async () => {
   const result = await runLua(`
     local runtime = {
@@ -848,9 +980,25 @@ test('commits official buffMode changes and reflects in build projection', async
     -- The dynamic row calls Tabulate once with the exact official context.
     -- Retrying with an empty context would invent a different source set.
     assert(calls.tabulate == 1)
+    local scoped = adapter:commitBuildChanges({
+      changes = { buffMode = "COMBAT" },
+      projectionScope = "tree",
+      canonicalXML = "<PathOfBuilding2 />",
+    })
+    assert(scoped.success == true)
+    assert(scoped.data.build.projectionScope == "tree")
+    assert(scoped.data.build.skillBreakdown == nil)
+    assert(scoped.data.build.config == nil)
+    assert(calls.tabulate == 1)
+    local skills = adapter:execute({ action = "projectCurrentBuild", projectionScope = "skills" })
+    assert(skills.success == true)
+    assert(skills.data.build.skillBreakdown.dpsPipeline.totalDPS == 1000)
+    assert(skills.data.build.skillBreakdown.dynamicSubSections["1"].rows[1].value == "1000")
+    assert(skills.data.build.config == nil)
+    assert(calls.tabulate == 2)
     return result.data.build.buffMode .. ":" .. tostring(calls.tabulate)
   `);
-  assert.equal(result, 'COMBAT:1');
+  assert.equal(result, 'COMBAT:2');
 });
 
 test('projects each official radius visual through the native renderer without combining rows', async () => {

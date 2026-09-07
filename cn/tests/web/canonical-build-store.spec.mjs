@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const ts = require('typescript');
 const storePath = new URL('../../web/src/stores/buildStore.ts', import.meta.url);
 
-async function loadStore(fetch) {
+async function loadStore(fetch, { useRealPinia = false } = {}) {
   const source = await readFile(storePath, 'utf8');
   const javascript = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -16,9 +16,10 @@ async function loadStore(fetch) {
   const module = { exports: {} };
   const storage = new Map();
   const identity = value => value;
+  const pinia = useRealPinia ? require('pinia') : null;
   const localRequire = id => {
-    if (id === 'pinia') return { defineStore: (_id, options) => () => {
-      const store = options.state();
+    if (id === 'pinia') return pinia ?? { defineStore: (storeId, options) => () => {
+      const store = { ...options.state(), $id: storeId };
       for (const [name, action] of Object.entries(options.actions)) store[name] = action.bind(store);
       return store;
     } };
@@ -38,6 +39,7 @@ async function loadStore(fetch) {
     exports: module.exports, module, require: localRequire, fetch, console, Set, Map, Object, Array, Number, String, Error, Math,
     localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
   });
+  if (pinia) pinia.setActivePinia(pinia.createPinia());
   const store = module.exports.useBuildStore();
   store.__testStorage = storage;
   return store;
@@ -68,11 +70,11 @@ test('a level edit commits a new canonical PoB document instead of retaining a l
   assert.equal(store.characterLevel, 91);
   assert.equal(store.hasUnsavedLocalEdits, false);
   assert.deepEqual(calls.at(-1), { url: '/api/build/commit', payload: {
-    code: '<PathOfBuilding2><Build /></PathOfBuilding2>', expectedRevision: 1, changes: { level: 91 },
+    code: '<PathOfBuilding2><Build /></PathOfBuilding2>', expectedRevision: 1, projectionScope: 'tree', changes: { level: 91 },
   } });
 });
 
-test('a newer official projection clears detail that the current revision did not return', async () => {
+test('a scoped official projection preserves stale detail until the current version is requested', async () => {
   const response = body => ({ ok: true, json: async () => body });
   const store = await loadStore(async (url) => {
     if (url === '/api/import') return response({ success: true, data: {
@@ -93,7 +95,109 @@ test('a newer official projection clears detail that the current revision did no
   assert.equal(store.skillBreakdown.dpsPipeline.totalDPS, 100);
   const committed = await store.setLevel(91);
   assert.equal(committed.success, true);
-  assert.equal(store.skillBreakdown, null);
+  assert.equal(store.skillBreakdown.dpsPipeline.totalDPS, 100);
+  assert.equal(store.projectionVersions.calcs, 1);
+  assert.equal(store.canonicalBuild.version, 2);
+});
+
+for (const tab of ['CALCS', 'SKILLS']) test(`打开 ${tab} 前补取当前版本的官方计算明细`, async () => {
+  const calls = [];
+  const response = body => ({ ok: true, json: async () => body });
+  const store = await loadStore(async (url, request) => {
+    const payload = JSON.parse(request.body);
+    calls.push({ url, payload });
+    if (url === '/api/import') return response({ success: true, data: {
+      buildName: 'fixture', output: { Life: 100 }, skillBreakdown: { dpsPipeline: { totalDPS: 100 } },
+    } });
+    if (url === '/api/build/commit') return response({ success: true, data: {
+      sourceRevision: 1, revision: 2, code: 'level-91-code',
+      build: { buildName: 'fixture', characterLevel: 91, output: { Life: 101 } },
+    } });
+    if (url === '/api/build/projection') return response({ success: true, data: {
+      sourceRevision: 2, revision: 2,
+      build: { output: { Life: 101 }, skillBreakdown: { dpsPipeline: { totalDPS: 200 } } },
+    } });
+    throw new Error(`Unexpected URL: ${url}`);
+  });
+
+  await store.importBuildFromCode('initial-code');
+  await store.setLevel(91);
+  assert.equal(store.activeTab, 'TREE');
+  assert.equal(store.projectionVersions.calcs, 1);
+
+  const activated = await store.activateTab(tab);
+  assert.equal(activated, true);
+  assert.equal(store.activeTab, tab);
+  assert.equal(store.skillBreakdown.dpsPipeline.totalDPS, 200);
+  assert.equal(store.projectionVersions.calcs, 2);
+  assert.deepEqual(calls.at(-1), {
+    url: '/api/build/projection',
+    payload: { code: 'level-91-code', expectedRevision: 2, projectionScope: 'calcs' },
+  });
+});
+
+test('技能页修改同步更新官方数值和内嵌明细，无需重复请求', async () => {
+  const calls = [];
+  const response = body => ({ ok: true, json: async () => body });
+  const store = await loadStore(async (url, request) => {
+    const payload = JSON.parse(request.body);
+    calls.push({ url, payload });
+    assert.equal(url, '/api/skills/commit');
+    return response({ success: true, data: {
+      sourceRevision: 1, revision: 2, code: 'skill-code',
+      build: { output: { TotalDPS: 200 }, skillBreakdown: { dpsPipeline: { totalDPS: 200 } } },
+    } });
+  });
+  store.applyOfficialProjection({
+    output: { TotalDPS: 100 }, skillBreakdown: { dpsPipeline: { totalDPS: 100 } },
+    loadouts: { active: { skillSetId: 1 } },
+  }, { code: 'initial-code', version: 1 });
+  assert.equal(await store.activateTab('SKILLS'), true);
+  assert.equal((await store.commitOfficialSkillChange('setGem', { groupIndex: 1, gemIndex: 1, patch: { level: 11 } })).success, true);
+  assert.equal(store.stats.TotalDPS, 200);
+  assert.equal(store.skillBreakdown.dpsPipeline.totalDPS, 200);
+  assert.equal(store.projectionVersions.calcs, 2);
+  assert.equal(await store.activateTab('SKILLS'), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].payload.projectionScope, 'skills');
+});
+
+for (const failure of ['missing', 'stale', 'network']) test(`页面明细补取失败保持原页面与数据：${failure}`, async () => {
+  const store = await loadStore(async () => {
+    if (failure === 'network') throw new Error('test projection unavailable');
+    return { ok: true, json: async () => ({ success: true, data: {
+      sourceRevision: failure === 'stale' ? 1 : 2, revision: failure === 'stale' ? 1 : 2,
+      build: { output: { TotalDPS: 999 } },
+    } }) };
+  });
+  store.applyOfficialProjection({ output: { TotalDPS: 100 }, skillBreakdown: { dpsPipeline: { totalDPS: 100 } } }, { code: 'old-code', version: 1 });
+  store.canonicalBuild = { code: 'current-code', version: 2 };
+  assert.equal(await store.activateTab('SKILLS'), false);
+  assert.equal(store.activeTab, 'TREE');
+  assert.equal(store.stats.TotalDPS, 100);
+  assert.equal(store.skillBreakdown.dpsPipeline.totalDPS, 100);
+  assert.equal(store.canonicalBuild.version, 2);
+  assert.ok(store.lastCalculationError);
+  assert.equal(store.isCalculating, false);
+});
+
+test('已经在技能页时也会刷新过期明细，迟到响应不能覆盖新文档', async () => {
+  let respond;
+  const store = await loadStore(() => new Promise(resolve => { respond = resolve; }));
+  store.applyOfficialProjection({ output: { TotalDPS: 100 } }, { code: 'old-code', version: 1 });
+  store.activeTab = 'SKILLS';
+  const pending = store.activateTab('SKILLS');
+  assert.equal(typeof respond, 'function');
+  store.applyOfficialProjection({ output: { TotalDPS: 200 }, skillBreakdown: { dpsPipeline: { totalDPS: 200 } } }, { code: 'new-code', version: 1 });
+  respond({ ok: true, json: async () => ({ success: true, data: {
+    sourceRevision: 1, revision: 1,
+    build: { output: { TotalDPS: 100 }, skillBreakdown: { dpsPipeline: { totalDPS: 100 } } },
+  } }) });
+  assert.equal(await pending, false);
+  assert.equal(store.canonicalBuild.code, 'new-code');
+  assert.equal(store.stats.TotalDPS, 200);
+  assert.equal(store.skillBreakdown.dpsPipeline.totalDPS, 200);
+  assert.equal(store.lastCalculationError.code, 'POB_PROJECTION_CONTRACT_INVALID');
 });
 
 test('canonical reload replaces a stale stored projection before equipment actions need loadout ids', async () => {
@@ -244,7 +348,7 @@ test('official item assignment atomically replaces state from the canonical tran
   assert.equal(committed.success, true);
   assert.deepEqual(calls.at(-1), {
     url: '/api/items/assign',
-    payload: { code: 'initial-code', expectedRevision: 1, target, itemId: 2 },
+    payload: { code: 'initial-code', expectedRevision: 1, target, itemId: 2, projectionScope: 'tree' },
   });
   assert.equal(store.canonicalBuild.code, 'assigned-code');
   assert.equal(store.canonicalBuild.version, 2);
@@ -326,21 +430,24 @@ test('ensureCanonicalBuildLoaded resets canonicalBuild version and bridgeCanonic
   assert.equal(store.canonicalBuild.code, 'committed-after-restore');
   assert.deepEqual(calls.at(-1), {
     url: '/api/build/commit',
-    payload: { code: 'stored-code', expectedRevision: 1, changes: { level: 92 } },
+    payload: { code: 'stored-code', expectedRevision: 1, projectionScope: 'tree', changes: { level: 92 } },
   });
 });
 
 test('rapid passive-tree clicks commit in order against the latest canonical revision', async () => {
   const pending = [];
   const commitPayloads = [];
+  const allocatedNodes = new Set();
   const response = body => ({ ok: true, json: async () => body });
   const commitResponse = payload => {
     const sourceRevision = payload.expectedRevision;
     const revision = sourceRevision + 1;
-    const allocNodes = payload.changes.allocNodes;
+    const change = payload.changes.passiveNode;
+    if (change.allocate) allocatedNodes.add(change.nodeId);
+    else allocatedNodes.delete(change.nodeId);
     return response({ success: true, data: {
       sourceRevision, revision, code: `node-code-${revision}`,
-      build: { allocNodes, output: { Life: revision } },
+      build: { allocNodes: [...allocatedNodes], output: { Life: revision } },
     } });
   };
   const store = await loadStore(async (url, request) => {
@@ -350,7 +457,7 @@ test('rapid passive-tree clicks commit in order against the latest canonical rev
     } });
     commitPayloads.push(payload);
     return await new Promise(resolve => pending.push({ payload, resolve }));
-  });
+  }, { useRealPinia: true });
 
   await store.importBuildFromCode('initial-code');
   const first = store.toggleNode(101);
@@ -380,11 +487,12 @@ test('rapid passive-tree clicks commit in order against the latest canonical rev
   assert.equal(store.canonicalBuild.version, 4);
   assert.deepEqual(commitPayloads.map(payload => ({
     expectedRevision: payload.expectedRevision,
-    allocNodes: payload.changes.allocNodes,
+    passiveNode: payload.changes.passiveNode,
+    projectionScope: payload.projectionScope,
   })), [
-    { expectedRevision: 1, allocNodes: [101] },
-    { expectedRevision: 2, allocNodes: [101, 102] },
-    { expectedRevision: 3, allocNodes: [101, 102, 103] },
+    { expectedRevision: 1, passiveNode: { nodeId: 101, allocate: true }, projectionScope: 'tree' },
+    { expectedRevision: 2, passiveNode: { nodeId: 102, allocate: true }, projectionScope: 'tree' },
+    { expectedRevision: 3, passiveNode: { nodeId: 103, allocate: true }, projectionScope: 'tree' },
   ]);
 });
 

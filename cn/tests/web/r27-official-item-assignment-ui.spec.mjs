@@ -49,3 +49,21 @@ test('item pickers render and submit only Lua validTargetSlots', async () => {
   assert.doesNotMatch(itemsPanel, /slots\.length === 0\) return isJewelItem\(item\)/);
   assert.doesNotMatch(itemsPanel, /activeJewelSockets\.value\[0\]\.id/);
 });
+
+test('item hover requests only the current official tooltip and never writes it back into the item library', async () => {
+  const [itemsPanel, store] = await Promise.all([
+    source('../../web/src/components/ItemsPanel.vue'),
+    source('../../web/src/stores/buildStore.ts'),
+  ]);
+
+  assert.match(itemsPanel, /const itemTooltipCache = new Map<string, Record<string, any>>\(\)/);
+  assert.match(itemsPanel, /await store\.getOfficialItemTooltip\(request\.itemId\)/);
+  assert.match(itemsPanel, /request\.generation !== hoverRequestGeneration/);
+  assert.match(itemsPanel, /request\.version !== store\.canonicalBuild\?\.version/);
+  assert.match(itemsPanel, /hoveredItem\.value = \{ \.\.\.request\.item, tooltip: tooltipResult\.tooltip \}/);
+  assert.match(itemsPanel, /while \(pendingTooltipRequest\)/);
+  assert.match(store, /async getOfficialItemTooltip\(itemId: number\)/);
+  assert.match(store, /fetch\('\/api\/items\/tooltip'/);
+  assert.match(store, /sourceRevision !== document\.version \|\| data\.revision !== document\.version/);
+  assert.doesNotMatch(itemsPanel, /store\.itemLibrary\s*(?:=|\.push|\.splice)/);
+});

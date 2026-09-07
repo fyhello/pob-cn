@@ -65,12 +65,22 @@ interface OfficialProjectionState {
   equippedSlots: Record<string, string | number>;
   socketedJewels: Record<number, string | number>;
   socketGroups: any[];
-  skillBreakdown: any;
+  skillBreakdown?: any;
   calcsSkillGroup: number;
   buffMode?: 'EFFECTIVE' | 'COMBAT' | 'BUFFED' | 'UNBUFFED';
-  config: Record<string, any> | null;
+  config?: Record<string, any> | null;
   stats: CharacterStats | null;
   loadouts: Record<string, any> | null;
+}
+
+type ProjectionScope = 'tree' | 'skills' | 'items' | 'calcs' | 'config';
+
+function projectionScopeForTab(tab: string): ProjectionScope {
+  if (tab === 'SKILLS') return 'skills';
+  if (tab === 'ITEMS') return 'items';
+  if (tab === 'CALCS') return 'calcs';
+  if (tab === 'CONFIG') return 'config';
+  return 'tree';
 }
 
 function isRecord(value: unknown): value is Record<string, any> {
@@ -80,17 +90,30 @@ function isRecord(value: unknown): value is Record<string, any> {
 // Mutations can arrive while the official calculation is still running. Keep
 // them ordered per store so every request observes the revision produced by
 // the previous one instead of reusing a stale canonical snapshot.
-const canonicalMutationTails = new WeakMap<object, Promise<unknown>>();
+const canonicalMutationTails = new Map<string, Promise<unknown>>();
+
+function canonicalMutationStoreId(store: object) {
+  const id = (store as { $id?: unknown }).$id;
+  if (typeof id !== 'string' || !id) throw new Error('Pinia 构建状态缺少稳定的 store ID。');
+  return id;
+}
 
 function enqueueCanonicalMutation<T>(store: object, work: () => Promise<T>): Promise<T> {
-  const previous = canonicalMutationTails.get(store) ?? Promise.resolve();
+  const storeId = canonicalMutationStoreId(store);
+  const previous = canonicalMutationTails.get(storeId) ?? Promise.resolve();
   const task = previous.then(work, work);
-  canonicalMutationTails.set(store, task.catch(() => undefined));
+  const tail = task.catch(() => undefined);
+  canonicalMutationTails.set(storeId, tail);
+  void tail.finally(() => {
+    if (canonicalMutationTails.get(storeId) === tail) canonicalMutationTails.delete(storeId);
+  });
   return task;
 }
 
 function officialProjectionState(value: Record<string, unknown>): OfficialProjectionState {
   const build = localizeImportedBuild(value);
+  const hasSkillBreakdown = Object.hasOwn(build, 'skillBreakdown');
+  const hasConfig = Object.hasOwn(build, 'config');
   const itemLibrary: Item[] = Array.isArray(build.itemLibrary) ? [...build.itemLibrary] : [];
   const itemsById = new Map(itemLibrary.filter(item => item.id !== undefined && item.id !== null).map(item => [String(item.id), item]));
   const includeItem = (value: unknown): Item => {
@@ -126,10 +149,10 @@ function officialProjectionState(value: Record<string, unknown>): OfficialProjec
     equippedSlots,
     socketedJewels,
     socketGroups: Array.isArray(build.socketGroups) ? localizeImportedSocketGroups(build.socketGroups) : [],
-    skillBreakdown: build.skillBreakdown ?? null,
+    ...(hasSkillBreakdown ? { skillBreakdown: build.skillBreakdown ?? null } : {}),
     calcsSkillGroup: Number.isInteger(build.calcsSkillGroup) && Number(build.calcsSkillGroup) > 0 ? Number(build.calcsSkillGroup) : 1,
     buffMode: validBuffMode,
-    config: isRecord(build.config) ? build.config : null,
+    ...(hasConfig ? { config: isRecord(build.config) ? build.config : null } : {}),
     stats: isRecord(build.output) ? build.output as CharacterStats : null,
     loadouts: isRecord(build.loadouts) ? build.loadouts : null,
   };
@@ -190,6 +213,7 @@ export const useBuildStore = defineStore('build', {
     bridgeCanonicalVersion: 0,
     hasUnsavedLocalEdits: false,
     loadouts: null as Record<string, any> | null,
+    projectionVersions: { calcs: 0, config: 0 } as Record<'calcs' | 'config', number>,
   }),
 
   getters: {
@@ -235,7 +259,7 @@ export const useBuildStore = defineStore('build', {
         else next.add(nodeId);
         this.allocatedNodes = next;
 
-        const result = await this.commitCanonicalMutationNow('/api/build/commit', { changes: { allocNodes: [...next] } }, 'POB_BUILD_COMMIT_FAILED', '官方 PoB 未返回可提交的构建修改结果。');
+        const result = await this.commitCanonicalMutationNow('/api/build/commit', { changes: { passiveNode: { nodeId, allocate: !prev.has(nodeId) } } }, 'POB_BUILD_COMMIT_FAILED', '官方 PoB 未返回可提交的构建修改结果。');
         if (!result.success) {
           this.allocatedNodes = prev;
         }
@@ -292,8 +316,14 @@ export const useBuildStore = defineStore('build', {
       this.equippedSlots = next.equippedSlots;
       this.socketedJewels = next.socketedJewels;
       this.socketGroups = next.socketGroups;
-      this.skillBreakdown = next.skillBreakdown;
-      this.config = next.config;
+      if (next.skillBreakdown !== undefined) {
+        this.skillBreakdown = next.skillBreakdown;
+        this.projectionVersions.calcs = document.version;
+      }
+      if (next.config !== undefined) {
+        this.config = next.config;
+        this.projectionVersions.config = document.version;
+      }
       this.selectedSkillIndex = Math.max(0, next.socketGroups.findIndex(group => group.isMain));
       this.selectedCalculationSkillIndex = Math.min(Math.max(0, next.calcsSkillGroup - 1), Math.max(0, next.socketGroups.length - 1));
       if (next.buffMode) this.buffMode = next.buffMode;
@@ -320,9 +350,11 @@ export const useBuildStore = defineStore('build', {
       this.isCalculating = true;
       this.lastCalculationError = null;
       try {
+        const projectionScope = projectionScopeForTab(this.activeTab);
+        const body = JSON.stringify({ code: document.code, expectedRevision: document.version, projectionScope, ...payload });
         const response = await fetch(path, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: document.code, expectedRevision: document.version, ...payload }),
+          body,
         });
         const result = await response.json();
         const data = result?.data;
@@ -353,6 +385,52 @@ export const useBuildStore = defineStore('build', {
       const skillSetId = this.loadouts?.active?.skillSetId;
       if (!Number.isInteger(skillSetId)) return { success: false, error: { code: 'POB_SKILL_SET_MISSING', message: '当前官方 Build 缺少活动技能集。' } };
       return this.commitCanonicalMutation('/api/skills/commit', { skillSetId, operation, ...payload }, 'POB_SKILL_COMMIT_FAILED', '官方 PoB 未返回可提交的技能修改结果。');
+    },
+
+    async activateTab(tab: 'TREE' | 'SKILLS' | 'ITEMS' | 'CALCS' | 'CONFIG') {
+      const scope = projectionScopeForTab(tab);
+      const detailScope = scope === 'skills' ? 'calcs' : scope;
+      if ((detailScope === 'calcs' || detailScope === 'config') && !await this.ensureProjection(detailScope)) return false;
+      this.activeTab = tab;
+      return true;
+    },
+
+    async ensureProjection(scope: 'calcs' | 'config') {
+      const document = this.canonicalBuild;
+      if (!document || this.projectionVersions[scope] === document.version) return true;
+      if (this.isCalculating) return false;
+      this.isCalculating = true;
+      this.lastCalculationError = null;
+      try {
+        const response = await fetch('/api/build/projection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: document.code, expectedRevision: document.version, projectionScope: scope }),
+        });
+        const result = await response.json();
+        const data = result?.data;
+        if (!response.ok || result?.success !== true || !isRecord(data) || !isRecord(data.build)
+          || data.sourceRevision !== document.version || data.revision !== document.version
+          || this.canonicalBuild?.version !== document.version || this.canonicalBuild?.code !== document.code
+          || !isRecord(scope === 'calcs' ? data.build.skillBreakdown : data.build.config)) {
+          const error = result?.error;
+          this.lastCalculationError = {
+            code: typeof error?.code === 'string' ? error.code : 'POB_PROJECTION_CONTRACT_INVALID',
+            message: typeof error?.message === 'string' ? error.message : '官方 PoB 未返回当前版本的页面投影。',
+          };
+          return false;
+        }
+        this.applyOfficialProjection(data.build, document);
+        return this.projectionVersions[scope] === document.version;
+      } catch (error) {
+        this.lastCalculationError = {
+          code: 'POB_PROJECTION_REQUEST_FAILED',
+          message: error instanceof Error ? error.message : '无法连接官方 PoB 投影服务。',
+        };
+        return false;
+      } finally {
+        this.isCalculating = false;
+      }
     },
 
     async selectOfficialLoadout(selection: { specId: number; itemSetId: number; skillSetId: number; configSetId: number }): Promise<{ success: boolean; error?: { code: string; message: string } }> {
@@ -392,9 +470,11 @@ export const useBuildStore = defineStore('build', {
       this.isCalculating = true;
       this.lastCalculationError = null;
       try {
+        const projectionScope = projectionScopeForTab(this.activeTab);
+        const body = JSON.stringify({ code: document.code, expectedRevision: document.version, target, itemId, projectionScope });
         const response = await fetch('/api/items/assign', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: document.code, expectedRevision: document.version, target, itemId }),
+          body,
         });
         const result = await response.json();
         const data = result?.data;
@@ -424,6 +504,29 @@ export const useBuildStore = defineStore('build', {
     async deleteOfficialLibraryItem(itemId: number): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
       if (!Number.isInteger(itemId) || itemId <= 0) return { success: false, error: { code: 'POB_ITEM_DELETE_ITEM_ID_INVALID', message: '只能删除当前官方物品库中的物品。' } };
       return this.commitCanonicalMutation('/api/items/remove', { itemId }, 'POB_ITEM_DELETE_FAILED', '官方 PoB 未返回可提交的物品删除结果。');
+    },
+
+    async getOfficialItemTooltip(itemId: number): Promise<{ success: boolean; data?: { itemId: number; tooltip: Record<string, any> }; error?: { code: string; message: string } }> {
+      if (!Number.isInteger(itemId) || itemId <= 0) return { success: false, error: { code: 'POB_ITEM_TOOLTIP_ITEM_ID_INVALID', message: '物品 ID 必须是当前官方物品库中的正整数。' } };
+      const document = this.canonicalBuild;
+      if (!document) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_MISSING', message: '当前内容尚未保存为官方 PoB 文档。' } };
+      if (this.bridgeCanonicalVersion !== document.version) return { success: false, error: { code: 'POB_ITEM_TOOLTIP_SESSION_UNAVAILABLE', message: '当前官方 PoB 会话尚未载入，无法读取物品浮窗。' } };
+      try {
+        const body = JSON.stringify({ expectedRevision: document.version, itemId });
+        const response = await fetch('/api/items/tooltip', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body,
+        });
+        const result = await response.json();
+        const data = result?.data;
+        if (!response.ok || result?.success !== true || !isRecord(data) || data.itemId !== itemId || !isRecord(data.tooltip) || data.sourceRevision !== document.version || data.revision !== document.version) {
+          const error = result?.error;
+          return { success: false, error: { code: typeof error?.code === 'string' ? error.code : 'POB_ITEM_TOOLTIP_CONTRACT_INVALID', message: typeof error?.message === 'string' ? error.message : '官方 PoB 未返回当前文档的完整物品浮窗。' } };
+        }
+        return { success: true, data: { itemId, tooltip: data.tooltip } };
+      } catch (error) {
+        return { success: false, error: { code: 'POB_ITEM_TOOLTIP_REQUEST_FAILED', message: error instanceof Error ? error.message : '无法连接官方 PoB 服务。' } };
+      }
     },
 
     async getOfficialCraftOptions(input: { action?: 'create' | 'edit' | 'duplicate'; sourceItemId?: number; baseName: string; itemLevel: number; rarity: 'NORMAL' | 'MAGIC' | 'RARE'; corrupted: boolean; draft?: Record<string, unknown> }): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {

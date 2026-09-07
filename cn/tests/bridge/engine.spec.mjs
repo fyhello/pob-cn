@@ -31,10 +31,28 @@ test('routes JSON replies and times out stalled requests', async () => {
   await startReady(engine, child);
 
   const reply = engine.request({ action: 'calculate' }, { timeoutMs: 50 });
-  child.stdout.emit('data', Buffer.from('POB_JSON:{"action":"calculate","total":42}\n'));
-  assert.deepEqual(await reply, { action: 'calculate', total: 42 });
+  child.stdout.emit('data', Buffer.from('POB_JSON:{"success":true,"action":"calculate","total":42}\n'));
+  assert.deepEqual(await reply, { success: true, action: 'calculate', total: 42 });
   await assert.rejects(engine.request({ action: 'stalled' }), /timed out/i);
   await engine.close();
+});
+
+test('序列化或写入失败不会占用后续请求的响应', async t => {
+  const child = new FakeProcess();
+  const engine = new PoBCoreEngine({ spawn: () => child, requestTimeoutMs: 100 });
+  t.after(() => engine.close());
+  await startReady(engine, child);
+  const circular = { action: 'calculate' };
+  circular.self = circular;
+  await assert.rejects(engine.request(circular), /circular/i);
+  assert.equal(child.stdin.writes.length, 0);
+  const write = child.stdin.write;
+  child.stdin.write = () => { throw new Error('test write failed'); };
+  await assert.rejects(engine.request({ action: 'calculate' }), /test write failed/);
+  child.stdin.write = write;
+  const reply = engine.request({ action: 'calculate' });
+  child.stdout.emit('data', Buffer.from('POB_JSON:{"success":true,"total":43}\n'));
+  assert.deepEqual(await reply, { success: true, total: 43 });
 });
 
 test('rejects pending requests on an unexpected exit and can restart', async () => {

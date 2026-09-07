@@ -25,11 +25,76 @@ test('bridge HTTP service returns the engine import data projection unchanged', 
   assert.deepEqual(calls, [{ action: 'loadXML', xml: '<PathOfBuilding2/>', name: 'fixture' }, { action: 'calculate' }]);
 });
 
+test('item tooltip endpoint reads only the active official session without reloading or recalculating', async t => {
+  const calls = [];
+  const tooltip = { header: { title: 'Official Amulet', base: 'Amulet' }, bodyLines: ['Equipping this item in Amulet will give you:'] };
+  const server = createBridgeHttpServer({ request: async request => {
+    calls.push(request);
+    if (request.action === 'loadXML') return { success: true, data: { buildName: 'fixture' } };
+    if (request.action === 'projectOfficialItemTooltip') return { success: true, data: { itemId: request.itemId, tooltip } };
+    throw new Error(`unexpected engine action ${request.action}`);
+  } });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
+
+  const imported = await request(server, '/api/import', { code: '<PathOfBuilding2/>' });
+  const response = await request(server, '/api/items/tooltip', { expectedRevision: 1, itemId: 7 });
+
+  assert.equal(imported.status, 200);
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body, {
+    success: true,
+    action: 'projectOfficialItemTooltip',
+    data: { itemId: 7, tooltip, sourceRevision: 1, revision: 1 },
+  });
+  assert.deepEqual(calls, [
+    { action: 'loadXML', xml: '<PathOfBuilding2/>', name: '' },
+    { action: 'projectOfficialItemTooltip', itemId: 7 },
+  ]);
+});
+
+test('item tooltip endpoint rejects invalid, unavailable, and stale sessions without touching the engine', async t => {
+  const calls = [];
+  const server = createBridgeHttpServer({ request: async request => {
+    calls.push(request);
+    if (request.action === 'loadXML') return { success: true, data: { buildName: 'fixture' } };
+    throw new Error(`unexpected engine action ${request.action}`);
+  } });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
+
+  const unavailable = await request(server, '/api/items/tooltip', { expectedRevision: 1, itemId: 7 });
+  const invalid = await request(server, '/api/items/tooltip', { expectedRevision: 1, itemId: 0 });
+  await request(server, '/api/import', { code: '<PathOfBuilding2/>' });
+  const stale = await request(server, '/api/items/tooltip', { expectedRevision: 2, itemId: 7 });
+
+  assert.equal(unavailable.status, 409);
+  assert.equal(unavailable.body.error.code, 'POB_ITEM_TOOLTIP_SESSION_UNAVAILABLE');
+  assert.equal(invalid.status, 400);
+  assert.equal(invalid.body.error.code, 'POB_ITEM_TOOLTIP_ITEM_ID_REQUIRED');
+  assert.equal(stale.status, 409);
+  assert.equal(stale.body.error.code, 'POB_CANONICAL_REVISION_CONFLICT');
+  assert.deepEqual(calls, [{ action: 'loadXML', xml: '<PathOfBuilding2/>', name: '' }]);
+});
+
+test('item tooltip endpoint fails closed when PoB does not return an official structured tooltip', async t => {
+  const server = createBridgeHttpServer({ request: async request => {
+    if (request.action === 'loadXML') return { success: true, data: { buildName: 'fixture' } };
+    if (request.action === 'projectOfficialItemTooltip') return { success: true, data: { itemId: request.itemId } };
+    throw new Error(`unexpected engine action ${request.action}`);
+  } });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
+
+  await request(server, '/api/import', { code: '<PathOfBuilding2/>' });
+  const response = await request(server, '/api/items/tooltip', { expectedRevision: 1, itemId: 7 });
+
+  assert.equal(response.status, 422);
+  assert.equal(response.body.error.code, 'POB_ITEM_TOOLTIP_CONTRACT_INVALID');
+});
+
 test('build, skill, and config mutations reload the caller XML and only accept official committed documents', async t => {
   const calls = [];
   const server = createBridgeHttpServer({ request: async request => {
     calls.push(request);
-    if (request.action === 'loadXML') return { success: true, data: {} };
+    if (request.action === 'loadXML' || request.action === 'loadXMLForMutation') return { success: true, data: {} };
     return { success: true, data: { xml: `<PathOfBuilding2><Build action="${request.action}" /></PathOfBuilding2>`, build: { output: { Life: 222 }, loadouts: { active: { configSetId: 4, skillSetId: 3 } } }, output: { Life: 222 } } };
   } });
   server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
@@ -48,9 +113,40 @@ test('build, skill, and config mutations reload the caller XML and only accept o
   assert.equal(rejectedCalculate.status, 400);
   assert.equal(rejectedCalculate.body.error.code, 'POB_CANONICAL_WRITE_REQUIRED');
   assert.deepEqual(calls, [
-    { action: 'loadXML', xml: code, name: '' }, { action: 'commitBuildChanges', changes: { level: 91 }, canonicalXML: code, name: '' },
+    { action: 'loadXMLForMutation', xml: code, name: '' }, { action: 'commitBuildChanges', changes: { level: 91 }, canonicalXML: code, name: '' },
     { action: 'commitSkillChange', skillSetId: 3, operation: 'setMain', groupIndex: 1, gemIndex: undefined, patch: undefined, label: undefined, canonicalXML: decodeBuildCode(build.body.data.code), name: '' },
     { action: 'commitConfigChange', configSetId: 4, variable: 'conditionMoving', value: true, canonicalXML: decodeBuildCode(skill.body.data.code), name: '' },
+  ]);
+});
+
+test('projection endpoint reloads the canonical session and returns only the requested official view', async t => {
+  const calls = [];
+  const server = createBridgeHttpServer({ request: async engineRequest => {
+    calls.push(engineRequest);
+    if (engineRequest.action === 'loadXMLForMutation') return { success: true, data: {} };
+    if (engineRequest.action === 'projectCurrentBuild') {
+      return { success: true, data: {
+        output: { Life: 222 },
+        build: { projectionScope: engineRequest.projectionScope, output: { Life: 222 }, skillBreakdown: { dynamicSubSections: { Defence: { rows: [] } } } },
+      } };
+    }
+    throw new Error(`unexpected engine action ${engineRequest.action}`);
+  } });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
+
+  const code = '<PathOfBuilding2><Build canonical="true" /></PathOfBuilding2>';
+  const response = await request(server, '/api/build/projection', { code, expectedRevision: 4, projectionScope: 'calcs' });
+  const invalid = await request(server, '/api/build/projection', { code, expectedRevision: 4, projectionScope: 'unknown' });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.data.sourceRevision, 4);
+  assert.equal(response.body.data.revision, 4);
+  assert.equal(response.body.data.build.projectionScope, 'calcs');
+  assert.equal(invalid.status, 400);
+  assert.equal(invalid.body.error.code, 'POB_PROJECTION_SCOPE_INVALID');
+  assert.deepEqual(calls, [
+    { action: 'loadXMLForMutation', xml: code, name: '' },
+    { action: 'projectCurrentBuild', projectionScope: 'calcs', name: '' },
   ]);
 });
 
@@ -90,7 +186,7 @@ test('craft endpoints reload the caller canonical document and only commit retur
   const calls = [];
   const server = createBridgeHttpServer({ request: async request => {
     calls.push(request);
-    if (request.action === 'loadXML') return { success: true, data: {} };
+    if (request.action === 'loadXML' || request.action === 'loadXMLForMutation') return { success: true, data: {} };
     if (request.action === 'craftPreview') return { success: true, data: { item: { id: 7 }, output: { Life: 100 } } };
     return { success: true, data: { item: { id: 8 }, output: { Life: 200 }, xml: '<PathOfBuilding2><Items committed="true" /></PathOfBuilding2>' } };
   } });
@@ -105,7 +201,7 @@ test('craft endpoints reload the caller canonical document and only commit retur
   assert.equal(committed.body.data.revision, 5);
   assert.match(decodeBuildCode(committed.body.data.code), /committed="true"/);
   assert.deepEqual(calls, [
-    { action: 'loadXML', xml: payload.code, name: '' },
+    { action: 'loadXMLForMutation', xml: payload.code, name: '' },
     { action: 'craftPreview', operation: 'edit', target: payload.target, draft: payload.draft, name: '', sourceItemId: 7 },
     { action: 'craftCommit', operation: 'edit', target: payload.target, draft: payload.draft, name: '', sourceItemId: 7 },
   ]);
@@ -118,7 +214,7 @@ test('craft commits serialize the bridge session and reject a stale queued draft
   const firstCommitReady = new Promise(resolve => { firstCommitStarted = resolve; });
   const server = createBridgeHttpServer({ request: async engineRequest => {
     calls.push(engineRequest);
-    if (engineRequest.action === 'loadXML') return { success: true, data: {} };
+    if (engineRequest.action === 'loadXML' || engineRequest.action === 'loadXMLForMutation') return { success: true, data: {} };
     if (engineRequest.action === 'craftCommit') {
       firstCommitStarted();
       await new Promise(resolve => { releaseFirstCommit = resolve; });
@@ -137,14 +233,14 @@ test('craft commits serialize the bridge session and reject a stale queued draft
   assert.equal(firstResult.body.data.revision, 5);
   assert.equal(secondResult.status, 409);
   assert.equal(secondResult.body.error.code, 'POB_CANONICAL_REVISION_CONFLICT');
-  assert.deepEqual(calls.map(call => call.action), ['loadXML', 'craftCommit']);
+  assert.deepEqual(calls.map(call => call.action), ['loadXMLForMutation', 'craftCommit']);
 });
 
 test('crafting options reload the canonical document and return only the Lua engine projection', async t => {
   const calls = [];
   const server = createBridgeHttpServer({ request: async request => {
     calls.push(request);
-    if (request.action === 'loadXML') return { success: true, data: {} };
+    if (request.action === 'loadXML' || request.action === 'loadXMLForMutation') return { success: true, data: {} };
     return { success: true, data: { prefixes: [{ id: 'Life1' }], suffixes: [], essences: [], affixLimits: { prefixes: 1, suffixes: 1 }, corruptible: true } };
   } });
   server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
@@ -154,7 +250,7 @@ test('crafting options reload the canonical document and return only the Lua eng
   assert.deepEqual(response.body.data.prefixes, [{ id: 'Life1' }]);
   assert.equal(response.body.data.sourceRevision, 4);
   assert.deepEqual(calls, [
-    { action: 'loadXML', xml: payload.code, name: '' },
+    { action: 'loadXMLForMutation', xml: payload.code, name: '' },
     { action: 'craftOptions', baseName: 'Crimson Amulet', rarity: 'RARE', itemLevel: 82, corrupted: false, draft: undefined, canonicalRevision: 4 },
   ]);
 });
@@ -163,7 +259,7 @@ test('crafting options accept browser-normalized XML line endings for the active
   const calls = [];
   const server = createBridgeHttpServer({ request: async request => {
     calls.push(request);
-    if (request.action === 'loadXML') return { success: true, data: {} };
+    if (request.action === 'loadXML' || request.action === 'loadXMLForMutation') return { success: true, data: {} };
     return { success: true, data: { prefixes: [], suffixes: [], essences: [], affixLimits: { prefixes: 3, suffixes: 3 }, corruptible: true } };
   } });
   server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
@@ -184,7 +280,7 @@ test('official item assignment reloads canonical XML and commits only the return
   const calls = [];
   const server = createBridgeHttpServer({ request: async request => {
     calls.push(request);
-    if (request.action === 'loadXML') return { success: true, data: {} };
+    if (request.action === 'loadXML' || request.action === 'loadXMLForMutation') return { success: true, data: {} };
     const cleared = request.itemId === null;
     return {
       success: true,
@@ -211,7 +307,7 @@ test('official item assignment reloads canonical XML and commits only the return
   assert.equal(cleared.body.data.revision, 9);
   assert.match(decodeBuildCode(cleared.body.data.code), /assigned="clear"/);
   assert.deepEqual(calls, [
-    { action: 'loadXML', xml: payload.code, name: '' },
+    { action: 'loadXMLForMutation', xml: payload.code, name: '' },
     { action: 'assignOfficialItem', target, itemId: 12, canonicalXML: payload.code, name: '' },
     { action: 'assignOfficialItem', target, itemId: null, canonicalXML: decodeBuildCode(assigned.body.data.code), name: '' },
   ]);
@@ -221,7 +317,7 @@ test('official item removal reloads canonical XML and commits only the returned 
   const calls = [];
   const server = createBridgeHttpServer({ request: async request => {
     calls.push(request);
-    if (request.action === 'loadXML') return { success: true, data: {} };
+    if (request.action === 'loadXML' || request.action === 'loadXMLForMutation') return { success: true, data: {} };
     return { success: true, data: { removedItemId: 12, output: { Life: 100 }, build: { buildName: 'fixture', itemLibrary: [], equippedItems: {}, output: { Life: 100 } }, xml: '<PathOfBuilding2><Items removed="12" /></PathOfBuilding2>' } };
   } });
   server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
@@ -233,7 +329,7 @@ test('official item removal reloads canonical XML and commits only the returned 
   assert.equal(removed.body.data.revision, 8);
   assert.match(decodeBuildCode(removed.body.data.code), /removed="12"/);
   assert.deepEqual(calls, [
-    { action: 'loadXML', xml: payload.code, name: '' },
+    { action: 'loadXMLForMutation', xml: payload.code, name: '' },
     { action: 'deleteOfficialItem', itemId: 12, canonicalXML: payload.code, name: '' },
   ]);
 });
@@ -242,7 +338,7 @@ test('loadout selection reloads canonical XML and returns the official switched 
   const calls = [];
   const server = createBridgeHttpServer({ request: async request => {
     calls.push(request);
-    if (request.action === 'loadXML') return { success: true, data: {} };
+    if (request.action === 'loadXML' || request.action === 'loadXMLForMutation') return { success: true, data: {} };
     return { success: true, data: { xml: '<PathOfBuilding2><Build loadout="boss" /></PathOfBuilding2>', build: { loadouts: { active: { specId: 2, itemSetId: 20, skillSetId: 40, configSetId: 50 } } }, output: { Life: 200 } } };
   } });
   server.listen(0, '127.0.0.1'); await once(server, 'listening'); t.after(() => server.close());
@@ -253,7 +349,7 @@ test('loadout selection reloads canonical XML and returns the official switched 
   assert.equal(response.body.data.revision, 7);
   assert.match(decodeBuildCode(response.body.data.code), /loadout="boss"/);
   assert.deepEqual(calls, [
-    { action: 'loadXML', xml: payload.code, name: '' },
+    { action: 'loadXMLForMutation', xml: payload.code, name: '' },
     { action: 'selectLoadout', selection: payload.selection, canonicalXML: payload.code, name: '' },
   ]);
 });
@@ -277,7 +373,7 @@ test('craft endpoints return Lua validation failures without a duplicate bridge 
   assert.equal(response.body.error.code, 'POB_CRAFT_AFFIX_TYPE_INVALID');
   assert.equal(response.body.error.api, 'draft.prefixes[0].id');
   assert.deepEqual(calls, [
-    { action: 'loadXML', xml: payload.code, name: '' },
+    { action: 'loadXMLForMutation', xml: payload.code, name: '' },
     { action: 'craftPreview', operation: 'edit', target: payload.target, draft: payload.draft, name: '', sourceItemId: 7 },
   ]);
 });
@@ -305,7 +401,7 @@ test('craft endpoints pass structural drafts to the Lua core unchanged', async t
   assert.equal(response.body.error.code, 'POB_CRAFT_AFFIX_COUNT_INVALID');
   assert.equal(response.body.error.api, 'draft.prefixes');
   assert.deepEqual(calls, [
-    { action: 'loadXML', xml: payload.code, name: '' },
+    { action: 'loadXMLForMutation', xml: payload.code, name: '' },
     { action: 'craftPreview', operation: 'create', target: undefined, draft: payload.draft, name: '' },
   ]);
 });

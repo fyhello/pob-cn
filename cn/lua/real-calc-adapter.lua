@@ -222,7 +222,7 @@ local function unsupportedCalculationInput(path, message)
 	return failure("POB_CALC_INPUT_UNSUPPORTED", path, message)
 end
 
-local function projectItem(item, allowTransientId, data, itemsTab)
+local function projectItem(item, allowTransientId, data, itemsTab, includeTooltip)
 	if type(item) ~= "table" or (type(item.id) ~= "number" and not allowTransientId) then
 		return nil, unsupportedProjection("itemsTab.items", "PoB returned an item without a numeric id")
 	end
@@ -244,7 +244,10 @@ local function projectItem(item, allowTransientId, data, itemsTab)
 	-- consumes the structured upstream capture below, so title/base rows cannot
 	-- render twice. A runtime without the upstream presentation method exposes
 	-- no tooltip field instead of falling back to a hand-built approximation.
-	local tooltip = officialTooltipProjection(itemsTab, item)
+	local tooltip
+	if includeTooltip ~= false then
+		tooltip = officialTooltipProjection(itemsTab, item)
+	end
 	local function projectAffixes(kind)
 		local result = {}
 		for _, affix in ipairs(item[kind] or {}) do
@@ -973,16 +976,37 @@ local function projectConfig(build, runtime)
 	return { activeConfigSetId = activeId, options = options }
 end
 
-local function projectBuild(build, requestedName, output, runtime, fastMode, skillBreakdown)
+local function normalizeProjectionScope(value)
+	if value == nil or value == "full" then return "full" end
+	if value == "tree" or value == "skills" or value == "items" or value == "calcs" or value == "config" then return value end
+	return nil
+end
+
+local function projectBuild(build, requestedName, output, runtime, fastMode, skillBreakdown, requestedScope)
 	if type(build) ~= "table" then
 		return nil, unsupportedProjection("build", "PoB did not retain the imported build")
 	end
+	local projectionScope = normalizeProjectionScope(requestedScope)
+	if not projectionScope then
+		return nil, unsupportedProjection("projectionScope", "projectionScope must be one of full, tree, skills, items, calcs, or config")
+	end
+	local includeCalculationDetails = projectionScope == "full" or projectionScope == "calcs" or projectionScope == "skills"
+	local includeConfig = projectionScope == "full" or projectionScope == "config"
 	local treeTab = type(build.treeTab) == "table" and build.treeTab or {}
 	local itemsTab = type(build.itemsTab) == "table" and build.itemsTab or {}
 	local skillsTab = type(build.skillsTab) == "table" and build.skillsTab or {}
 	local spec = type(build.spec) == "table" and build.spec or {}
+	local projectedSkillBreakdown = nil
+	if includeCalculationDetails then
+		projectedSkillBreakdown = skillBreakdown or projectBreakdown(build, fastMode, runtime)
+	end
+	local projectedConfig = nil
+	if includeConfig then
+		projectedConfig = projectConfig(build, runtime)
+	end
 	local projection = {
 		projectionVersion = "pob-cn-web-active-build-v1",
+		projectionScope = projectionScope,
 		buildName = stringValue(requestedName, build.buildName, "Imported build"),
 		className = stringValue(spec.curClassName, build.className, "Unknown"),
 		ascendancyName = stringValue(spec.curAscendClassName, build.ascendClassName),
@@ -1005,16 +1029,16 @@ local function projectBuild(build, requestedName, output, runtime, fastMode, ski
 			configSets = {},
 		},
 		output = outputScalars(output),
-		skillBreakdown = skillBreakdown or projectBreakdown(build, fastMode, runtime),
 		calcsSkillGroup = tonumber(type(build.calcsTab) == "table" and type(build.calcsTab.input) == "table" and build.calcsTab.input.skill_number) or 1,
 		buffMode = stringValue(type(build.calcsTab) == "table" and type(build.calcsTab.input) == "table" and build.calcsTab.input.misc_buffMode, "EFFECTIVE"),
-		config = projectConfig(build, runtime),
 		preservedByCore = {
 			"Configuration and calculation options",
 			"Notes and metadata",
 			"Official XML retained by the running PoB core",
 		},
 	}
+	if includeCalculationDetails then projection.skillBreakdown = projectedSkillBreakdown end
+	if includeConfig then projection.config = projectedConfig end
 	local equipmentSlots, utilitySlots = {}, {}
 	for slotName, slot in pairs(itemsTab.slots or {}) do
 		local shown = true
@@ -1068,7 +1092,7 @@ local function projectBuild(build, requestedName, output, runtime, fastMode, ski
 
 	local itemsById = {}
 	for itemId, item in pairs(itemsTab.items or {}) do
-		local projectedItem, err = projectItem(item, nil, build.data, itemsTab)
+		local projectedItem, err = projectItem(item, nil, build.data, itemsTab, false)
 		if not projectedItem then return nil, err end
 		itemsById[tonumber(itemId) or projectedItem.id] = projectedItem
 		table.insert(projection.itemLibrary, projectedItem)
@@ -1190,6 +1214,7 @@ end
 local calculationInputKeys = {
 	"level",
 	"allocNodes",
+	"passiveNode",
 	"className",
 	"socketGroups",
 	"mainSocketGroup",
@@ -2156,6 +2181,24 @@ function Adapter:projectOfficialItem(item, allowTransientId)
 	return projectItem(item, allowTransientId, type(build) == "table" and build.data or nil, type(build) == "table" and build.itemsTab or nil)
 end
 
+function Adapter:projectOfficialItemTooltip(itemId)
+	if type(itemId) ~= "number" or itemId <= 0 or itemId % 1 ~= 0 then
+		return failure("POB_ITEM_TOOLTIP_ITEM_ID_INVALID", "itemId", "物品 ID 必须是当前官方物品库中的正整数")
+	end
+	local build, incomplete = self:requireLoadedBuild("projectOfficialItemTooltip")
+	if not build then return incomplete end
+	local itemsTab = type(build.itemsTab) == "table" and build.itemsTab or nil
+	local item = type(itemsTab) == "table" and type(itemsTab.items) == "table" and itemsTab.items[itemId] or nil
+	if type(item) ~= "table" then
+		return failure("POB_ITEM_TOOLTIP_NOT_FOUND", "itemId", "官方物品库中不存在该物品")
+	end
+	local tooltip = officialTooltipProjection(itemsTab, item)
+	if type(tooltip) ~= "table" then
+		return failure("POB_ITEM_TOOLTIP_UNAVAILABLE", "itemsTab:AddItemTooltip", "官方 PoB 未返回该物品的原生浮窗")
+	end
+	return { success = true, action = "projectOfficialItemTooltip", data = { itemId = itemId, tooltip = tooltip } }
+end
+
 officialValidTargetSlots = function(itemsTab, item)
 	local result = { equipment = {}, equipmentJewels = {}, jewels = {} }
 	if type(itemsTab) ~= "table" or type(itemsTab.IsItemValidForSlot) ~= "function" then return result end
@@ -2902,7 +2945,7 @@ function Adapter:assignOfficialItem(request)
 	end
 	local exported = self:exportXML()
 	if not exported.success then return self:restoreCalculationSnapshot(snapshot, exported) end
-	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true)
+	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true, nil, request.projectionScope)
 	if not projection then return self:restoreCalculationSnapshot(snapshot, projectionError) end
 	result.data.xml = exported.data.xml
 	result.data.build = projection
@@ -2948,7 +2991,7 @@ function Adapter:deleteOfficialLibraryItem(request)
 	if not calculated then return self:restoreCalculationSnapshot(snapshot, failure("POB_CALCULATION_FAILED", "build.calcsTab:BuildOutput", tostring(calculationError))) end
 	local exported = self:exportXML()
 	if not exported.success then return self:restoreCalculationSnapshot(snapshot, exported) end
-	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true)
+	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true, nil, request.projectionScope)
 	if not projection then return self:restoreCalculationSnapshot(snapshot, projectionError) end
 	return { success = true, action = "deleteOfficialItem", data = { removedItemId = itemId, output = outputScalars(build.calcsTab.mainOutput), xml = exported.data.xml, build = projection } }
 end
@@ -2994,7 +3037,7 @@ function Adapter:commitBuildChanges(request)
 	local changes = type(request) == "table" and request.changes or nil
 	if type(changes) ~= "table" then return failure("POB_BUILD_CHANGE_INVALID", "changes", "必须提供官方可保存的构建修改") end
 	for key in pairs(changes) do
-		if key ~= "level" and key ~= "allocNodes" and key ~= "className" and key ~= "mainSocketGroup" and key ~= "calcsSkillGroup" and key ~= "buffMode" then
+		if key ~= "level" and key ~= "allocNodes" and key ~= "passiveNode" and key ~= "className" and key ~= "mainSocketGroup" and key ~= "calcsSkillGroup" and key ~= "buffMode" then
 			return failure("POB_BUILD_CHANGE_INVALID", "changes."..tostring(key), "不支持的构建修改")
 		end
 	end
@@ -3009,7 +3052,7 @@ function Adapter:commitBuildChanges(request)
 	if not calculated then return self:restoreCalculationSnapshot(snapshot, failure("POB_CALCULATION_FAILED", "build.calcsTab:BuildOutput", tostring(calculationError))) end
 	local exported = self:exportXML()
 	if not exported.success then return self:restoreCalculationSnapshot(snapshot, exported) end
-	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true)
+	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true, nil, request.projectionScope)
 	if not projection then return self:restoreCalculationSnapshot(snapshot, projectionError) end
 	return { success = true, action = "commitBuildChanges", data = { xml = exported.data.xml, build = projection, output = outputScalars(build.calcsTab.mainOutput) } }
 end
@@ -3079,7 +3122,7 @@ function Adapter:commitConfigChange(request)
 	if not calculated then return self:restoreCalculationSnapshot(snapshot, failure("POB_CALCULATION_FAILED", "build.calcsTab:BuildOutput", tostring(calculationError))) end
 	local exported = self:exportXML()
 	if not exported.success then return self:restoreCalculationSnapshot(snapshot, exported) end
-	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true)
+	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true, nil, request.projectionScope)
 	if not projection then return self:restoreCalculationSnapshot(snapshot, projectionError) end
 	return { success = true, action = "commitConfigChange", data = { xml = exported.data.xml, build = projection, output = outputScalars(build.calcsTab.mainOutput) } }
 end
@@ -3201,7 +3244,7 @@ function Adapter:commitSkillChange(request)
 	if not calculated then return reject(failure("POB_CALCULATION_FAILED", "build.calcsTab:BuildOutput", tostring(calculationError))) end
 	local exported = self:exportXML()
 	if not exported.success then return reject(exported) end
-	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true)
+	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true, nil, request.projectionScope)
 	if not projection then return reject(projectionError) end
 	return { success = true, action = "commitSkillChange", data = { xml = exported.data.xml, build = projection, output = outputScalars(build.calcsTab.mainOutput) } }
 end
@@ -3227,7 +3270,36 @@ function Adapter:applyCalculationInputs(build, request)
 	end
 
 	local requestedNodes = request.allocNodes
+	local requestedPassiveNode = request.passiveNode
 	local requestedClassName = request.className
+	if requestedPassiveNode ~= nil then
+		if requestedNodes ~= nil or requestedClassName ~= nil then
+			return nil, unsupportedCalculationInput("passiveNode", "passiveNode cannot be combined with allocNodes or className")
+		end
+		if type(spec) ~= "table" or type(spec.nodes) ~= "table" or type(spec.AllocNode) ~= "function" or type(spec.DeallocNode) ~= "function" then
+			return nil, failure("POB_HEADLESS_API_UNAVAILABLE", "build.spec", "PoB build cannot apply a single passive node change")
+		end
+		if type(requestedPassiveNode) ~= "table" then
+			return nil, unsupportedCalculationInput("passiveNode", "passiveNode must contain a nodeId and allocate flag")
+		end
+		local nodeId = validInteger(requestedPassiveNode.nodeId)
+		local allocate = requestedPassiveNode.allocate
+		local node = nodeId and spec.nodes[nodeId] or nil
+		if not node then return nil, unsupportedCalculationInput("passiveNode.nodeId", "node id is not present in the loaded PoB passive tree") end
+		if type(allocate) ~= "boolean" then return nil, unsupportedCalculationInput("passiveNode.allocate", "allocate must be boolean") end
+		local changed, changeError
+		if allocate and not (node.alloc or type(spec.allocNodes) == "table" and spec.allocNodes[nodeId]) then
+			changed, changeError = pcall(spec.AllocNode, spec, node)
+			if not changed then return nil, failure("POB_PASSIVE_ALLOCATION_FAILED", "build.spec:AllocNode", tostring(changeError)) end
+			if not (node.alloc or type(spec.allocNodes) == "table" and spec.allocNodes[nodeId]) then
+				return nil, failure("POB_PASSIVE_ALLOCATION_FAILED", "build.spec:AllocNode", "PoB rejected the requested passive allocation")
+			end
+		elseif not allocate and (node.alloc or type(spec.allocNodes) == "table" and spec.allocNodes[nodeId]) then
+			changed, changeError = pcall(spec.DeallocNode, spec, node)
+			if not changed then return nil, failure("POB_PASSIVE_DEALLOCATION_FAILED", "build.spec:DeallocNode", tostring(changeError)) end
+		end
+		if type(itemsTab) == "table" and type(itemsTab.UpdateSockets) == "function" then itemsTab:UpdateSockets() end
+	end
 	if requestedNodes ~= nil or requestedClassName ~= nil then
 		if type(spec) ~= "table" or type(spec.ImportFromNodeList) ~= "function" or type(spec.nodes) ~= "table" then
 			return nil, failure("POB_HEADLESS_API_UNAVAILABLE", "build.spec:ImportFromNodeList", "PoB build cannot apply passive tree changes")
@@ -3418,12 +3490,61 @@ function Adapter:calculate(action, request)
 	}
 end
 
+function Adapter:projectCurrentBuild(request)
+	local build, unavailable = self:available()
+	if not build then
+		unavailable.action = "projectCurrentBuild"
+		return unavailable
+	end
+	local projectionScope = normalizeProjectionScope(type(request) == "table" and request.projectionScope or nil)
+	if not projectionScope then return failure("POB_PROJECTION_SCOPE_INVALID", "projectionScope", "projectionScope must be one of full, tree, skills, items, calcs, or config") end
+	local calculated, calculationError = pcall(build.calcsTab.BuildOutput, build.calcsTab)
+	if not calculated then return failure("POB_CALCULATION_FAILED", "build.calcsTab:BuildOutput", tostring(calculationError)) end
+	local projection, projectionError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, true, nil, projectionScope)
+	if not projection then return projectionError end
+	return { success = true, action = "projectCurrentBuild", data = { build = projection, output = outputScalars(build.calcsTab.mainOutput) } }
+end
+
 function Adapter:requireLoadedBuild(action)
 	local build = self:currentBuild()
 	if type(build) ~= "table" or type(build.savers) ~= "table" then
 		return nil, failure("POB_BUILD_LOAD_INCOMPLETE", "build.savers", "PoB requires build conversion or did not finish loading the imported XML")
 	end
 	return build
+end
+
+function Adapter:loadXML(request, action, includeProjection)
+	if type(request.xml) ~= "string" or request.xml == "" then
+		return failure("POB_INVALID_REQUEST", "xml", "xml is required")
+	end
+	local _, unavailable = self:available()
+	if unavailable then
+		unavailable.action = action
+		return unavailable
+	end
+	local ok, err = pcall(self.runtime.loadBuildFromXML, request.xml, request.name or "")
+	if not ok then
+		return failure("POB_BUILD_LOAD_FAILED", "loadBuildFromXML", tostring(err))
+	end
+	local _, incomplete = self:requireLoadedBuild(action)
+	if incomplete then return incomplete end
+	if not includeProjection then
+		-- Mutation endpoints only need the official document to be ready. Their
+		-- subsequent official commit performs the sole BuildOutput and projection.
+		return { success = true, action = action }
+	end
+	local calculated = self:calculate(action)
+	if not calculated.success then return calculated end
+	-- calculate already built the complete official breakdown for this exact
+	-- BuildOutput. Reuse it for the import projection instead of running the
+	-- expensive Tabulate and detailed breakdown traversal a second time.
+	local data, projectionError = projectBuild(self:currentBuild(), request.name, calculated.output, self.runtime, nil, calculated.skillBreakdown)
+	if not data then
+		projectionError.action = action
+		return projectionError
+	end
+	calculated.data = data
+	return calculated
 end
 
 function Adapter:exportXML()
@@ -3466,35 +3587,19 @@ function Adapter:execute(request)
 		return self:calculate(action, request)
 	end
 	if action == "loadXML" then
-		if type(request.xml) ~= "string" or request.xml == "" then
-			return failure("POB_INVALID_REQUEST", "xml", "xml is required")
-		end
-		local _, unavailable = self:available()
-		if unavailable then
-			unavailable.action = action
-			return unavailable
-		end
-		local ok, err = pcall(self.runtime.loadBuildFromXML, request.xml, request.name or "")
-		if not ok then
-			return failure("POB_BUILD_LOAD_FAILED", "loadBuildFromXML", tostring(err))
-		end
-		local _, incomplete = self:requireLoadedBuild(action)
-		if incomplete then return incomplete end
-		local calculated = self:calculate(action)
-		if not calculated.success then return calculated end
-		-- calculate already built the complete official breakdown for this exact
-		-- BuildOutput. Reuse it for the import projection instead of running the
-		-- expensive Tabulate and detailed breakdown traversal a second time.
-		local data, projectionError = projectBuild(self:currentBuild(), request.name, calculated.output, self.runtime, nil, calculated.skillBreakdown)
-		if not data then
-			projectionError.action = action
-			return projectionError
-		end
-		calculated.data = data
-		return calculated
+		return self:loadXML(request, action, true)
+	end
+	if action == "loadXMLForMutation" then
+		return self:loadXML(request, action, false)
+	end
+	if action == "projectCurrentBuild" then
+		return self:projectCurrentBuild(request)
 	end
 	if action == "exportXML" then
 		return self:exportXML()
+	end
+	if action == "projectOfficialItemTooltip" then
+		return self:projectOfficialItemTooltip(request.itemId)
 	end
 	if action == "assignOfficialItem" then
 		return self:assignOfficialItem(request)

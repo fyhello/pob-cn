@@ -66,12 +66,30 @@ export class PoBCoreEngine {
   request(message, { timeoutMs = this.requestTimeoutMs } = {}) {
     if (!this.ready || !this.child) throw new Error('PoB bridge is not ready');
     return new Promise((resolve, reject) => {
-      const pending = { resolve, reject, timer: setTimeout(() => {
+      let payload;
+      try {
+        payload = `${JSON.stringify(message)}\n`;
+      } catch (error) {
+        reject(error);
+        return;
+      }
+      const pending = {
+        resolve,
+        reject,
+        timer: null,
+      };
+      pending.timer = setTimeout(() => {
         this.pending = this.pending.filter(value => value !== pending);
         reject(new Error(`PoB bridge request timed out after ${timeoutMs}ms`));
-      }, timeoutMs) };
+      }, timeoutMs);
       this.pending.push(pending);
-      this.child.stdin.write(`${JSON.stringify(message)}\n`);
+      try {
+        this.child.stdin.write(payload);
+      } catch (error) {
+        clearTimeout(pending.timer);
+        this.pending = this.pending.filter(value => value !== pending);
+        reject(error);
+      }
     });
   }
 

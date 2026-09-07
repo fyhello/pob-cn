@@ -60,7 +60,7 @@
       <button 
         v-for="tab in tabs" 
         :key="tab.id"
-        @click="store.activeTab = tab.id"
+        @click="switchTab(tab.id)"
         :class="[
           'flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-all duration-200',
           store.activeTab === tab.id 
@@ -123,5 +123,9 @@ async function onLevelChange(event: Event) {
   const value = Number((event.target as HTMLInputElement).value);
   if (!Number.isInteger(value) || value < 1 || value > 100) return;
   await store.setLevel(value);
+}
+
+async function switchTab(tab: 'TREE' | 'SKILLS' | 'ITEMS' | 'CALCS' | 'CONFIG') {
+  await store.activateTab(tab);
 }
 </script>

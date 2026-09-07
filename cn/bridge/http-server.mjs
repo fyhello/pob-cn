@@ -73,7 +73,7 @@ export function createBridgeHttpServer(engine) {
       return { success: true, fromCache: true };
     }
     const xml = decodeBuildCode(code);
-    const loaded = await engine.request({ action: 'loadXML', xml, name });
+    const loaded = await engine.request({ action: 'loadXMLForMutation', xml, name });
     if (loaded?.success) {
       activeSession = { fingerprint, revision };
     } else {
@@ -99,6 +99,51 @@ export function createBridgeHttpServer(engine) {
           activeSession = { fingerprint: null, revision: null };
           return send(response, 200, imported);
         }
+      }
+      if (request.method === 'POST' && request.url === '/api/items/tooltip') {
+        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_ITEM_TOOLTIP_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝读取物品浮窗。' } });
+        if (!Number.isInteger(payload.itemId) || payload.itemId <= 0) return send(response, 400, { success: false, error: { code: 'POB_ITEM_TOOLTIP_ITEM_ID_REQUIRED', path: 'itemId', message: '物品 ID 必须是当前官方物品库中的正整数。' } });
+        if (activeSession.revision === null) return send(response, 409, { success: false, error: { code: 'POB_ITEM_TOOLTIP_SESSION_UNAVAILABLE', message: '当前官方 PoB 会话尚未载入，无法读取物品浮窗。' } });
+        if (activeSession.revision !== expectedRevision) return send(response, 409, { success: false, error: { code: 'POB_CANONICAL_REVISION_CONFLICT', message: '当前 PoB 文档已更新，请刷新后再读取物品浮窗。' } });
+        const result = await engine.request({ action: 'projectOfficialItemTooltip', itemId: payload.itemId });
+        if (!result?.success || !result?.data || result.data.itemId !== payload.itemId || typeof result.data.tooltip !== 'object' || result.data.tooltip === null || Array.isArray(result.data.tooltip)) {
+          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_ITEM_TOOLTIP_CONTRACT_INVALID', message: '官方 PoB 未返回完整物品浮窗。' } } : result);
+        }
+        return send(response, 200, {
+          success: true,
+          action: 'projectOfficialItemTooltip',
+          data: {
+            itemId: result.data.itemId,
+            tooltip: result.data.tooltip,
+            sourceRevision: expectedRevision,
+            revision: expectedRevision,
+          },
+        });
+      }
+      if (request.method === 'POST' && request.url === '/api/build/projection') {
+        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_PROJECTION_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，无法读取官方投影。' } });
+        const projectionScope = payload.projectionScope;
+        if (!['tree', 'skills', 'items', 'calcs', 'config'].includes(projectionScope)) {
+          return send(response, 400, { success: false, error: { code: 'POB_PROJECTION_SCOPE_INVALID', message: '投影范围必须是 tree、skills、items、calcs 或 config。' } });
+        }
+        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+        const result = await engine.request({ action: 'projectCurrentBuild', projectionScope, name: payload.name ?? '' });
+        if (!result?.success || !result?.data || typeof result.data.build !== 'object' || result.data.build === null || Array.isArray(result.data.build)) {
+          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_PROJECTION_CONTRACT_INVALID', message: '官方 PoB 未返回指定范围的投影。' } } : result);
+        }
+        return send(response, 200, {
+          success: true,
+          action: 'projectCurrentBuild',
+          data: {
+            build: result.data.build,
+            output: result.data.output,
+            sourceRevision: expectedRevision,
+            revision: expectedRevision,
+          },
+        });
       }
       if (request.method === 'POST' && request.url === '/api/export') {
         const sourceVersion = Number.isInteger(payload.version) && payload.version > 0 ? payload.version : null;
@@ -135,7 +180,9 @@ export function createBridgeHttpServer(engine) {
         const canonicalXML = decodeBuildCode(payload.code);
         const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
         if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const result = await engine.request({ action: 'assignOfficialItem', target: payload.target, itemId: payload.itemId, canonicalXML, name: payload.name ?? '' });
+        const engineRequest = { action: 'assignOfficialItem', target: payload.target, itemId: payload.itemId, canonicalXML, name: payload.name ?? '' };
+        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+        const result = await engine.request(engineRequest);
         if (!result?.success || typeof result?.data?.xml !== 'string') {
           activeSession = { fingerprint: null, revision: null };
           return send(response, 422, result?.success ? { success: false, error: { code: 'POB_ITEM_ASSIGNMENT_XML_MISSING', message: '官方 PoB 未返回物品分配后的文档。' } } : result);
@@ -153,7 +200,9 @@ export function createBridgeHttpServer(engine) {
         const canonicalXML = decodeBuildCode(payload.code);
         const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
         if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const result = await engine.request({ action: 'deleteOfficialItem', itemId: payload.itemId, canonicalXML, name: payload.name ?? '' });
+        const engineRequest = { action: 'deleteOfficialItem', itemId: payload.itemId, canonicalXML, name: payload.name ?? '' };
+        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+        const result = await engine.request(engineRequest);
         if (!result?.success || typeof result?.data?.xml !== 'string') {
           activeSession = { fingerprint: null, revision: null };
           return send(response, 422, result?.success ? { success: false, error: { code: 'POB_ITEM_DELETE_XML_MISSING', message: '官方 PoB 未返回删除后的文档。' } } : result);
@@ -171,7 +220,9 @@ export function createBridgeHttpServer(engine) {
         const canonicalXML = decodeBuildCode(payload.code);
         const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
         if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const result = await engine.request({ action: 'commitBuildChanges', changes: payload.changes, canonicalXML, name: payload.name ?? '' });
+        const engineRequest = { action: 'commitBuildChanges', changes: payload.changes, canonicalXML, name: payload.name ?? '' };
+        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+        const result = await engine.request(engineRequest);
         if (!result?.success || typeof result?.data?.xml !== 'string') {
           activeSession = { fingerprint: null, revision: null };
           return send(response, 422, result?.success ? { success: false, error: { code: 'POB_BUILD_XML_MISSING', message: '官方 PoB 未返回构建修改后的文档。' } } : result);
@@ -188,7 +239,9 @@ export function createBridgeHttpServer(engine) {
         const canonicalXML = decodeBuildCode(payload.code);
         const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
         if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const result = await engine.request({ action: 'commitConfigChange', configSetId: payload.configSetId, variable: payload.variable, value: payload.value, canonicalXML, name: payload.name ?? '' });
+        const engineRequest = { action: 'commitConfigChange', configSetId: payload.configSetId, variable: payload.variable, value: payload.value, canonicalXML, name: payload.name ?? '' };
+        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+        const result = await engine.request(engineRequest);
         if (!result?.success || typeof result?.data?.xml !== 'string') {
           activeSession = { fingerprint: null, revision: null };
           return send(response, 422, result?.success ? { success: false, error: { code: 'POB_CONFIG_XML_MISSING', message: '官方 PoB 未返回战斗配置修改后的文档。' } } : result);
@@ -205,7 +258,9 @@ export function createBridgeHttpServer(engine) {
         const canonicalXML = decodeBuildCode(payload.code);
         const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
         if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const result = await engine.request({ action: 'commitSkillChange', skillSetId: payload.skillSetId, operation: payload.operation, groupIndex: payload.groupIndex, gemIndex: payload.gemIndex, patch: payload.patch, label: payload.label, canonicalXML, name: payload.name ?? '' });
+        const engineRequest = { action: 'commitSkillChange', skillSetId: payload.skillSetId, operation: payload.operation, groupIndex: payload.groupIndex, gemIndex: payload.gemIndex, patch: payload.patch, label: payload.label, canonicalXML, name: payload.name ?? '' };
+        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+        const result = await engine.request(engineRequest);
         if (!result?.success || typeof result?.data?.xml !== 'string') {
           activeSession = { fingerprint: null, revision: null };
           return send(response, 422, result?.success ? { success: false, error: { code: 'POB_SKILL_XML_MISSING', message: '官方 PoB 未返回技能修改后的文档。' } } : result);

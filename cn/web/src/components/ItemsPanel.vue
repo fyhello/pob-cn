@@ -580,7 +580,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useBuildStore } from '../stores/buildStore';
 import { Shield, Box, X, Sparkles, Info, Hammer, Trash2, Wrench } from 'lucide-vue-next';
 import PoEItemTooltip from './PoEItemTooltip.vue';
@@ -867,25 +867,89 @@ function showNotice(text: string, type: 'info' | 'warn' = 'info') {
 const hoveredItem = ref<any>(null);
 const isTooltipVisible = ref(false);
 const mousePos = ref({ x: 0, y: 0 });
+const itemTooltipCache = new Map<string, Record<string, any>>();
+let hoverRequestGeneration = 0;
+let tooltipRequestActive = false;
+let pendingTooltipRequest: { item: any; itemId: number; version: number; generation: number } | null = null;
+
+function clearItemTooltipCache() {
+  hoverRequestGeneration += 1;
+  pendingTooltipRequest = null;
+  itemTooltipCache.clear();
+  isTooltipVisible.value = false;
+  hoveredItem.value = null;
+}
+
+watch(() => store.canonicalBuild?.version, clearItemTooltipCache);
+
+async function loadHoveredItemTooltip() {
+  if (tooltipRequestActive) return;
+  tooltipRequestActive = true;
+  try {
+    while (pendingTooltipRequest) {
+      const request = pendingTooltipRequest;
+      pendingTooltipRequest = null;
+      const cacheKey = `${request.version}:${request.itemId}`;
+      const cachedTooltip = itemTooltipCache.get(cacheKey);
+      const result = cachedTooltip
+        ? { success: true as const, data: { itemId: request.itemId, tooltip: cachedTooltip } }
+        : await store.getOfficialItemTooltip(request.itemId);
+      if (request.generation !== hoverRequestGeneration || request.version !== store.canonicalBuild?.version) {
+        continue;
+      }
+      const tooltipResult = result.data;
+      if (!result.success || !tooltipResult) {
+        if (result.error?.code !== 'POB_CANONICAL_REVISION_CONFLICT') showNotice(result.error?.message ?? '官方 PoB 未返回物品浮窗。', 'warn');
+        continue;
+      }
+      if (!cachedTooltip) itemTooltipCache.set(cacheKey, tooltipResult.tooltip);
+      hoveredItem.value = { ...request.item, tooltip: tooltipResult.tooltip };
+      isTooltipVisible.value = true;
+    }
+  } finally {
+    tooltipRequestActive = false;
+    if (pendingTooltipRequest) void loadHoveredItemTooltip();
+  }
+}
 
 function onHoverItem(item: any, e: MouseEvent) {
+  const canonicalVersion = store.canonicalBuild?.version;
+  const version = typeof canonicalVersion === 'number' && Number.isInteger(canonicalVersion) && canonicalVersion > 0 ? canonicalVersion : null;
+  hoverRequestGeneration += 1;
+  const generation = hoverRequestGeneration;
+  mousePos.value = { x: e.clientX, y: e.clientY };
   if (!item) {
     isTooltipVisible.value = false;
     hoveredItem.value = null;
     return;
   }
-  hoveredItem.value = item;
-  mousePos.value = { x: e.clientX, y: e.clientY };
-  isTooltipVisible.value = true;
+  const itemId = Number(item.id);
+  if (!Number.isInteger(itemId) || itemId <= 0 || version === null) {
+    isTooltipVisible.value = false;
+    hoveredItem.value = null;
+    showNotice('当前物品或官方 PoB 文档版本无效，无法读取浮窗。', 'warn');
+    return;
+  }
+  const cacheKey = `${version}:${itemId}`;
+  const cachedTooltip = itemTooltipCache.get(cacheKey);
+  if (cachedTooltip) {
+    hoveredItem.value = { ...item, tooltip: cachedTooltip };
+    isTooltipVisible.value = true;
+    return;
+  }
+  isTooltipVisible.value = false;
+  hoveredItem.value = null;
+  pendingTooltipRequest = { item, itemId, version, generation };
+  void loadHoveredItemTooltip();
 }
 
 function onMouseMove(e: MouseEvent) {
-  if (isTooltipVisible.value) {
-    mousePos.value = { x: e.clientX, y: e.clientY };
-  }
+  mousePos.value = { x: e.clientX, y: e.clientY };
 }
 
 function onMouseLeave() {
+  hoverRequestGeneration += 1;
+  pendingTooltipRequest = null;
   isTooltipVisible.value = false;
   hoveredItem.value = null;
 }
