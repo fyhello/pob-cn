@@ -321,7 +321,7 @@
                 </div>
                 <div v-if="Array.isArray(previewItem.tooltip.bodyLines) && previewItem.tooltip.bodyLines.length" class="space-y-1 py-0.5 text-xs">
                   <div v-for="(line, index) in previewItem.tooltip.bodyLines" :key="index" class="break-words leading-relaxed text-[#8888ff]">
-                    {{ translateWebItemLine(line) }}
+                    <ItemModifierLine :text="translateWebItemLine(line)" :unsupported="previewItem.tooltip.bodyLineUnsupported?.[index] === true" />
                   </div>
                 </div>
               </div>
@@ -366,6 +366,7 @@ import { computed, reactive, ref, watch, onMounted, onUnmounted, nextTick } from
 import { Clipboard, Code, Hammer, Sparkles } from 'lucide-vue-next';
 import { useBuildStore } from '../stores/buildStore';
 import { translateRuneName, translateWebItemLine, translateWebItemName, translateWebItemType, translateWebText } from '../utils/webTranslation';
+import ItemModifierLine from './ItemModifierLine.vue';
 
 function handleGlobalKeyDown(e: KeyboardEvent) {
   if (e.key === 'Escape' && props.isOpen) {

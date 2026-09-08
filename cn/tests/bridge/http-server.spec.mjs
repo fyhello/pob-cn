@@ -1,13 +1,60 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import test from 'node:test';
-import { createBridgeHttpServer, decodeBuildCode } from '../../bridge/http-server.mjs';
+import { createBridgeHttpServer as createSessionHttpServer, decodeBuildCode } from '../../bridge/http-server.mjs';
+import { BuildSessions } from '../../bridge/build-sessions.mjs';
+
+function createBridgeHttpServer(engine) {
+  engine.close ??= async () => {};
+  const sessions = new BuildSessions({ createEngine: async () => engine });
+  const server = createSessionHttpServer(sessions);
+  server.testSessionId = sessions.create();
+  server.on('close', () => { void sessions.shutdown(); });
+  return server;
+}
 
 async function request(server, path, payload) {
   const port = server.address().port;
-  const response = await fetch(`http://127.0.0.1:${port}${path}`, { method: payload === undefined ? 'GET' : 'POST', headers: { 'content-type': 'application/json' }, body: payload === undefined ? undefined : JSON.stringify(payload) });
+  const response = await fetch(`http://127.0.0.1:${port}${path}`, { method: payload === undefined ? 'GET' : 'POST', headers: { 'content-type': 'application/json', 'x-pob-session': await server.testSessionId }, body: payload === undefined ? undefined : JSON.stringify(payload) });
   return { status: response.status, body: await response.json() };
 }
+
+test('缺失或失效会话不启动核心；同版本同物品 ID 的读请求按网页隔离', async t => {
+  let engines = 0;
+  const sessions = new BuildSessions({ createEngine: async id => {
+    engines++;
+    return { close: async () => {}, request: async message => {
+      if (message.action === 'loadXML') return { success: true, data: { buildName: id } };
+      if (message.action === 'projectOfficialItemTooltip') return { success: true, data: { itemId: message.itemId, tooltip: { header: { title: id }, bodyLines: [] } } };
+      if (message.action === 'calculate') return { success: true, output: { owner: id } };
+      if (message.action === 'projectCurrentBuild') return { success: true, data: { build: { buildName: id } } };
+      throw new Error(`未预期的核心调用：${message.action}`);
+    } };
+  } });
+  const server = createSessionHttpServer(sessions);
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  t.after(async () => { server.close(); await sessions.shutdown(); });
+  const call = async (id, path, data) => {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...(id ? { 'x-pob-session': id } : {}) }, body: JSON.stringify(data) });
+    return response.json();
+  };
+  assert.equal((await call(null, '/api/calculate', {})).error.code, 'POB_SESSION_REQUIRED');
+  assert.equal((await call('invalid', '/api/calculate', {})).error.code, 'POB_SESSION_UNAVAILABLE');
+  assert.equal(engines, 0);
+  const a = await sessions.create();
+  const b = await sessions.create();
+  for (const id of [a, b]) {
+    assert.equal((await call(id, '/api/import', { code: '<PathOfBuilding2/>' })).success, true);
+    assert.equal((await call(id, '/api/items/tooltip', { itemId: 1, expectedRevision: 1 })).data.tooltip.header.title, id);
+    assert.equal((await call(id, '/api/calculate', {})).output.owner, id);
+    assert.equal((await call(id, '/api/build/projection', { code: '<PathOfBuilding2/>', expectedRevision: 1, projectionScope: 'items' })).data.build.buildName, id);
+  }
+  assert.equal(engines, 2);
+  await sessions.close(a);
+  assert.equal((await call(a, '/api/calculate', {})).error.code, 'POB_SESSION_UNAVAILABLE');
+  assert.equal((await call(b, '/api/calculate', {})).output.owner, b);
+});
 
 test('bridge HTTP service returns the engine import data projection unchanged', async t => {
   const calls = [];

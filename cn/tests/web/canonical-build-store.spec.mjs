@@ -17,9 +17,21 @@ async function loadStore(fetch, { useRealPinia = false } = {}) {
   const storage = new Map();
   const identity = value => value;
   const pinia = useRealPinia ? require('pinia') : null;
+  let nextSessionId = 0;
+  const sessionFetch = (url, init) => {
+    if (url === '/api/sessions') return Promise.resolve({ ok: true, json: async () => ({ success: true, sessionId: `test-${++nextSessionId}` }) });
+    if (url === '/api/sessions/close') return Promise.resolve({ ok: true, json: async () => ({ success: true }) });
+    return fetch(url, init);
+  };
+  const bridgeModule = { exports: {} };
+  const bridgeSource = ts.transpileModule(await readFile(new URL('../../web/src/api/bridgeClient.ts', import.meta.url), 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  vm.runInNewContext(bridgeSource, { exports: bridgeModule.exports, module: bridgeModule, fetch: sessionFetch, Error, Object });
   const localRequire = id => {
     if (id === 'pinia') return pinia ?? { defineStore: (storeId, options) => () => {
       const store = { ...options.state(), $id: storeId };
+      store.$reset = () => Object.assign(store, options.state());
       for (const [name, action] of Object.entries(options.actions)) store[name] = action.bind(store);
       return store;
     } };
@@ -33,17 +45,110 @@ async function loadStore(fetch, { useRealPinia = false } = {}) {
       localizeImportedItem: identity,
       localizeImportedSocketGroups: identity,
     };
+    if (id === '../api/bridgeClient') return bridgeModule.exports;
     throw new Error(`Unexpected import: ${id}`);
   };
   vm.runInNewContext(javascript, {
     exports: module.exports, module, require: localRequire, fetch, console, Set, Map, Object, Array, Number, String, Error, Math,
-    localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
+    sessionStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
   });
   if (pinia) pinia.setActivePinia(pinia.createPinia());
   const store = module.exports.useBuildStore();
+  store.sessionId = 'test-initial';
   store.__testStorage = storage;
   return store;
 }
+
+for (const outcome of ['success', 'failure']) test(`切换 BD 后拒绝旧修改的${outcome}响应，取消旧队列且不回滚新天赋`, async () => {
+  for (let round = 0; round < 3; round++) {
+    let release;
+    const mutations = [];
+    const response = value => ({ ok: true, json: async () => value });
+    const store = await loadStore(async (url, request) => {
+      const payload = JSON.parse(request.body);
+      if (url === '/api/import') return response({ success: true, data: {
+        buildName: payload.code, characterLevel: payload.code === 'A' ? 25 : 70,
+        allocNodes: payload.code === 'A' ? [1] : [99], output: { Life: payload.code === 'A' ? 384 : 935 },
+      } });
+      mutations.push(payload);
+      return new Promise(resolve => { release = () => resolve(response(outcome === 'success'
+        ? { success: true, data: { sourceRevision: 1, revision: 2, code: 'A2', build: { characterLevel: 26, allocNodes: [1, 2], output: { Life: 400 } } } }
+        : { success: false, error: { code: 'INJECTED', message: '验证失败' } })); });
+    }, { useRealPinia: true });
+    await store.importBuildFromCode('A');
+    const first = store.toggleNode(2);
+    const queued = store.setLevel(30);
+    await new Promise(resolve => setImmediate(resolve));
+    await store.importBuildFromCode('B');
+    const currentSession = store.sessionId;
+    release();
+    assert.equal((await first).success, false);
+    assert.equal((await queued).error.code, 'POB_DOCUMENT_CHANGED');
+    assert.equal(mutations.length, 1);
+    assert.equal(store.sessionId, currentSession);
+    assert.equal(store.canonicalBuild.code, 'B');
+    assert.equal(store.characterLevel, 70);
+    assert.equal(store.stats.Life, 935);
+    assert.deepEqual([...store.allocatedNodes], [99]);
+    assert.equal(store.isCalculating, false);
+    assert.equal(store.lastCalculationError, null);
+  }
+});
+
+test('当前文档的修改失败显示错误，且不改动官方文档与数值', async () => {
+  for (const outcome of ['response', 'network']) {
+    const store = await loadStore(async url => {
+      if (url === '/api/import') return { ok: true, json: async () => ({ success: true, data: { characterLevel: 40, output: { Life: 500 } } }) };
+      if (outcome === 'network') throw new Error('测试断开连接');
+      return { ok: false, json: async () => ({ success: false, error: { code: 'POB_SESSION_UNAVAILABLE', message: '测试会话已关闭' } }) };
+    });
+    await store.importBuildFromCode('A');
+    const result = await store.setLevel(50);
+    assert.equal(result.success, false);
+    assert.deepEqual(store.lastCalculationError, result.error);
+    assert.equal(store.characterLevel, 40);
+    assert.equal(store.stats.Life, 500);
+    assert.equal(store.canonicalBuild.code, 'A');
+    assert.equal(store.isCalculating, false);
+  }
+});
+
+test('跨 BD 同版本同 ID 的浮窗响应失效，新导入清理旧明细', async () => {
+  let release;
+  const response = value => ({ ok: true, json: async () => value });
+  const store = await loadStore(async (url, request) => {
+    const payload = JSON.parse(request.body);
+    if (url === '/api/import') return response({ success: true, data: {
+      buildName: payload.code, output: { Life: 100 },
+      ...(payload.code === 'A' ? { skillBreakdown: { previous: true }, config: { previous: true } } : {}),
+    } });
+    return new Promise(resolve => { release = () => resolve(response({ success: true, data: { itemId: 1, sourceRevision: 1, revision: 1, tooltip: { name: 'A' } } })); });
+  });
+  await store.importBuildFromCode('A');
+  const tooltip = store.getOfficialItemTooltip(1);
+  await new Promise(resolve => setImmediate(resolve));
+  await store.importBuildFromCode('B');
+  release();
+  assert.equal((await tooltip).success, false);
+  assert.equal(store.skillBreakdown, null);
+  assert.equal(store.config, null);
+  assert.equal(store.projectionVersions.calcs, 0);
+});
+
+test('导入返回坏投影时保留原文档、会话和可恢复草稿', async () => {
+  const response = value => ({ ok: true, json: async () => value });
+  const store = await loadStore(async (_url, request) => {
+    const { code } = JSON.parse(request.body);
+    return response({ success: true, data: code === 'A' ? { buildName: 'A', output: { Life: 100 } } : { equippedItems: { Amulet: { name: '缺少 ID' } } } });
+  });
+  await store.importBuildFromCode('A');
+  const session = store.sessionId;
+  const before = store.__testStorage.get('pob_nextgen_build_state');
+  assert.equal((await store.importBuildFromCode('B')).success, false);
+  assert.equal(store.sessionId, session);
+  assert.equal(store.canonicalBuild.code, 'A');
+  assert.equal(store.__testStorage.get('pob_nextgen_build_state'), before);
+});
 
 test('a level edit commits a new canonical PoB document instead of retaining a local calculation', async () => {
   const calls = [];
@@ -197,7 +302,7 @@ test('已经在技能页时也会刷新过期明细，迟到响应不能覆盖�
   assert.equal(store.canonicalBuild.code, 'new-code');
   assert.equal(store.stats.TotalDPS, 200);
   assert.equal(store.skillBreakdown.dpsPipeline.totalDPS, 200);
-  assert.equal(store.lastCalculationError.code, 'POB_PROJECTION_CONTRACT_INVALID');
+  assert.equal(store.lastCalculationError.code, 'POB_DOCUMENT_CHANGED');
 });
 
 test('canonical reload replaces a stale stored projection before equipment actions need loadout ids', async () => {
@@ -231,7 +336,7 @@ test('canonical reload replaces a stale stored projection before equipment actio
   assert.equal(store.itemLibrary[0].id, 7);
   assert.deepEqual(calls.filter(call => call.url === '/api/import'), [
     { url: '/api/import', payload: { code: 'initial-code' } },
-    { url: '/api/import', payload: { code: 'initial-code' } },
+    { url: '/api/import', payload: { code: 'initial-code', name: 'fixture' } },
   ]);
   assert.equal(calls.some(call => call.url === '/api/calculate'), false);
 });
@@ -461,8 +566,11 @@ test('rapid passive-tree clicks commit in order against the latest canonical rev
 
   await store.importBuildFromCode('initial-code');
   const first = store.toggleNode(101);
+  store.passiveAllocationMode = 1;
   const second = store.toggleNode(102);
+  store.passiveAllocationMode = 2;
   const third = store.toggleNode(103);
+  store.passiveAllocationMode = 0;
   const flush = async () => {
     for (let index = 0; index < 8; index += 1) await Promise.resolve();
   };
@@ -490,9 +598,9 @@ test('rapid passive-tree clicks commit in order against the latest canonical rev
     passiveNode: payload.changes.passiveNode,
     projectionScope: payload.projectionScope,
   })), [
-    { expectedRevision: 1, passiveNode: { nodeId: 101, allocate: true }, projectionScope: 'tree' },
-    { expectedRevision: 2, passiveNode: { nodeId: 102, allocate: true }, projectionScope: 'tree' },
-    { expectedRevision: 3, passiveNode: { nodeId: 103, allocate: true }, projectionScope: 'tree' },
+    { expectedRevision: 1, passiveNode: { nodeId: 101, allocate: true, allocMode: 0 }, projectionScope: 'tree' },
+    { expectedRevision: 2, passiveNode: { nodeId: 102, allocate: true, allocMode: 1 }, projectionScope: 'tree' },
+    { expectedRevision: 3, passiveNode: { nodeId: 103, allocate: true, allocMode: 2 }, projectionScope: 'tree' },
   ]);
 });
 

@@ -1,11 +1,14 @@
 import { defineStore } from 'pinia';
 import { resolveImportOutcome, type ImportOutcome } from './importContract';
 import { localizeImportedBuild, localizeImportedItem, localizeImportedSocketGroups } from '../utils/webTranslation';
+import { bridgeFetch, closeBuildSession, createBuildSession, requestForBuild, staleDocumentError } from '../api/bridgeClient';
 
 export interface CharacterStats {
   Life: number;
   Mana: number;
-  TotalSpirit?: number;
+  Spirit?: number;
+  SpiritUnreserved?: number;
+  SpiritUnreservedPercent?: number;
   TotalEHP: number;
   Str: number;
   Dex: number;
@@ -61,6 +64,8 @@ interface OfficialProjectionState {
   ascendancyName: string;
   characterLevel: number;
   allocatedNodes: Set<number>;
+  allocationModes: Record<number, 0 | 1 | 2>;
+  passiveCounts: Record<string, number> | null;
   itemLibrary: Item[];
   equippedSlots: Record<string, string | number>;
   socketedJewels: Record<number, string | number>;
@@ -98,10 +103,13 @@ function canonicalMutationStoreId(store: object) {
   return id;
 }
 
-function enqueueCanonicalMutation<T>(store: object, work: () => Promise<T>): Promise<T> {
-  const storeId = canonicalMutationStoreId(store);
+export function enqueueCanonicalMutation(store: { $id: string; sessionId: string; documentEpoch: number }, work: () => Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }>) {
+  const epoch = store.documentEpoch;
+  const sessionId = store.sessionId;
+  const storeId = `${canonicalMutationStoreId(store)}:${sessionId}:${epoch}`;
   const previous = canonicalMutationTails.get(storeId) ?? Promise.resolve();
-  const task = previous.then(work, work);
+  const task = previous.then(() => store.documentEpoch === epoch && store.sessionId === sessionId
+    ? work() : { success: false, error: staleDocumentError });
   const tail = task.catch(() => undefined);
   canonicalMutationTails.set(storeId, tail);
   void tail.finally(() => {
@@ -145,6 +153,8 @@ function officialProjectionState(value: Record<string, unknown>): OfficialProjec
     ascendancyName: typeof build.ascendancyName === 'string' ? build.ascendancyName : '',
     characterLevel: Number.isInteger(build.characterLevel) ? build.characterLevel : 1,
     allocatedNodes: new Set(Array.isArray(build.allocNodes) ? build.allocNodes.filter(Number.isInteger) : []),
+    allocationModes: isRecord(build.allocationModes) ? build.allocationModes : {},
+    passiveCounts: isRecord(build.passiveCounts) ? build.passiveCounts : null,
     itemLibrary,
     equippedSlots,
     socketedJewels,
@@ -160,12 +170,21 @@ function officialProjectionState(value: Record<string, unknown>): OfficialProjec
 
 export const useBuildStore = defineStore('build', {
   state: () => ({
+    sessionId: '',
+    documentEpoch: 0,
+    openingSequence: 0,
+    isOpening: false,
+    savedBuild: null as { id: string; version: number; code: string; name: string } | null,
+    storageError: '',
     buildName: '未命名流派配置',
     className: 'Sorceress',
     ascendancyName: 'Chronomancer',
     characterLevel: 90,
     activeTab: 'TREE' as 'TREE' | 'SKILLS' | 'ITEMS' | 'CALCS' | 'CONFIG' | 'IMPORT',
     allocatedNodes: new Set<number>(),
+    allocationModes: {} as Record<number, 0 | 1 | 2>,
+    passiveCounts: null as Record<string, number> | null,
+    passiveAllocationMode: 0 as 0 | 1 | 2,
 
     // 1. 流派物品与珠宝总库 (Item & Jewel Library)
     itemLibrary: [] as Item[],
@@ -180,7 +199,6 @@ export const useBuildStore = defineStore('build', {
     stats: {
       Life: 0,
       Mana: 0,
-      TotalSpirit: 0,
       TotalEHP: 0,
       Str: 0,
       Dex: 0,
@@ -249,7 +267,9 @@ export const useBuildStore = defineStore('build', {
       return this.commitOfficialBuildChanges({ level });
     },
     async toggleNode(nodeId: number) {
+      const allocMode = this.passiveAllocationMode;
       return enqueueCanonicalMutation(this, async () => {
+        const epoch = this.documentEpoch;
         // Read both the visible allocation and canonical document only after
         // earlier clicks have settled. This makes each request use the latest
         // revision/code and preserves every successful click in order.
@@ -259,8 +279,8 @@ export const useBuildStore = defineStore('build', {
         else next.add(nodeId);
         this.allocatedNodes = next;
 
-        const result = await this.commitCanonicalMutationNow('/api/build/commit', { changes: { passiveNode: { nodeId, allocate: !prev.has(nodeId) } } }, 'POB_BUILD_COMMIT_FAILED', '官方 PoB 未返回可提交的构建修改结果。');
-        if (!result.success) {
+        const result = await this.commitCanonicalMutationNow('/api/build/commit', { changes: { passiveNode: { nodeId, allocate: !prev.has(nodeId), allocMode } } }, 'POB_BUILD_COMMIT_FAILED', '官方 PoB 未返回可提交的构建修改结果。');
+        if (!result.success && this.documentEpoch === epoch) {
           this.allocatedNodes = prev;
         }
         return result;
@@ -268,20 +288,37 @@ export const useBuildStore = defineStore('build', {
     },
 
     async importBuildFromCode(codeText: string): Promise<ImportOutcome> {
-      this.isCalculating = true;
+      return this.openDocument(codeText);
+    },
+
+    async openDocument(codeText?: string, name = ''): Promise<ImportOutcome> {
+      const sequence = ++this.openingSequence;
+      this.isOpening = true;
       this.lastImportError = null;
-      this.lastCalculationError = null;
+      let sessionId = '';
       try {
-        const response = await fetch('/api/import', {
+        sessionId = await createBuildSession();
+        const response = await bridgeFetch(sessionId, codeText === undefined ? '/api/new' : '/api/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: codeText })
+          body: JSON.stringify({ code: codeText, ...(name ? { name } : {}) })
         });
         const res = await response.json();
         const outcome = resolveImportOutcome(response.ok, res);
+        if (sequence !== this.openingSequence) return { success: false, error: staleDocumentError };
         if (outcome.success) {
-          this.applyOfficialProjection(outcome.data, { version: 1, code: codeText.trim() });
+          const canonicalCode = codeText === undefined ? res.code : codeText.trim();
+          if (typeof canonicalCode !== 'string' || !canonicalCode.trim()) throw new Error('官方核心未返回新文档。');
+          const projection = officialProjectionState(outcome.data);
+          const previousSession = this.sessionId;
+          const epoch = this.documentEpoch + 1;
+          this.$reset();
+          this.sessionId = sessionId;
+          this.documentEpoch = epoch;
+          this.openingSequence = sequence;
+          this.applyOfficialProjection(outcome.data, { version: 1, code: canonicalCode }, projection);
           this.bridgeCanonicalVersion = 1;
+          void closeBuildSession(previousSession).catch(error => console.warn(error));
           return outcome;
         }
         this.lastImportError = outcome.error;
@@ -289,11 +326,27 @@ export const useBuildStore = defineStore('build', {
       } catch (e) {
         console.error("Import request failed:", e);
         const error = { code: 'POB_IMPORT_REQUEST_FAILED', message: e instanceof Error ? e.message : '导入请求失败。' };
-        this.lastImportError = error;
+        if (sequence === this.openingSequence) this.lastImportError = error;
         return { success: false, error };
       } finally {
-        this.isCalculating = false;
+        if (sessionId && this.sessionId !== sessionId) void closeBuildSession(sessionId).catch(error => console.warn(error));
+        if (sequence === this.openingSequence) this.isOpening = false;
       }
+    },
+
+    closeDocument() {
+      const sessionId = this.sessionId;
+      const epoch = this.documentEpoch + 1;
+      const sequence = this.openingSequence + 1;
+      this.$reset();
+      this.documentEpoch = epoch;
+      this.openingSequence = sequence;
+      try { sessionStorage.removeItem('pob_nextgen_build_state'); }
+      catch (error) {
+        this.storageError = '浏览器未能清除当前网页草稿，刷新可能重新打开旧草稿。';
+        console.warn(this.storageError, error);
+      }
+      void closeBuildSession(sessionId).catch(error => console.warn(error));
     },
 
     async selectCalculationSkillGroup(idx: number) {
@@ -304,14 +357,16 @@ export const useBuildStore = defineStore('build', {
       return this.commitOfficialBuildChanges({ buffMode: mode });
     },
 
-    applyOfficialProjection(data: Record<string, unknown>, document: CanonicalBuildDocument) {
+    applyOfficialProjection(data: Record<string, unknown>, document: CanonicalBuildDocument, prepared?: OfficialProjectionState) {
       if (!Number.isInteger(document.version) || document.version < 1 || typeof document.code !== 'string' || !document.code.trim()) throw new Error('官方 PoB 文档版本或分享代码无效。');
-      const next = officialProjectionState(data);
-      this.buildName = next.buildName;
+      const next = prepared ?? officialProjectionState(data);
+      if (!this.canonicalBuild) this.buildName = next.buildName;
       if (next.className) this.className = next.className;
-      if (next.ascendancyName) this.ascendancyName = next.ascendancyName;
+      this.ascendancyName = next.ascendancyName;
       this.characterLevel = next.characterLevel;
       this.allocatedNodes = next.allocatedNodes;
+      this.allocationModes = next.allocationModes;
+      this.passiveCounts = next.passiveCounts;
       this.itemLibrary = next.itemLibrary;
       this.equippedSlots = next.equippedSlots;
       this.socketedJewels = next.socketedJewels;
@@ -336,11 +391,12 @@ export const useBuildStore = defineStore('build', {
       this.saveToStorage();
     },
 
-    async commitCanonicalMutation(path: '/api/build/commit' | '/api/config/commit' | '/api/skills/commit' | '/api/items/remove', payload: Record<string, unknown>, fallbackCode: string, fallbackMessage: string): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
+    async commitCanonicalMutation(path: '/api/build/commit' | '/api/config/commit' | '/api/skills/commit' | '/api/items/remove' | '/api/items/from-pool' | '/api/items/from-text', payload: Record<string, unknown>, fallbackCode: string, fallbackMessage: string): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
       return enqueueCanonicalMutation(this, () => this.commitCanonicalMutationNow(path, payload, fallbackCode, fallbackMessage));
     },
 
-    async commitCanonicalMutationNow(path: '/api/build/commit' | '/api/config/commit' | '/api/skills/commit' | '/api/items/remove', payload: Record<string, unknown>, fallbackCode: string, fallbackMessage: string): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
+    async commitCanonicalMutationNow(path: '/api/build/commit' | '/api/config/commit' | '/api/skills/commit' | '/api/items/remove' | '/api/items/from-pool' | '/api/items/from-text', payload: Record<string, unknown>, fallbackCode: string, fallbackMessage: string): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
+      const epoch = this.documentEpoch;
       // Read the document only when this queued mutation starts. Earlier
       // requests may have advanced the canonical revision while this one
       // was waiting, so capturing it before enqueueing causes conflicts.
@@ -352,7 +408,7 @@ export const useBuildStore = defineStore('build', {
       try {
         const projectionScope = projectionScopeForTab(this.activeTab);
         const body = JSON.stringify({ code: document.code, expectedRevision: document.version, projectionScope, ...payload });
-        const response = await fetch(path, {
+        const response = await requestForBuild(this, path, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body,
         });
@@ -360,14 +416,17 @@ export const useBuildStore = defineStore('build', {
         const data = result?.data;
         if (!response.ok || result?.success !== true || !isRecord(data) || typeof data.code !== 'string' || !Number.isInteger(data.revision) || !isRecord(data.build) || data.sourceRevision !== document.version || data.revision !== document.version + 1) {
           const error = result?.error;
-          return { success: false, error: { code: typeof error?.code === 'string' ? error.code : fallbackCode, message: typeof error?.message === 'string' ? error.message : fallbackMessage } };
+          this.lastCalculationError = { code: typeof error?.code === 'string' ? error.code : fallbackCode, message: typeof error?.message === 'string' ? error.message : fallbackMessage };
+          return { success: false, error: this.lastCalculationError };
         }
         this.applyOfficialProjection(data.build, { code: data.code, version: data.revision });
         return { success: true, data };
       } catch (error) {
-        return { success: false, error: { code: `${fallbackCode}_REQUEST_FAILED`, message: error instanceof Error ? error.message : '无法连接官方 PoB 服务。' } };
+        const failure = { code: `${fallbackCode}_REQUEST_FAILED`, message: error instanceof Error ? error.message : '无法连接官方 PoB 服务。' };
+        if (this.documentEpoch === epoch) this.lastCalculationError = failure;
+        return { success: false, error: failure };
       } finally {
-        this.isCalculating = false;
+        if (this.documentEpoch === epoch) this.isCalculating = false;
       }
     },
 
@@ -388,21 +447,24 @@ export const useBuildStore = defineStore('build', {
     },
 
     async activateTab(tab: 'TREE' | 'SKILLS' | 'ITEMS' | 'CALCS' | 'CONFIG') {
+      const epoch = this.documentEpoch;
       const scope = projectionScopeForTab(tab);
       const detailScope = scope === 'skills' ? 'calcs' : scope;
       if ((detailScope === 'calcs' || detailScope === 'config') && !await this.ensureProjection(detailScope)) return false;
+      if (this.documentEpoch !== epoch) return false;
       this.activeTab = tab;
       return true;
     },
 
     async ensureProjection(scope: 'calcs' | 'config') {
+      const epoch = this.documentEpoch;
       const document = this.canonicalBuild;
       if (!document || this.projectionVersions[scope] === document.version) return true;
       if (this.isCalculating) return false;
       this.isCalculating = true;
       this.lastCalculationError = null;
       try {
-        const response = await fetch('/api/build/projection', {
+        const response = await requestForBuild(this, '/api/build/projection', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code: document.code, expectedRevision: document.version, projectionScope: scope }),
@@ -423,24 +485,30 @@ export const useBuildStore = defineStore('build', {
         this.applyOfficialProjection(data.build, document);
         return this.projectionVersions[scope] === document.version;
       } catch (error) {
+        if (this.documentEpoch !== epoch) return false;
         this.lastCalculationError = {
-          code: 'POB_PROJECTION_REQUEST_FAILED',
+          code: (error as { code?: string })?.code ?? 'POB_PROJECTION_REQUEST_FAILED',
           message: error instanceof Error ? error.message : '无法连接官方 PoB 投影服务。',
         };
         return false;
       } finally {
-        this.isCalculating = false;
+        if (this.documentEpoch === epoch) this.isCalculating = false;
       }
     },
 
     async selectOfficialLoadout(selection: { specId: number; itemSetId: number; skillSetId: number; configSetId: number }): Promise<{ success: boolean; error?: { code: string; message: string } }> {
+      return enqueueCanonicalMutation(this, () => this.selectOfficialLoadoutNow(selection));
+    },
+
+    async selectOfficialLoadoutNow(selection: { specId: number; itemSetId: number; skillSetId: number; configSetId: number }): Promise<{ success: boolean; error?: { code: string; message: string } }> {
+      const epoch = this.documentEpoch;
       const document = this.canonicalBuild;
       if (!document) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_MISSING', message: '当前内容尚未保存为官方 PoB 文档。' } };
       if (this.hasUnsavedLocalEdits) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_DIRTY', message: '当前本地编辑尚未写入官方 PoB 文档，无法切换 Loadout。' } };
       this.isCalculating = true;
       this.lastCalculationError = null;
       try {
-        const response = await fetch('/api/loadouts/select', {
+        const response = await requestForBuild(this, '/api/loadouts/select', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code: document.code, expectedRevision: document.version, selection }),
         });
@@ -455,7 +523,7 @@ export const useBuildStore = defineStore('build', {
       } catch (error) {
         return { success: false, error: { code: 'POB_LOADOUT_SWITCH_REQUEST_FAILED', message: error instanceof Error ? error.message : '无法连接官方 PoB 服务。' } };
       } finally {
-        this.isCalculating = false;
+        if (this.documentEpoch === epoch) this.isCalculating = false;
       }
     },
 
@@ -464,6 +532,7 @@ export const useBuildStore = defineStore('build', {
     },
 
     async commitOfficialItemAssignmentNow(target: { kind?: 'equipment'; itemSetId: number; slotName: string } | { kind: 'jewel'; specId: number; nodeId: number }, itemId: number | null): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
+      const epoch = this.documentEpoch;
       const document = this.canonicalBuild;
       if (!document) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_MISSING', message: '当前内容尚未保存为官方 PoB 文档。' } };
       if (this.hasUnsavedLocalEdits) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_DIRTY', message: '当前本地编辑尚未写入官方 PoB 文档，无法分配物品。' } };
@@ -472,7 +541,7 @@ export const useBuildStore = defineStore('build', {
       try {
         const projectionScope = projectionScopeForTab(this.activeTab);
         const body = JSON.stringify({ code: document.code, expectedRevision: document.version, target, itemId, projectionScope });
-        const response = await fetch('/api/items/assign', {
+        const response = await requestForBuild(this, '/api/items/assign', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body,
         });
@@ -487,7 +556,7 @@ export const useBuildStore = defineStore('build', {
       } catch (error) {
         return { success: false, error: { code: 'POB_ITEM_ASSIGNMENT_REQUEST_FAILED', message: error instanceof Error ? error.message : '无法连接官方 PoB 服务。' } };
       } finally {
-        this.isCalculating = false;
+        if (this.documentEpoch === epoch) this.isCalculating = false;
       }
     },
 
@@ -513,7 +582,7 @@ export const useBuildStore = defineStore('build', {
       if (this.bridgeCanonicalVersion !== document.version) return { success: false, error: { code: 'POB_ITEM_TOOLTIP_SESSION_UNAVAILABLE', message: '当前官方 PoB 会话尚未载入，无法读取物品浮窗。' } };
       try {
         const body = JSON.stringify({ expectedRevision: document.version, itemId });
-        const response = await fetch('/api/items/tooltip', {
+        const response = await requestForBuild(this, '/api/items/tooltip', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body,
         });
@@ -534,7 +603,7 @@ export const useBuildStore = defineStore('build', {
       if (!document) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_MISSING', message: '当前内容尚未保存为官方 PoB 文档。' } };
       if (this.hasUnsavedLocalEdits) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_DIRTY', message: '当前本地编辑尚未写入官方 PoB 文档，无法读取制作选项。' } };
       try {
-        const response = await fetch('/api/crafting/options', {
+        const response = await requestForBuild(this, '/api/crafting/options', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code: document.code, expectedRevision: document.version, ...input }),
@@ -558,7 +627,7 @@ export const useBuildStore = defineStore('build', {
       if (!document) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_MISSING', message: '当前内容尚未保存为官方 PoB 文档。' } };
       if (this.hasUnsavedLocalEdits) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_DIRTY', message: '当前本地编辑尚未写入官方 PoB 文档，无法读取制作目录。' } };
       try {
-        const response = await fetch('/api/crafting/catalog', {
+        const response = await requestForBuild(this, '/api/crafting/catalog', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code: document.code, expectedRevision: document.version, query }),
         });
@@ -581,17 +650,18 @@ export const useBuildStore = defineStore('build', {
     },
 
     async commitOfficialCraft(action: 'create' | 'edit' | 'duplicate', target: OfficialItemTarget | null, draft: Record<string, unknown>, sourceItemId?: number): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
-      return this.runOfficialCraft('/api/items/commit', action, target, draft, true, sourceItemId);
+      return enqueueCanonicalMutation(this, () => this.runOfficialCraft('/api/items/commit', action, target, draft, true, sourceItemId));
     },
 
     async runOfficialCraft(path: '/api/items/preview' | '/api/items/commit', action: 'create' | 'edit' | 'duplicate', target: OfficialItemTarget | null, draft: Record<string, unknown>, commit: boolean, sourceItemId?: number): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
+      const epoch = this.documentEpoch;
       const document = this.canonicalBuild;
       if (!document) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_MISSING', message: '当前内容尚未保存为官方 PoB 文档。' } };
       if (this.hasUnsavedLocalEdits) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_DIRTY', message: '当前本地编辑尚未写入官方 PoB 文档，无法制作物品。' } };
       this.isCalculating = true;
       this.lastCalculationError = null;
       try {
-        const response = await fetch(path, {
+        const response = await requestForBuild(this, path, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code: document.code, expectedRevision: document.version, action, sourceItemId, target, draft }),
         });
@@ -615,7 +685,7 @@ export const useBuildStore = defineStore('build', {
       } catch (error) {
         return { success: false, error: { code: 'POB_CRAFT_REQUEST_FAILED', message: error instanceof Error ? error.message : '无法连接官方 PoB 服务。' } };
       } finally {
-        this.isCalculating = false;
+        if (this.documentEpoch === epoch) this.isCalculating = false;
       }
     },
 
@@ -624,16 +694,18 @@ export const useBuildStore = defineStore('build', {
         // Browser recovery deliberately trusts only the canonical PoB document.
         // Persisting the full projection was unused on restore and blocked the
         // main thread after every official item transaction.
-        const payload = { canonicalBuild: this.canonicalBuild };
-        localStorage.setItem('pob_nextgen_build_state', JSON.stringify(payload));
+        const payload = { canonicalBuild: this.canonicalBuild, buildName: this.buildName, savedBuild: this.savedBuild };
+        sessionStorage.setItem('pob_nextgen_build_state', JSON.stringify(payload));
+        this.storageError = '';
       } catch (e) {
-        console.warn("Save to localStorage failed:", e);
+        this.storageError = '当前网页草稿保存失败，刷新前请先保存到存档库。';
+        console.warn(this.storageError, e);
       }
     },
 
     loadFromStorage() {
       try {
-        const raw = localStorage.getItem('pob_nextgen_build_state');
+        const raw = sessionStorage.getItem('pob_nextgen_build_state');
         if (raw) {
           const d = JSON.parse(raw);
           if (d.canonicalBuild && typeof d.canonicalBuild === 'object'
@@ -641,6 +713,9 @@ export const useBuildStore = defineStore('build', {
             && typeof d.canonicalBuild.code === 'string' && d.canonicalBuild.code.trim()) {
             this.canonicalBuild = { version: d.canonicalBuild.version, code: d.canonicalBuild.code };
             this.bridgeCanonicalVersion = 0;
+            this.buildName = typeof d.buildName === 'string' ? d.buildName : this.buildName;
+            if (d.savedBuild && typeof d.savedBuild.id === 'string' && Number.isInteger(d.savedBuild.version)
+              && typeof d.savedBuild.code === 'string' && typeof d.savedBuild.name === 'string') this.savedBuild = d.savedBuild;
           }
           // Browser projections from older clients may contain fabricated or
           // stale results. Restore only the official document, then replace
@@ -648,11 +723,13 @@ export const useBuildStore = defineStore('build', {
           this.hasUnsavedLocalEdits = false;
         }
       } catch (e) {
-        console.warn("Load from localStorage failed:", e);
+        this.storageError = '当前网页草稿无法读取，原始草稿仍保留在浏览器中。';
+        console.warn(this.storageError, e);
       }
     },
 
     async recalculate() {
+      const epoch = this.documentEpoch;
       this.isCalculating = true;
       this.lastCalculationError = null;
       try {
@@ -663,7 +740,7 @@ export const useBuildStore = defineStore('build', {
         // result already. Avoid immediately running the same calculation a
         // second time after a browser refresh or bridge restart.
         if (bridgeSessionMissing) return;
-        const response = await fetch('/api/calculate', {
+        const response = await requestForBuild(this, '/api/calculate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
@@ -672,6 +749,7 @@ export const useBuildStore = defineStore('build', {
         try {
           data = await response.json();
         } catch {
+          if (this.documentEpoch !== epoch) return;
           this.lastCalculationError = {
             code: 'POB_CALC_RESPONSE_INVALID',
             message: '官方 PoB 计算服务返回了无法识别的响应。'
@@ -711,14 +789,17 @@ export const useBuildStore = defineStore('build', {
           this.buffMode = rawBuffMode;
         }
       } catch (e) {
+        if (this.documentEpoch !== epoch) return;
         console.warn("Recalculate failed:", e);
         this.lastCalculationError = {
           code: 'POB_CALC_REQUEST_FAILED',
           message: e instanceof Error && e.message ? e.message.slice(0, 240) : '无法连接官方 PoB 计算服务。'
         };
       } finally {
-        this.saveToStorage();
-        this.isCalculating = false;
+        if (this.documentEpoch === epoch) {
+          this.saveToStorage();
+          this.isCalculating = false;
+        }
       }
     },
 
@@ -733,12 +814,10 @@ export const useBuildStore = defineStore('build', {
       }
       if (this.bridgeCanonicalVersion === document.version) return true;
       try {
-        const response = await fetch('/api/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: document.code })
-        });
-        const outcome = resolveImportOutcome(response.ok, await response.json());
+        const savedBuild = this.savedBuild;
+        const sequence = this.openingSequence + 1;
+        const outcome = await this.openDocument(document.code, this.buildName);
+        if (sequence !== this.openingSequence) return false;
         if (!outcome.success) {
           this.lastCalculationError = {
             code: outcome.error.code,
@@ -746,14 +825,8 @@ export const useBuildStore = defineStore('build', {
           };
           return false;
         }
-        // A browser restart may restore an older local projection that has no
-        // Loadout IDs. Refresh it from the same canonical XML before allowing
-        // item actions. Dirty edits intentionally keep their local view.
-        if (!this.hasUnsavedLocalEdits) {
-          this.applyOfficialProjection(outcome.data, { version: 1, code: document.code });
-        } else {
-          this.canonicalBuild = { version: 1, code: document.code };
-        }
+        this.savedBuild = savedBuild;
+        this.saveToStorage();
         this.bridgeCanonicalVersion = 1;
         return true;
       } catch (e) {
@@ -786,7 +859,7 @@ export const useBuildStore = defineStore('build', {
         };
       }
       try {
-        const response = await fetch('/api/export', {
+        const response = await requestForBuild(this, '/api/export', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code: document.code, version: document.version })

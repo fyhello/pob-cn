@@ -86,6 +86,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useBuildStore } from '../stores/buildStore';
+import { useLibraryStore } from '../stores/libraryStore';
 import { Download, X, Copy, Check } from 'lucide-vue-next';
 
 const emit = defineEmits(['close']);
@@ -105,6 +106,7 @@ onUnmounted(() => {
 });
 
 const store = useBuildStore();
+const library = useLibraryStore();
 const activeMode = ref<'IMPORT' | 'EXPORT'>('IMPORT');
 const importCode = ref('');
 const exportCode = ref('');
@@ -145,6 +147,7 @@ function copyExportCode() {
 }
 
 async function doImport() {
+  if (library.busy || !library.confirmDiscard()) return;
   const code = importCode.value.trim();
   if (!code) {
     importStatus.value = '请输入有效的 PoB 导入代码！';

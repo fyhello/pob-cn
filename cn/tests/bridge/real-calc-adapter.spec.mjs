@@ -61,7 +61,7 @@ test('calls only the HeadlessWrapper build APIs and returns calculated mainOutpu
       spec = {
         curClassName = "Sorceress",
         curAscendClassName = "Chronomancer",
-        allocNodes = { [123] = true },
+        allocNodes = { [123] = { allocMode = 0 } },
         jewels = {},
       },
       treeTab = { specList = { {} } },
@@ -264,8 +264,8 @@ test('projects only official visible equipment slots', async () => {
 
 test('projects every official passive tree, equipment set, skill set, and active loadout ids', async () => {
   const result = await runLua(`
-    local firstSpec = { title = "Default", curClassName = "Sorceress", allocNodes = { [101] = true }, jewels = {} }
-    local secondSpec = { title = "Boss", curClassName = "Sorceress", allocNodes = { [202] = true }, jewels = {} }
+    local firstSpec = { title = "Default", curClassName = "Sorceress", allocNodes = { [101] = { allocMode = 1 } }, jewels = {} }
+    local secondSpec = { title = "Boss", curClassName = "Sorceress", allocNodes = { [202] = { allocMode = 2 } }, jewels = {} }
     local firstSet = { id = 10, title = "Default", ["Weapon 1"] = { selItemId = 1 } }
     local secondSet = { id = 20, title = "Boss", ["Weapon 1"] = { selItemId = 2 } }
     local firstSkills = { id = 30, title = "Default", socketGroupList = { { label = "Clear", enabled = true, includeInFullDPS = true, gemList = {} } } }
@@ -316,6 +316,8 @@ test('projects every official passive tree, equipment set, skill set, and active
     assert(loadouts.itemSets[2].equippedItems["Weapon 1"].id == 2)
     assert(response.data.equippedItems["Weapon 1"].id == 2)
     assert(response.data.allocNodes[1] == 202)
+    assert(response.data.allocationModes['202'] == 2)
+    assert(response.data.loadouts.passiveTrees[1].allocationModes['101'] == 1)
     local switched = adapter:execute({ action = "selectLoadout", selection = { specId = 1, itemSetId = 10, skillSetId = 30, configSetId = 50 } })
     assert(switched.success == true)
     assert(switched.data.xml:find("saved", 1, true))
@@ -393,6 +395,7 @@ test('restores the supplied canonical XML when a committed build change fails', 
     local restoredXML, restoredName, saved = nil, nil, false
     local canonicalXML = "<PathOfBuilding2><Build canonical='rollback' /></PathOfBuilding2>"
     local build = {
+      savers = {},
       calcsTab = {
         input = { misc_buffMode = "EFFECTIVE" },
         BuildOutput = function() error("fixture calculation failure") end,
@@ -652,7 +655,7 @@ test('commits existing official item assignments, clears slots, rejects invalid 
       local secondSet = { id = 2, title = "Boss", ["Weapon 1"] = { selItemId = secondItemId } }
       local weaponSlot = { slotName = "Weapon 1", selItemId = firstItemId }
       local firstSpec = { title = "Default", curClassName = "Sorceress", allocNodes = {}, jewels = {} }
-      local secondSpec = { title = "Boss", curClassName = "Sorceress", allocNodes = { [200] = true }, jewels = { [200] = secondJewelId } }
+      local secondSpec = { title = "Boss", curClassName = "Sorceress", allocNodes = { [200] = { allocMode = 0 } }, jewels = { [200] = secondJewelId } }
       local build = { savers = {}, buildName = "Fixture", characterLevel = 90, spec = firstSpec }
       local jewelSlot = { nodeId = 200, slotName = "Jewel 200", selItemId = 0 }
       local itemsTab = {
@@ -833,6 +836,45 @@ test('defers dynamic item comparison tooltips until a single official item is ex
   const adapter = await readFile(adapterPath, 'utf8');
   assert.match(adapter, /projectItem\(item, nil, build\.data, itemsTab, false\)/);
   assert.match(adapter, /function Adapter:projectOfficialItemTooltip\(itemId\)/);
+});
+
+test('未支持状态按官方行序透传，不按相同文字或颜色剥离后的文本推断', async () => {
+  const result = await runLua(`
+    colorCodes = { UNSUPPORTED = "^xF05050" }
+    local item = {
+      id = 7, title = "Test", baseName = "Amulet", base = { name = "Amulet", type = "Amulet" },
+      explicitModLines = {
+        { line = "Same words", extra = "unknown" },
+        { line = "Same words" },
+        { line = "Hidden variant", extra = "unknown", variantList = { [2] = true } },
+        { line = "First line\\nSecond line", extra = "unknown" },
+      },
+      buffModLines = { { line = "Unsupported buff", extra = "unknown" } },
+      CheckModLineVariant = function(_, line) return not line.variantList or line.variantList[1] end,
+    }
+    local build = { itemsTab = { items = { [7] = item }, AddItemTooltip = function(_, tooltip)
+      tooltip:AddLine(14, "Test")
+      tooltip:AddLine(14, "Amulet")
+      tooltip:AddLine(14, colorCodes.UNSUPPORTED .. "Same words")
+      tooltip:AddLine(14, "^x8888ffSame words")
+      tooltip:AddLine(14, colorCodes.UNSUPPORTED .. "First line\\nSecond line")
+    end } }
+    local adapter = Adapter.new({ build = build, newBuild = function() end })
+    local projected = assert(adapter:projectOfficialItem(item))
+    assert(#projected.displayLines == #projected.displayLineUnsupported)
+    assert(#projected.displayLines == 6)
+    assert(projected.displayLineUnsupported[3] == true)
+    assert(projected.displayLineUnsupported[4] == false)
+    assert(projected.displayLineUnsupported[5] == true)
+    assert(projected.displayLineUnsupported[6] == true)
+    assert(#projected.unparsedLines == 3)
+    assert(projected.tooltip.bodyLineUnsupported[1] == true)
+    assert(projected.tooltip.bodyLineUnsupported[2] == false)
+    assert(projected.tooltip.bodyLineUnsupported[3] == true)
+    assert(projected.tooltip.bodyLines[1] == projected.tooltip.bodyLines[2])
+    return "ok"
+  `);
+  assert.equal(result, 'ok');
 });
 
 test('fails closed when the official loader leaves a build awaiting conversion', async () => {

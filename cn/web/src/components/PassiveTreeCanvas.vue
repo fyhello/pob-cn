@@ -12,12 +12,21 @@
     ></canvas>
 
     <!-- 顶部画布操作悬浮条 -->
-    <div class="absolute top-4 left-4 z-10 flex items-center space-x-3 glass-panel p-2 rounded-lg border border-poe-border/80 shadow-2xl">
+    <div class="absolute top-4 left-4 right-4 z-10 flex flex-wrap items-center gap-3 w-fit max-w-[calc(100%-2rem)] glass-panel p-2 rounded-lg border border-poe-border/80 shadow-2xl">
       <div class="flex items-center space-x-1.5 px-2 border-r border-poe-border/50 text-xs">
-        <span class="text-gray-400">已分配天赋点:</span>
-        <span class="font-bold font-mono text-poe-gold text-sm">{{ store.allocatedNodes.size }}</span>
-        <span class="text-gray-500">/ 123</span>
+        <span class="text-gray-400">已分配（含两组）:</span>
+        <span class="font-bold font-mono text-poe-gold text-sm">{{ store.passiveCounts?.used ?? '' }}</span>
+        <span class="text-red-400">I: {{ store.passiveCounts?.weaponSet1 ?? '' }}</span>
+        <span class="text-green-400">II: {{ store.passiveCounts?.weaponSet2 ?? '' }}</span>
+        <span class="text-gray-400">升华: {{ store.passiveCounts?.ascendancy ?? '' }}</span>
       </div>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="text-gray-400">分配模式</span>
+        <div class="flex overflow-hidden rounded border border-white/20" role="group" aria-label="天赋分配模式">
+          <button v-for="mode in ([0, 1, 2] as const)" :key="mode" :aria-pressed="store.passiveAllocationMode === mode" :class="[mode === 1 ? 'text-red-400' : mode === 2 ? 'text-green-400' : 'text-poe-gold', store.passiveAllocationMode === mode ? 'bg-white/15' : 'hover:bg-white/5']" class="h-8 w-12" @click="store.passiveAllocationMode = mode">{{ mode === 0 ? '公用' : mode === 1 ? 'I' : 'II' }}</button>
+        </div>
+      </div>
+      <WeaponSetSelector />
 
       <!-- 搜索天赋节点输入框 -->
       <div class="flex items-center bg-black/50 border border-poe-border rounded px-2 py-1 text-xs focus-within:border-poe-gold transition-all">
@@ -260,6 +269,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useBuildStore } from '../stores/buildStore';
+import WeaponSetSelector from './WeaponSetSelector.vue';
 import { Plus, Minus, RotateCcw, Search, Sparkles, X, Trash2 } from 'lucide-vue-next';
 import treeDataRaw from '../../../generated/web-data/tree_0_5.json';
 
@@ -268,7 +278,7 @@ const containerRef = ref<HTMLDivElement | null>(null);
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const searchQuery = ref('');
 
-watch(() => store.allocatedNodes, () => {
+watch([() => store.allocatedNodes, () => store.allocationModes], () => {
   drawCanvas();
 }, { deep: true });
 
@@ -477,23 +487,28 @@ function drawCanvas() {
   ctx.stroke();
 
   // 2. 绘制官方精准已激活璀璨发光连线
-  ctx.strokeStyle = '#ffd066';
   ctx.lineWidth = 40;
   ctx.lineCap = 'round';
-  ctx.shadowColor = '#ffbb33';
   ctx.shadowBlur = 40;
-  ctx.beginPath();
-  for (const [id1, id2] of officialConnectors) {
-    if (store.allocatedNodes.has(id1) && store.allocatedNodes.has(id2)) {
-      const n1 = nodeMap.get(id1);
-      const n2 = nodeMap.get(id2);
-      if (n1 && n2) {
-        ctx.moveTo(n1.x, n1.y);
-        ctx.lineTo(n2.x, n2.y);
+  for (const mode of [0, 1, 2]) {
+    ctx.strokeStyle = allocationColor(mode);
+    ctx.shadowColor = allocationColor(mode);
+    ctx.beginPath();
+    for (const [id1, id2] of officialConnectors) {
+      if (store.allocatedNodes.has(id1) && store.allocatedNodes.has(id2)) {
+        const mode1 = store.allocationModes[id1] ?? 0;
+        const mode2 = store.allocationModes[id2] ?? 0;
+        if ((mode1 && mode2 && mode1 !== mode2) || (mode1 || mode2) !== mode) continue;
+        const n1 = nodeMap.get(id1);
+        const n2 = nodeMap.get(id2);
+        if (n1 && n2) {
+          ctx.moveTo(n1.x, n1.y);
+          ctx.lineTo(n2.x, n2.y);
+        }
       }
     }
+    ctx.stroke();
   }
-  ctx.stroke();
   ctx.shadowBlur = 0;
 
   // 3. 绘制节点
@@ -523,9 +538,9 @@ function drawCanvas() {
     } else if (isAllocated) {
       const grad = ctx.createRadialGradient(node.x, node.y, 5, node.x, node.y, radius);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(1, '#c8a85c');
+      grad.addColorStop(1, allocationColor(store.allocationModes[node.id] ?? 0));
       ctx.fillStyle = grad;
-      ctx.shadowColor = '#c8a85c';
+      ctx.shadowColor = allocationColor(store.allocationModes[node.id] ?? 0);
       ctx.shadowBlur = 35;
     } else if (isMatched) {
       ctx.fillStyle = '#3b82f6';
@@ -544,12 +559,16 @@ function drawCanvas() {
     ctx.shadowBlur = 0;
 
     // 节点外边框
-    ctx.strokeStyle = hasJewel ? '#6ee7b7' : (isAllocated ? '#ffe89c' : (isSocket ? '#f59e0b' : (isKeystone ? '#af6025' : (isNotable ? '#4a4a60' : '#222230'))));
+    ctx.strokeStyle = isAllocated ? allocationColor(store.allocationModes[node.id] ?? 0) : (hasJewel ? '#6ee7b7' : (isSocket ? '#f59e0b' : (isKeystone ? '#af6025' : (isNotable ? '#4a4a60' : '#222230'))));
     ctx.lineWidth = isAllocated ? 12 : 6;
     ctx.stroke();
   }
 
   ctx.restore();
+}
+
+function allocationColor(mode: number) {
+  return mode === 1 ? '#f87171' : mode === 2 ? '#4ade80' : '#ffd066';
 }
 
 function handleMouseDown(e: MouseEvent) {

@@ -1,5 +1,5 @@
 <template>
-  <aside class="w-80 border-r border-poe-border bg-poe-panel/90 backdrop-blur-md flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden select-none z-10">
+  <aside class="w-80 border-r border-poe-border bg-poe-panel/90 backdrop-blur-md flex flex-col h-full overflow-hidden select-none z-10">
     <!-- 侧边栏标题栏 -->
     <div class="p-3 border-b border-poe-border/70 flex items-center justify-between bg-black/40">
       <div class="flex items-center space-x-2">
@@ -135,10 +135,10 @@
           <div>
             <div class="flex justify-between text-[11px] mb-1">
               <span class="text-purple-400 font-semibold">精魂</span>
-              <span class="font-mono text-white font-bold">{{ store.stats.TotalSpirit || 0 }} / {{ store.stats.TotalSpirit || 0 }}</span>
+              <span data-testid="spirit-value" class="font-mono font-bold" :class="store.stats.SpiritUnreserved != null && store.stats.SpiritUnreserved < 0 ? 'text-red-400' : 'text-white'">{{ store.stats.SpiritUnreserved ?? '' }} / {{ store.stats.Spirit ?? '' }}</span>
             </div>
             <div class="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-purple-900/50">
-              <div class="h-full bg-gradient-to-r from-purple-700 to-amber-500 rounded-full w-full"></div>
+              <div v-if="store.stats.SpiritUnreservedPercent != null" class="h-full bg-gradient-to-r from-purple-700 to-amber-500 rounded-full" :style="{ width: `max(0%, min(100%, ${store.stats.SpiritUnreservedPercent}%))` }"></div>
             </div>
           </div>
 

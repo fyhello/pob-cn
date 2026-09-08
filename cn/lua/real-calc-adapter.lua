@@ -98,19 +98,24 @@ end
 -- emit one. No text content is inspected to decide that boundary.
 local function officialTooltipProjection(itemsTab, item)
 	if type(itemsTab) ~= "table" or type(itemsTab.AddItemTooltip) ~= "function" then return nil end
-	local captured = { lines = {} }
+	local captured = { lines = {}, unsupported = {} }
 	function captured:AddLine(_, value)
 		if type(value) == "string" and value ~= "" then
 			table.insert(self.lines, stripColourCodes(value))
+			local colours = rawget(_G, "colorCodes")
+			local unsupported = colours and colours.UNSUPPORTED
+			-- 保留官方浮窗给未支持词缀设置的状态，不能从译文反推。
+			table.insert(self.unsupported, type(unsupported) == "string" and value:sub(1, #unsupported) == unsupported)
 		end
 	end
 	function captured:AddSeparator() end
 	local ok = pcall(itemsTab.AddItemTooltip, itemsTab, captured, tooltipItemView(item))
 	local headerCount = item.title and 2 or 1
 	if not ok or #captured.lines < headerCount then return nil end
-	local bodyLines = {}
+	local bodyLines, bodyLineUnsupported = {}, {}
 	for index = headerCount + 1, #captured.lines do
 		table.insert(bodyLines, captured.lines[index])
+		table.insert(bodyLineUnsupported, captured.unsupported[index])
 	end
 	return {
 		header = {
@@ -118,6 +123,7 @@ local function officialTooltipProjection(itemsTab, item)
 			base = headerCount == 2 and captured.lines[2] or nil,
 		},
 		bodyLines = bodyLines,
+		bodyLineUnsupported = bodyLineUnsupported,
 	}
 end
 
@@ -126,9 +132,12 @@ end
 -- display rows.
 local function officialDisplayLines(item)
 	if type(item) ~= "table" then return nil end
-	local lines = {}
-	local function add(value)
-		if type(value) == "string" and value ~= "" then table.insert(lines, value) end
+	local lines, unsupported, unparsed = {}, {}, {}
+	local function add(value, isUnsupported)
+		if type(value) == "string" and value ~= "" then
+			table.insert(lines, value)
+			table.insert(unsupported, isUnsupported == true)
+		end
 	end
 	if item.title then
 		add(item.title)
@@ -160,16 +169,18 @@ local function officialDisplayLines(item)
 	if item.talismanTier then add("Talisman Tier: "..tostring(item.talismanTier)) end
 	local function addMods(list)
 		for _, modLine in ipairs(list or {}) do
-			if type(modLine) == "table" then
+			if type(modLine) == "table" and (not modLine.variantList or item:CheckModLineVariant(modLine)) then
+				local isUnsupported = not not modLine.extra
+				if isUnsupported then table.insert(unparsed, modLine.line) end
 				local line = modLine.line
-			local itemTools = rawget(_G, "itemLib")
-			if type(itemTools) == "table" and type(itemTools.formatModLine) == "function" then
-				local formatted, value = pcall(itemTools.formatModLine, modLine)
-				if formatted and type(value) == "string" then
-					line = value:gsub("%^x%x%x%x%x%x%x", ""):gsub("%^%d", "")
+				local itemTools = rawget(_G, "itemLib")
+				if type(itemTools) == "table" and type(itemTools.formatModLine) == "function" then
+					local formatted, value = pcall(itemTools.formatModLine, modLine)
+					if formatted and type(value) == "string" then
+						line = value:gsub("%^x%x%x%x%x%x%x", ""):gsub("%^%d", "")
+					end
 				end
-			end
-			add(line)
+				add(line, isUnsupported)
 			end
 		end
 	end
@@ -180,6 +191,7 @@ local function officialDisplayLines(item)
 	addMods(item.classRequirementModLines)
 	addMods(item.implicitModLines)
 	addMods(item.explicitModLines)
+	addMods(item.buffModLines)
 	if item.fractured then add("Fractured") end
 	if item.desecrated then add("Desecrated") end
 	if item.mutated then add("Mutated") end
@@ -187,7 +199,7 @@ local function officialDisplayLines(item)
 	if item.sanctified then add("Sanctified") end
 	if item.doubleCorrupted then add("Twice Corrupted") elseif item.corrupted then add("Corrupted") end
 	if #lines == 0 then return nil end
-	return lines
+	return lines, unsupported, unparsed
 end
 
 -- PoB exposes editable implicit rolls through the same rangeLineList used by
@@ -236,7 +248,7 @@ local function projectItem(item, allowTransientId, data, itemsTab, includeToolti
 		local built, value = pcall(item.BuildRaw, item)
 		if built and type(value) == "string" then rawText = value end
 	end
-	local displayLines = officialDisplayLines(item)
+	local displayLines, displayLineUnsupported, unparsedLines = officialDisplayLines(item)
 	if not displayLines then
 		return nil, unsupportedProjection("itemsTab.items["..tostring(item.id or "preview").."].displayLines", "PoB 未返回可见物品字段")
 	end
@@ -314,6 +326,8 @@ local function projectItem(item, allowTransientId, data, itemsTab, includeToolti
 		validTargetSlots = officialValidTargetSlots and officialValidTargetSlots(itemsTab, item) or nil,
 		raw = rawText,
 		displayLines = displayLines,
+		displayLineUnsupported = displayLineUnsupported,
+		unparsedLines = unparsedLines,
 		tooltip = tooltip,
 	}
 end
@@ -1103,18 +1117,28 @@ local function projectBuild(build, requestedName, output, runtime, fastMode, ski
 	if not specList or not specList[1] then specList = { spec } end
 	for specId, passiveSpec in ipairs(specList) do
 		if specId == projection.loadouts.active.specId then passiveSpec = spec end
-		local nodes = {}
-		for nodeId in pairs(passiveSpec.allocNodes or {}) do
+		local nodes, allocationModes = {}, {}
+		for nodeId, node in pairs(passiveSpec.allocNodes or {}) do
 			local numericId = tonumber(nodeId)
-			if numericId then table.insert(nodes, numericId) end
+			if numericId then
+				table.insert(nodes, numericId)
+				allocationModes[tostring(numericId)] = node.allocMode or 0
+			end
 		end
 		table.sort(nodes)
 		local jewels, jewelError = projectSocketedJewels(passiveSpec, itemsById, "treeTab.specList["..specId.."].jewels")
 		if not jewels then return nil, jewelError end
-		local projectedSpec = { id = specId, title = stringValue(passiveSpec.title, "Default"), allocNodes = nodes, socketedJewels = jewels }
+		local counts
+		if type(passiveSpec.CountAllocNodes) == "function" then
+			local used, ascendancy, secondaryAscendancy, sockets, weaponSet1, weaponSet2 = passiveSpec:CountAllocNodes()
+			counts = { used = used, ascendancy = ascendancy, secondaryAscendancy = secondaryAscendancy, sockets = sockets, weaponSet1 = weaponSet1, weaponSet2 = weaponSet2 }
+		end
+		local projectedSpec = { id = specId, title = stringValue(passiveSpec.title, "Default"), allocNodes = nodes, allocationModes = allocationModes, passiveCounts = counts, socketedJewels = jewels }
 		table.insert(projection.loadouts.passiveTrees, projectedSpec)
 		if specId == projection.loadouts.active.specId then
 			projection.allocNodes = nodes
+			projection.allocationModes = allocationModes
+			projection.passiveCounts = counts
 			projection.socketedJewels = jewels
 		end
 	end
@@ -1215,6 +1239,7 @@ local calculationInputKeys = {
 	"level",
 	"allocNodes",
 	"passiveNode",
+	"weaponSet",
 	"className",
 	"socketGroups",
 	"mainSocketGroup",
@@ -2176,9 +2201,9 @@ function Adapter:craftCatalog(request)
 	return { success = true, action = "craftCatalog", data = { bases = result } }
 end
 
-function Adapter:projectOfficialItem(item, allowTransientId)
+function Adapter:projectOfficialItem(item, allowTransientId, includeTooltip)
 	local build = self:currentBuild()
-	return projectItem(item, allowTransientId, type(build) == "table" and build.data or nil, type(build) == "table" and build.itemsTab or nil)
+	return projectItem(item, allowTransientId, type(build) == "table" and build.data or nil, type(build) == "table" and build.itemsTab or nil, includeTooltip)
 end
 
 function Adapter:projectOfficialItemTooltip(itemId)
@@ -3037,7 +3062,7 @@ function Adapter:commitBuildChanges(request)
 	local changes = type(request) == "table" and request.changes or nil
 	if type(changes) ~= "table" then return failure("POB_BUILD_CHANGE_INVALID", "changes", "必须提供官方可保存的构建修改") end
 	for key in pairs(changes) do
-		if key ~= "level" and key ~= "allocNodes" and key ~= "passiveNode" and key ~= "className" and key ~= "mainSocketGroup" and key ~= "calcsSkillGroup" and key ~= "buffMode" then
+		if key ~= "level" and key ~= "allocNodes" and key ~= "passiveNode" and key ~= "weaponSet" and key ~= "className" and key ~= "mainSocketGroup" and key ~= "calcsSkillGroup" and key ~= "buffMode" then
 			return failure("POB_BUILD_CHANGE_INVALID", "changes."..tostring(key), "不支持的构建修改")
 		end
 	end
@@ -3254,6 +3279,17 @@ function Adapter:applyCalculationInputs(build, request)
 	local itemsTab = build.itemsTab
 	local skillsTab = build.skillsTab
 	local spec = build.spec
+	if request.weaponSet ~= nil then
+		if request.weaponSet ~= 1 and request.weaponSet ~= 2 then
+			return nil, unsupportedCalculationInput("weaponSet", "武器组必须为 1 或 2。")
+		end
+		local control = itemsTab and itemsTab.controls and itemsTab.controls["weaponSwap"..request.weaponSet]
+		if not control or type(control.onClick) ~= "function" then
+			return nil, failure("POB_HEADLESS_API_UNAVAILABLE", "itemsTab.controls.weaponSwap", "官方武器组切换接口不可用。")
+		end
+		local ok, err = pcall(control.onClick)
+		if not ok then return nil, failure("POB_WEAPON_SWAP_FAILED", "weaponSet", tostring(err)) end
+	end
 
 	if request.level ~= nil then
 		local level = validInteger(request.level)
@@ -3287,6 +3323,27 @@ function Adapter:applyCalculationInputs(build, request)
 		local node = nodeId and spec.nodes[nodeId] or nil
 		if not node then return nil, unsupportedCalculationInput("passiveNode.nodeId", "node id is not present in the loaded PoB passive tree") end
 		if type(allocate) ~= "boolean" then return nil, unsupportedCalculationInput("passiveNode.allocate", "allocate must be boolean") end
+		local mode = requestedPassiveNode.allocMode
+		if mode == nil then mode = 0 end
+		if mode ~= 0 and mode ~= 1 and mode ~= 2 then
+			return nil, unsupportedCalculationInput("passiveNode.allocMode", "天赋分配模式必须为公用、武器组一或武器组二。")
+		end
+		-- 这些限制位于官方树视图，不在 AllocNode 内；必须与官方点击入口一致。
+		local globalNode = node.type == "Keystone" or node.type == "Socket" or node.containJewelSocket
+		if globalNode then
+			local viewer = build.treeTab and build.treeTab.viewer
+			if allocate and not node.alloc and node.path then
+				if not viewer or type(viewer.IsConnectedToWeaponSetNodes) ~= "function" then
+					return nil, failure("POB_HEADLESS_API_UNAVAILABLE", "treeTab.viewer", "官方公用天赋路径校验不可用。")
+				end
+				if mode > 0 or viewer:IsConnectedToWeaponSetNodes(node) then
+					return nil, unsupportedCalculationInput("passiveNode", "关键天赋和珠宝插槽只能沿公用路径在公用模式下分配。")
+				end
+			elseif not allocate and node.alloc and node.allocMode == 0 and mode > 0 then
+				return nil, unsupportedCalculationInput("passiveNode", "请在公用模式下撤销该公用天赋。")
+			end
+		end
+		spec.allocMode = mode
 		local changed, changeError
 		if allocate and not (node.alloc or type(spec.allocNodes) == "table" and spec.allocNodes[nodeId]) then
 			changed, changeError = pcall(spec.AllocNode, spec, node)
@@ -3443,6 +3500,8 @@ function Adapter:restoreCalculationSnapshot(xml, originalError)
 	if not ok then
 		return failure("POB_CALC_TRANSACTION_RESTORE_FAILED", "loadBuildFromXML", tostring(err))
 	end
+	local _, incomplete = self:requireLoadedBuild('restoreCalculationSnapshot')
+	if incomplete then return incomplete end
 	local restored, unavailable = self:available()
 	if not restored then
 		return failure("POB_CALC_TRANSACTION_RESTORE_FAILED", "loadBuildFromXML", unavailable.error.message)
@@ -3506,6 +3565,13 @@ function Adapter:projectCurrentBuild(request)
 end
 
 function Adapter:requireLoadedBuild(action)
+	local launch = self.runtime.launch
+	local main = self.runtime.main
+	if (launch and launch.promptMsg) or (main and main.newMode) then
+		local result = failure('POB_CORE_LIFECYCLE_FAILED', action, tostring(launch and launch.promptMsg or 'PoB mode switch did not complete'))
+		result.fatal = true
+		return nil, result
+	end
 	local build = self:currentBuild()
 	if type(build) ~= "table" or type(build.savers) ~= "table" then
 		return nil, failure("POB_BUILD_LOAD_INCOMPLETE", "build.savers", "PoB requires build conversion or did not finish loading the imported XML")
@@ -3569,6 +3635,11 @@ end
 
 function Adapter:execute(request)
 	local action = type(request) == "table" and request.action or nil
+	if action == 'exportSharedItem' or action == 'importSharedItem' or action == 'previewSharedItem' or action == 'previewItemText' or action == 'importItemText' then
+		local transfer = dofile('../cn/lua/item-transfer.lua')
+		if action == 'previewSharedItem' or action == 'previewItemText' then return transfer.preview(self, request) end
+		return action == 'exportSharedItem' and transfer.export(self, request) or transfer.import(self, request)
+	end
 	if action == "ping" then
 		return { success = true, action = action, pong = true, calculator = self:status() }
 	end

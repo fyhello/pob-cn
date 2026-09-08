@@ -1,8 +1,8 @@
 <template>
-  <div class="p-8 flex-1 overflow-y-auto bg-black/95 select-none relative">
+  <div class="items-panel p-8 flex-1 overflow-y-auto bg-black/95 select-none relative">
     <div class="max-w-7xl mx-auto space-y-6">
       <!-- 装备面板顶部标题与快捷操作 -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="text-xl font-bold text-poe-gold font-poe-title flex items-center space-x-2">
             <Shield class="w-5 h-5 text-poe-gold" />
@@ -13,7 +13,8 @@
           </p>
         </div>
 
-        <div class="flex items-center space-x-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <WeaponSetSelector />
           <button 
             @click="openNewCraftStudio"
             @mouseenter="warmCraftingStudio"
@@ -44,9 +45,9 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-12 gap-6 items-start">
+      <div class="items-grid grid gap-6 items-start">
         <!-- 左侧：官方装备槽位 + 药剂/护符栏 + 星盘珠宝插槽 (4列) -->
-        <div class="col-span-4 space-y-4 max-h-[calc(100vh-140px)] overflow-y-auto pr-1">
+        <div class="min-w-0 space-y-4 max-h-[calc(100vh-140px)] overflow-y-auto pr-1">
           <!-- 1. 角色基础装备槽 -->
           <div class="space-y-1.5">
             <div class="flex items-center justify-between pb-1 px-1">
@@ -70,14 +71,14 @@
                     : 'bg-black/60 border-poe-border/80 hover:border-poe-gold/50 hover:bg-white/5')
               ]"
             >
-              <div class="flex items-center space-x-2.5 truncate">
+              <div class="flex min-w-0 flex-1 items-center space-x-2.5">
                 <div 
                   :class="[
                     'w-7 h-7 rounded-lg border flex items-center justify-center text-[10px] font-mono font-bold shrink-0',
                     store.equippedItems[slot.id] ? 'bg-amber-950/50 border-amber-500/60 text-amber-300 shadow-sm' : 'bg-black/80 border-poe-border text-gray-500'
                   ]"
                 >
-                  {{ slot.short }}
+                  <Shield class="h-4 w-4" :aria-label="slot.name" />
                 </div>
                 <div class="truncate">
                   <div class="text-[10px] font-semibold text-gray-400 flex items-center space-x-1.5">
@@ -275,7 +276,7 @@
         </div>
 
         <!-- 中间：流派物品与珠宝总库 (4列) -->
-        <div class="col-span-4 space-y-3">
+        <div class="min-w-0 space-y-3">
           <div class="glass-panel p-4 rounded-2xl border border-poe-border/80 shadow-xl flex flex-col h-[600px]">
             <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
               <div>
@@ -390,6 +391,14 @@
                   </button>
 
                   <button
+                    @click.stop="library.copyItem(Number(item.id))"
+                    :disabled="store.isCalculating || library.busy"
+                    class="p-1 rounded text-sky-400 hover:text-sky-200 disabled:opacity-40"
+                    title="复制到公共物品池"
+                    aria-label="复制到公共物品池"
+                  ><Archive class="w-3.5 h-3.5" /></button>
+
+                  <button
                     @click.stop="deleteLibraryItem(item)"
                     :disabled="store.isCalculating"
                     class="p-1 hover:bg-red-950/70 rounded text-gray-500 hover:text-red-300 text-xs transition-colors disabled:opacity-40"
@@ -410,6 +419,10 @@
           </div>
         </div>
 
+        <div class="items-tools min-w-0 space-y-4 select-text">
+          <SharedItemPool embedded />
+          <ItemTextImport />
+        </div>
       </div>
     </div>
 
@@ -582,7 +595,11 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useBuildStore } from '../stores/buildStore';
-import { Shield, Box, X, Sparkles, Info, Hammer, Trash2, Wrench } from 'lucide-vue-next';
+import { useLibraryStore } from '../stores/libraryStore';
+import { Shield, Box, X, Sparkles, Info, Hammer, Trash2, Wrench, Archive } from 'lucide-vue-next';
+import WeaponSetSelector from './WeaponSetSelector.vue';
+import ItemTextImport from './ItemTextImport.vue';
+import SharedItemPool from './SharedItemPool.vue';
 import PoEItemTooltip from './PoEItemTooltip.vue';
 import { translateWebText } from '../utils/webTranslation';
 import treeDataRaw from '../../../generated/web-data/tree_0_5.json';
@@ -591,6 +608,7 @@ const loadItemCraftingStudio = () => import('./ItemCraftingStudio.vue');
 const ItemCraftingStudio = defineAsyncComponent(loadItemCraftingStudio);
 
 const store = useBuildStore();
+const library = useLibraryStore();
 const invFilter = ref<'SLOT' | 'ALL' | 'EQUIP' | 'JEWEL' | 'FLASK'>('ALL');
 const selectedSlot = ref('Body Armour');
 const selectedJewelNode = ref<number | null>(null);
@@ -614,6 +632,9 @@ const flaskSlots = computed(() => {
 });
 
 const allSlots = computed(() => [...equipmentSlots.value, ...flaskSlots.value]);
+watch(allSlots, slots => {
+  if (!slots.some(slot => slot.id === selectedSlot.value)) selectedSlot.value = slots[0]?.id ?? '';
+});
 
 const equippedSlotsCount = computed(() => {
   return equipmentSlots.value.filter(slot => store.equippedSlots[slot.id]).length;
@@ -880,7 +901,7 @@ function clearItemTooltipCache() {
   hoveredItem.value = null;
 }
 
-watch(() => store.canonicalBuild?.version, clearItemTooltipCache);
+watch([() => store.sessionId, () => store.documentEpoch, () => store.canonicalBuild?.version], clearItemTooltipCache);
 
 async function loadHoveredItemTooltip() {
   if (tooltipRequestActive) return;
@@ -1100,7 +1121,7 @@ function getItemEquippedStatus(item: any): string | null {
   for (const [slot, id] of Object.entries(store.equippedSlots)) {
     if (String(id) === String(item.id)) {
       const slotDef = allSlots.value.find(s => s.id === slot);
-      return slotDef ? slotDef.short : slot;
+      return slotDef ? slotDef.short : slotLabel(slot);
     }
   }
   for (const [nodeId, id] of Object.entries(store.socketedJewels)) {
@@ -1138,3 +1159,16 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeyDown);
 });
 </script>
+
+<style scoped>
+.items-panel { container-type: inline-size; }
+.items-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@container (max-width: 1000px) {
+  .items-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .items-tools { grid-column: 1 / -1; }
+}
+@container (max-width: 650px) {
+  .items-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 1100px) { .items-panel { padding: 16px; } }
+</style>

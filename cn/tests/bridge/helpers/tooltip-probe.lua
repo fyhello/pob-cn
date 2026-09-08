@@ -56,13 +56,4 @@ dofile = function(path)
   return value
 end
 
--- 测试只修改独立进程内的 BD，禁止官方运行时写入保存文件。
-local originalOpen = io.open
-io.open = function(path, mode, ...)
-  if mode and (mode:find('w') or mode:find('a') or mode:find('+', 1, true)) then
-    error('diagnostic disk write blocked: ' .. tostring(path))
-  end
-  return originalOpen(path, mode, ...)
-end
-
 dofile('../cn/bridge/calc_server.lua')

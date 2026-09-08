@@ -1,5 +1,7 @@
 import http from 'node:http';
 import { deflateSync, inflateRawSync, inflateSync, unzipSync } from 'node:zlib';
+import { sessionError } from './build-sessions.mjs';
+import { handleLibraryRequest } from './library-http.mjs';
 
 const maxBodyBytes = 2 * 1024 * 1024;
 
@@ -44,16 +46,43 @@ function canonicalXmlFingerprint(code) {
   return decodeBuildCode(code).replace(/\r\n?/gu, '\n');
 }
 
-export function createBridgeHttpServer(engine) {
-  if (!engine || typeof engine.request !== 'function') throw new Error('a ready bridge engine is required');
-  let activeSession = { fingerprint: null, revision: null };
-  let sessionQueue = Promise.resolve();
+export function createBridgeHttpServer(sessions, { library } = {}) {
+  return http.createServer(async (request, response) => {
+    if (request.method === 'GET' && request.url === '/health') return send(response, 200, { ready: true });
+    try {
+      // 本机服务不接受第三方网页的跨站写入；正常请求经 Vite 同源代理进入。
+      if (request.headers['sec-fetch-site'] === 'cross-site') throw sessionError('POB_ORIGIN_REJECTED', '已拒绝跨站访问。', 403);
+      const payload = request.method === 'GET' ? {} : await readJson(request);
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw sessionError('POB_REQUEST_INVALID', '请求内容必须为 JSON 对象。', 400);
+      if (request.url.startsWith('/api/library/')) {
+        if (!library) throw sessionError('POB_LIBRARY_UNAVAILABLE', '存档库尚未启用。', 503);
+        const result = await handleLibraryRequest(request, payload, { library, sessions, encodeBuildCode });
+        return send(response, result.success ? 200 : 422, result);
+      }
+      if (request.method === 'POST' && request.url === '/api/sessions') {
+        return send(response, 201, { success: true, sessionId: await sessions.create() });
+      }
+      const id = request.headers['x-pob-session'] ?? payload.sessionId;
+      if (typeof id !== 'string' || !id) throw sessionError('POB_SESSION_REQUIRED', '请求缺少当前网页的计算会话。', 400);
+      if (request.method === 'POST' && request.url === '/api/sessions/close') {
+        await sessions.close(id);
+        return send(response, 200, { success: true });
+      }
+      if (request.method === 'POST' && request.url === '/api/sessions/heartbeat') {
+        sessions.get(id);
+        return send(response, 200, { success: true });
+      }
+      await sessions.run(id, session => handleBuildRequest(request, response, payload, session, library));
+    } catch (error) {
+      if (!response.headersSent) send(response, error.status ?? 503, { success: false, error: { code: error.code ?? 'POB_BRIDGE_REQUEST_FAILED', message: error.message } });
+      else console.error('PoB 请求完成后的会话清理失败：', error);
+    }
+  });
+}
 
-  function runInSession(work) {
-    const next = sessionQueue.then(work, work);
-    sessionQueue = next.catch(() => undefined);
-    return next;
-  }
+async function handleBuildRequest(request, response, payload, session, library) {
+  const engine = session.engine;
+  let activeSession = session.document;
 
   async function ensureLoaded(code, revision, name = '') {
     const fingerprint = canonicalXmlFingerprint(code);
@@ -82,256 +111,306 @@ export function createBridgeHttpServer(engine) {
     return loaded;
   }
 
-  return http.createServer(async (request, response) => {
-    if (request.method === 'OPTIONS') { response.writeHead(204, { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type' }); response.end(); return; }
-    if (request.method === 'GET' && request.url === '/health') return send(response, 200, { ready: true });
-    try {
-      return await runInSession(async () => {
-        if (request.method === 'GET' && request.url === '/api/stats') return send(response, 200, await engine.request({ action: 'getStats' }));
-        const payload = await readJson(request);
-      if (request.method === 'POST' && request.url === '/api/import') {
-        const canonicalXML = decodeBuildCode(payload.code);
-        const imported = await engine.request({ action: 'loadXML', xml: canonicalXML, name: payload.name ?? '' });
-        if (imported?.success) {
-          activeSession = { fingerprint: canonicalXmlFingerprint(payload.code), revision: 1 };
-          return send(response, 200, { success: true, revision: 1, action: 'loadXML', data: imported.data });
-        } else {
-          activeSession = { fingerprint: null, revision: null };
-          return send(response, 200, imported);
-        }
-      }
-      if (request.method === 'POST' && request.url === '/api/items/tooltip') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_ITEM_TOOLTIP_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝读取物品浮窗。' } });
-        if (!Number.isInteger(payload.itemId) || payload.itemId <= 0) return send(response, 400, { success: false, error: { code: 'POB_ITEM_TOOLTIP_ITEM_ID_REQUIRED', path: 'itemId', message: '物品 ID 必须是当前官方物品库中的正整数。' } });
-        if (activeSession.revision === null) return send(response, 409, { success: false, error: { code: 'POB_ITEM_TOOLTIP_SESSION_UNAVAILABLE', message: '当前官方 PoB 会话尚未载入，无法读取物品浮窗。' } });
-        if (activeSession.revision !== expectedRevision) return send(response, 409, { success: false, error: { code: 'POB_CANONICAL_REVISION_CONFLICT', message: '当前 PoB 文档已更新，请刷新后再读取物品浮窗。' } });
-        const result = await engine.request({ action: 'projectOfficialItemTooltip', itemId: payload.itemId });
-        if (!result?.success || !result?.data || result.data.itemId !== payload.itemId || typeof result.data.tooltip !== 'object' || result.data.tooltip === null || Array.isArray(result.data.tooltip)) {
-          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_ITEM_TOOLTIP_CONTRACT_INVALID', message: '官方 PoB 未返回完整物品浮窗。' } } : result);
-        }
-        return send(response, 200, {
-          success: true,
-          action: 'projectOfficialItemTooltip',
-          data: {
-            itemId: result.data.itemId,
-            tooltip: result.data.tooltip,
-            sourceRevision: expectedRevision,
-            revision: expectedRevision,
-          },
-        });
-      }
-      if (request.method === 'POST' && request.url === '/api/build/projection') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_PROJECTION_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，无法读取官方投影。' } });
-        const projectionScope = payload.projectionScope;
-        if (!['tree', 'skills', 'items', 'calcs', 'config'].includes(projectionScope)) {
-          return send(response, 400, { success: false, error: { code: 'POB_PROJECTION_SCOPE_INVALID', message: '投影范围必须是 tree、skills、items、calcs 或 config。' } });
-        }
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const result = await engine.request({ action: 'projectCurrentBuild', projectionScope, name: payload.name ?? '' });
-        if (!result?.success || !result?.data || typeof result.data.build !== 'object' || result.data.build === null || Array.isArray(result.data.build)) {
-          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_PROJECTION_CONTRACT_INVALID', message: '官方 PoB 未返回指定范围的投影。' } } : result);
-        }
-        return send(response, 200, {
-          success: true,
-          action: 'projectCurrentBuild',
-          data: {
-            build: result.data.build,
-            output: result.data.output,
-            sourceRevision: expectedRevision,
-            revision: expectedRevision,
-          },
-        });
-      }
-      if (request.method === 'POST' && request.url === '/api/export') {
-        const sourceVersion = Number.isInteger(payload.version) && payload.version > 0 ? payload.version : null;
-        if (!sourceVersion) return send(response, 400, { success: false, error: { code: 'POB_CANONICAL_VERSION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝导出。' } });
-        const loaded = await ensureLoaded(payload.code, sourceVersion, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const result = await engine.request({ action: 'exportXML' });
-        if (!result?.success || typeof result?.data?.xml !== 'string') throw new Error(result?.error?.message ?? result?.error ?? 'official PoB XML export failed');
-        return send(response, 200, { success: true, code: encodeBuildCode(result.data.xml), format: 'pob-share-code', sourceVersion });
-      }
-      if (request.method === 'POST' && request.url === '/api/loadouts/select') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_LOADOUT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝切换 Loadout。' } });
-        const canonicalXML = decodeBuildCode(payload.code);
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const result = await engine.request({ action: 'selectLoadout', selection: payload.selection, canonicalXML, name: payload.name ?? '' });
-        if (!result?.success || typeof result?.data?.xml !== 'string') {
-          activeSession = { fingerprint: null, revision: null };
-          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_LOADOUT_XML_MISSING', message: '官方 PoB 未返回切换后的文档。' } } : result);
-        }
-        const nextCode = encodeBuildCode(result.data.xml);
-        activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
-        const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
-        delete data.xml;
-        return send(response, 200, { success: true, action: 'selectLoadout', data });
-      }
-      if (request.method === 'POST' && request.url === '/api/items/assign') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_ITEM_ASSIGNMENT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝物品分配。' } });
-        if (!Object.hasOwn(payload, 'itemId') || (payload.itemId !== null && !Number.isInteger(payload.itemId))) {
-          return send(response, 400, { success: false, error: { code: 'POB_ITEM_ASSIGNMENT_ITEM_ID_REQUIRED', path: 'itemId', message: '物品 ID 必须是官方物品库中的整数，或使用空值卸下物品。' } });
-        }
-        const canonicalXML = decodeBuildCode(payload.code);
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const engineRequest = { action: 'assignOfficialItem', target: payload.target, itemId: payload.itemId, canonicalXML, name: payload.name ?? '' };
-        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
-        const result = await engine.request(engineRequest);
-        if (!result?.success || typeof result?.data?.xml !== 'string') {
-          activeSession = { fingerprint: null, revision: null };
-          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_ITEM_ASSIGNMENT_XML_MISSING', message: '官方 PoB 未返回物品分配后的文档。' } } : result);
-        }
-        const nextCode = encodeBuildCode(result.data.xml);
-        activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
-        const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
-        delete data.xml;
-        return send(response, 200, { success: true, action: 'assignOfficialItem', data });
-      }
-      if (request.method === 'POST' && request.url === '/api/items/remove') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_ITEM_DELETE_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝删除物品。' } });
-        if (!Number.isInteger(payload.itemId) || payload.itemId <= 0) return send(response, 400, { success: false, error: { code: 'POB_ITEM_DELETE_ITEM_ID_REQUIRED', path: 'itemId', message: '物品 ID 必须是当前官方物品库中的正整数。' } });
-        const canonicalXML = decodeBuildCode(payload.code);
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const engineRequest = { action: 'deleteOfficialItem', itemId: payload.itemId, canonicalXML, name: payload.name ?? '' };
-        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
-        const result = await engine.request(engineRequest);
-        if (!result?.success || typeof result?.data?.xml !== 'string') {
-          activeSession = { fingerprint: null, revision: null };
-          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_ITEM_DELETE_XML_MISSING', message: '官方 PoB 未返回删除后的文档。' } } : result);
-        }
-        const nextCode = encodeBuildCode(result.data.xml);
-        activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
-        const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
-        delete data.xml;
-        return send(response, 200, { success: true, action: 'deleteOfficialItem', data });
-      }
-      if (request.method === 'POST' && request.url === '/api/build/commit') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_BUILD_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝构建修改。' } });
-        if (!payload.changes || typeof payload.changes !== 'object' || Array.isArray(payload.changes)) return send(response, 400, { success: false, error: { code: 'POB_BUILD_CHANGE_REQUIRED', message: '必须提供官方可保存的构建修改。' } });
-        const canonicalXML = decodeBuildCode(payload.code);
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const engineRequest = { action: 'commitBuildChanges', changes: payload.changes, canonicalXML, name: payload.name ?? '' };
-        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
-        const result = await engine.request(engineRequest);
-        if (!result?.success || typeof result?.data?.xml !== 'string') {
-          activeSession = { fingerprint: null, revision: null };
-          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_BUILD_XML_MISSING', message: '官方 PoB 未返回构建修改后的文档。' } } : result);
-        }
-        const nextCode = encodeBuildCode(result.data.xml);
-        activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
-        const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
-        delete data.xml;
-        return send(response, 200, { success: true, action: 'commitBuildChanges', data });
-      }
-      if (request.method === 'POST' && request.url === '/api/config/commit') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_CONFIG_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝战斗配置修改。' } });
-        const canonicalXML = decodeBuildCode(payload.code);
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const engineRequest = { action: 'commitConfigChange', configSetId: payload.configSetId, variable: payload.variable, value: payload.value, canonicalXML, name: payload.name ?? '' };
-        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
-        const result = await engine.request(engineRequest);
-        if (!result?.success || typeof result?.data?.xml !== 'string') {
-          activeSession = { fingerprint: null, revision: null };
-          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_CONFIG_XML_MISSING', message: '官方 PoB 未返回战斗配置修改后的文档。' } } : result);
-        }
-        const nextCode = encodeBuildCode(result.data.xml);
-        activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
-        const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
-        delete data.xml;
-        return send(response, 200, { success: true, action: 'commitConfigChange', data });
-      }
-      if (request.method === 'POST' && request.url === '/api/skills/commit') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_SKILL_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝技能修改。' } });
-        const canonicalXML = decodeBuildCode(payload.code);
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const engineRequest = { action: 'commitSkillChange', skillSetId: payload.skillSetId, operation: payload.operation, groupIndex: payload.groupIndex, gemIndex: payload.gemIndex, patch: payload.patch, label: payload.label, canonicalXML, name: payload.name ?? '' };
-        if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
-        const result = await engine.request(engineRequest);
-        if (!result?.success || typeof result?.data?.xml !== 'string') {
-          activeSession = { fingerprint: null, revision: null };
-          return send(response, 422, result?.success ? { success: false, error: { code: 'POB_SKILL_XML_MISSING', message: '官方 PoB 未返回技能修改后的文档。' } } : result);
-        }
-        const nextCode = encodeBuildCode(result.data.xml);
-        activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
-        const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
-        delete data.xml;
-        return send(response, 200, { success: true, action: 'commitSkillChange', data });
-      }
-      if (request.method === 'POST' && (request.url === '/api/items/preview' || request.url === '/api/items/commit')) {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_CRAFT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝制作操作。' } });
-        const operation = payload.action;
-        if (!['create', 'edit', 'duplicate'].includes(operation)) return send(response, 400, { success: false, error: { code: 'POB_CRAFT_OPERATION_REQUIRED', path: 'action', message: '必须明确指定 create、edit 或 duplicate 操作。' } });
-        if (operation !== 'create' && (!Number.isInteger(payload.sourceItemId) || payload.sourceItemId <= 0)) {
-          return send(response, 400, { success: false, error: { code: 'POB_CRAFT_SOURCE_ITEM_REQUIRED', path: 'sourceItemId', message: '编辑或复制官方物品必须指定 sourceItemId。' } });
-        }
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) {
-          const conflict = loaded?.error?.code === 'POB_CANONICAL_REVISION_CONFLICT';
-          return send(response, conflict ? 409 : 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        }
-        const action = request.url.endsWith('/preview') ? 'craftPreview' : 'craftCommit';
-        // The Lua craft entrypoint requires the explicit semantic operation
-        // (create/edit/duplicate).  Always forward it; omitting it for
-        // `create` makes an otherwise valid request fail closed.
-        const craftRequest = { action, operation, target: payload.target, draft: payload.draft, name: payload.name ?? '' };
-        if (Number.isInteger(payload.sourceItemId)) craftRequest.sourceItemId = payload.sourceItemId;
-        const result = await engine.request(craftRequest);
-        if (!result?.success) return send(response, 422, result);
-        const responseData = { ...result.data, sourceRevision: expectedRevision, canonicalRevision: expectedRevision };
-        if (action === 'craftCommit') {
-          const nextCode = encodeBuildCode(result.data.xml);
-          activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
-          responseData.code = nextCode;
-          responseData.revision = expectedRevision + 1;
-          delete responseData.xml;
-        }
-        return send(response, 200, { success: true, action, data: responseData });
-      }
-      if (request.method === 'POST' && request.url === '/api/crafting/options') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_CRAFT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，无法读取官方制作选项。' } });
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const optionsRequest = { action: 'craftOptions', baseName: payload.baseName, itemLevel: payload.itemLevel, rarity: payload.rarity, corrupted: payload.corrupted === true, draft: payload.draft, canonicalRevision: expectedRevision };
-        if (typeof payload.action === 'string') optionsRequest.actionMode = payload.action;
-        if (Number.isInteger(payload.sourceItemId)) optionsRequest.sourceItemId = payload.sourceItemId;
-        const result = await engine.request(optionsRequest);
-        if (!result?.success) return send(response, 422, result);
-        return send(response, 200, { success: true, action: 'craftOptions', canonicalRevision: expectedRevision, data: { ...result.data, sourceRevision: expectedRevision, canonicalRevision: expectedRevision } });
-      }
-      if (request.method === 'POST' && request.url === '/api/crafting/catalog') {
-        const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
-        if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_CRAFT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，无法读取官方制作目录。' } });
-        const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
-        if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-        const result = await engine.request({ action: 'craftCatalog', query: payload.query });
-        if (!result?.success) return send(response, 422, result);
-        return send(response, 200, { success: true, action: 'craftCatalog', canonicalRevision: expectedRevision, data: { ...result.data, sourceRevision: expectedRevision, canonicalRevision: expectedRevision } });
-      }
-      if (request.method === 'POST' && request.url === '/api/calculate') {
-        const inputKeys = ['level', 'allocNodes', 'className', 'socketGroups', 'mainSocketGroup', 'calcsSkillGroup', 'buffMode'];
-        if (inputKeys.some(key => payload[key] !== undefined)) return send(response, 400, { success: false, error: { code: 'POB_CANONICAL_WRITE_REQUIRED', message: '构建、技能和战斗状态修改必须通过官方 XML 提交接口。' } });
-        return send(response, 200, await engine.request({ action: 'calculate' }));
-      }
-      return send(response, 404, { success: false, error: 'route not found' });
-      });
-    } catch (error) {
-      return send(response, 400, { success: false, error: error.message });
+  try {
+    if (request.method === 'GET' && request.url === '/api/stats') return send(response, 200, await engine.request({ action: 'getStats' }));
+    if (request.method === 'POST' && request.url === '/api/new') {
+      const created = await engine.request({ action: 'newBuild' });
+      if (!created?.success) return send(response, 422, created);
+      const exported = await engine.request({ action: 'exportXML' });
+      if (!exported?.success) return send(response, 422, exported);
+      const code = encodeBuildCode(exported.data.xml);
+      const projected = await engine.request({ action: 'loadXML', xml: exported.data.xml, name: payload.name ?? '' });
+      if (!projected?.success) return send(response, 422, projected);
+      activeSession = { fingerprint: canonicalXmlFingerprint(code), revision: 1 };
+      return send(response, 200, { success: true, revision: 1, code, data: projected.data });
     }
-  });
+    if (request.method === 'POST' && request.url === '/api/import') {
+      const canonicalXML = decodeBuildCode(payload.code);
+      const imported = await engine.request({ action: 'loadXML', xml: canonicalXML, name: payload.name ?? '' });
+      if (imported?.success) {
+        activeSession = { fingerprint: canonicalXmlFingerprint(payload.code), revision: 1 };
+        return send(response, 200, { success: true, revision: 1, action: 'loadXML', data: imported.data });
+      } else {
+        activeSession = { fingerprint: null, revision: null };
+        return send(response, 200, imported);
+      }
+    }
+    if (request.method === 'POST' && request.url === '/api/items/tooltip') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_ITEM_TOOLTIP_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝读取物品浮窗。' } });
+      if (!Number.isInteger(payload.itemId) || payload.itemId <= 0) return send(response, 400, { success: false, error: { code: 'POB_ITEM_TOOLTIP_ITEM_ID_REQUIRED', path: 'itemId', message: '物品 ID 必须是当前官方物品库中的正整数。' } });
+      if (activeSession.revision === null) return send(response, 409, { success: false, error: { code: 'POB_ITEM_TOOLTIP_SESSION_UNAVAILABLE', message: '当前官方 PoB 会话尚未载入，无法读取物品浮窗。' } });
+      if (activeSession.revision !== expectedRevision) return send(response, 409, { success: false, error: { code: 'POB_CANONICAL_REVISION_CONFLICT', message: '当前 PoB 文档已更新，请刷新后再读取物品浮窗。' } });
+      const result = await engine.request({ action: 'projectOfficialItemTooltip', itemId: payload.itemId });
+      if (!result?.success || !result?.data || result.data.itemId !== payload.itemId || typeof result.data.tooltip !== 'object' || result.data.tooltip === null || Array.isArray(result.data.tooltip)) {
+        return send(response, 422, result?.success ? { success: false, error: { code: 'POB_ITEM_TOOLTIP_CONTRACT_INVALID', message: '官方 PoB 未返回完整物品浮窗。' } } : result);
+      }
+      return send(response, 200, {
+        success: true,
+        action: 'projectOfficialItemTooltip',
+        data: {
+          itemId: result.data.itemId,
+          tooltip: result.data.tooltip,
+          sourceRevision: expectedRevision,
+          revision: expectedRevision,
+        },
+      });
+    }
+    if (request.method === 'POST' && request.url === '/api/build/projection') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_PROJECTION_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，无法读取官方投影。' } });
+      const projectionScope = payload.projectionScope;
+      if (!['tree', 'skills', 'items', 'calcs', 'config'].includes(projectionScope)) {
+        return send(response, 400, { success: false, error: { code: 'POB_PROJECTION_SCOPE_INVALID', message: '投影范围必须是 tree、skills、items、calcs 或 config。' } });
+      }
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const result = await engine.request({ action: 'projectCurrentBuild', projectionScope, name: payload.name ?? '' });
+      if (!result?.success || !result?.data || typeof result.data.build !== 'object' || result.data.build === null || Array.isArray(result.data.build)) {
+        return send(response, 422, result?.success ? { success: false, error: { code: 'POB_PROJECTION_CONTRACT_INVALID', message: '官方 PoB 未返回指定范围的投影。' } } : result);
+      }
+      return send(response, 200, {
+        success: true,
+        action: 'projectCurrentBuild',
+        data: {
+          build: result.data.build,
+          output: result.data.output,
+          sourceRevision: expectedRevision,
+          revision: expectedRevision,
+        },
+      });
+    }
+    if (request.method === 'POST' && request.url === '/api/export') {
+      const sourceVersion = Number.isInteger(payload.version) && payload.version > 0 ? payload.version : null;
+      if (!sourceVersion) return send(response, 400, { success: false, error: { code: 'POB_CANONICAL_VERSION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝导出。' } });
+      const loaded = await ensureLoaded(payload.code, sourceVersion, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const result = await engine.request({ action: 'exportXML' });
+      if (!result?.success || typeof result?.data?.xml !== 'string') throw new Error(result?.error?.message ?? result?.error ?? 'official PoB XML export failed');
+      return send(response, 200, { success: true, code: encodeBuildCode(result.data.xml), format: 'pob-share-code', sourceVersion });
+    }
+    if (request.method === 'POST' && request.url === '/api/loadouts/select') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_LOADOUT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝切换 Loadout。' } });
+      const canonicalXML = decodeBuildCode(payload.code);
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const result = await engine.request({ action: 'selectLoadout', selection: payload.selection, canonicalXML, name: payload.name ?? '' });
+      if (!result?.success || typeof result?.data?.xml !== 'string') {
+        activeSession = { fingerprint: null, revision: null };
+        return send(response, 422, result?.success ? { success: false, error: { code: 'POB_LOADOUT_XML_MISSING', message: '官方 PoB 未返回切换后的文档。' } } : result);
+      }
+      const nextCode = encodeBuildCode(result.data.xml);
+      activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
+      const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
+      delete data.xml;
+      return send(response, 200, { success: true, action: 'selectLoadout', data });
+    }
+    if (request.method === 'POST' && request.url === '/api/items/assign') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_ITEM_ASSIGNMENT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝物品分配。' } });
+      if (!Object.hasOwn(payload, 'itemId') || (payload.itemId !== null && !Number.isInteger(payload.itemId))) {
+        return send(response, 400, { success: false, error: { code: 'POB_ITEM_ASSIGNMENT_ITEM_ID_REQUIRED', path: 'itemId', message: '物品 ID 必须是官方物品库中的整数，或使用空值卸下物品。' } });
+      }
+      const canonicalXML = decodeBuildCode(payload.code);
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const engineRequest = { action: 'assignOfficialItem', target: payload.target, itemId: payload.itemId, canonicalXML, name: payload.name ?? '' };
+      if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+      const result = await engine.request(engineRequest);
+      if (!result?.success || typeof result?.data?.xml !== 'string') {
+        activeSession = { fingerprint: null, revision: null };
+        return send(response, 422, result?.success ? { success: false, error: { code: 'POB_ITEM_ASSIGNMENT_XML_MISSING', message: '官方 PoB 未返回物品分配后的文档。' } } : result);
+      }
+      const nextCode = encodeBuildCode(result.data.xml);
+      activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
+      const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
+      delete data.xml;
+      return send(response, 200, { success: true, action: 'assignOfficialItem', data });
+    }
+    if (request.method === 'POST' && request.url === '/api/items/remove') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_ITEM_DELETE_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝删除物品。' } });
+      if (!Number.isInteger(payload.itemId) || payload.itemId <= 0) return send(response, 400, { success: false, error: { code: 'POB_ITEM_DELETE_ITEM_ID_REQUIRED', path: 'itemId', message: '物品 ID 必须是当前官方物品库中的正整数。' } });
+      const canonicalXML = decodeBuildCode(payload.code);
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const engineRequest = { action: 'deleteOfficialItem', itemId: payload.itemId, canonicalXML, name: payload.name ?? '' };
+      if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+      const result = await engine.request(engineRequest);
+      if (!result?.success || typeof result?.data?.xml !== 'string') {
+        activeSession = { fingerprint: null, revision: null };
+        return send(response, 422, result?.success ? { success: false, error: { code: 'POB_ITEM_DELETE_XML_MISSING', message: '官方 PoB 未返回删除后的文档。' } } : result);
+      }
+      const nextCode = encodeBuildCode(result.data.xml);
+      activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
+      const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
+      delete data.xml;
+      return send(response, 200, { success: true, action: 'deleteOfficialItem', data });
+    }
+    if (request.method === 'POST' && (request.url === '/api/items/from-pool' || request.url === '/api/items/pool-preview')) {
+      const expectedRevision = payload.expectedRevision;
+      if (!Number.isInteger(expectedRevision) || expectedRevision < 1) throw sessionError('POB_BUILD_REVISION_REQUIRED', '缺少当前文档版本。', 400);
+      const loaded = await ensureLoaded(payload.code, expectedRevision);
+      if (!loaded?.success) return send(response, 409, loaded);
+      const item = await library.read('items', payload.id);
+      if (request.url === '/api/items/pool-preview') {
+        const preview = await engine.request({ action: 'previewSharedItem', raw: item.raw });
+        return send(response, preview.success ? 200 : 422, preview);
+      }
+      const result = await engine.request({ action: 'importSharedItem', raw: item.raw, target: payload.target, projectionScope: payload.projectionScope });
+      if (!result?.success) return send(response, 422, result);
+      if (typeof result.data?.xml !== 'string') throw sessionError('POB_SHARED_ITEM_XML_MISSING', '官方核心没有返回物品复制后的文档。', 422);
+      const code = encodeBuildCode(result.data.xml);
+      activeSession = { fingerprint: canonicalXmlFingerprint(code), revision: expectedRevision + 1 };
+      const data = { ...result.data, code, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
+      delete data.xml;
+      return send(response, 200, { success: true, data });
+    }
+    if (request.method === 'POST' && (request.url === '/api/items/text-preview' || request.url === '/api/items/from-text')) {
+      const expectedRevision = payload.expectedRevision;
+      if (!Number.isInteger(expectedRevision) || expectedRevision < 1) throw sessionError('POB_BUILD_REVISION_REQUIRED', '缺少当前文档版本。', 400);
+      if (typeof payload.raw !== 'string' || !payload.raw.trim() || Buffer.byteLength(payload.raw, 'utf8') > 65536) {
+        throw sessionError('POB_ITEM_TEXT_INVALID', '物品文本不能为空或超过 64 KiB。', 400);
+      }
+      const loaded = await ensureLoaded(payload.code, expectedRevision);
+      if (!loaded?.success) return send(response, 409, loaded);
+      const preview = request.url === '/api/items/text-preview';
+      const result = await engine.request({ action: preview ? 'previewItemText' : 'importItemText', raw: payload.raw, target: payload.target, projectionScope: payload.projectionScope });
+      if (!result?.success) {
+        if (!preview) activeSession = { fingerprint: null, revision: null };
+        return send(response, 422, result);
+      }
+      if (preview) return send(response, 200, { ...result, data: { ...result.data, sourceRevision: expectedRevision } });
+      if (typeof result.data?.xml !== 'string') {
+        activeSession = { fingerprint: null, revision: null };
+        throw sessionError('POB_ITEM_TEXT_XML_MISSING', '官方核心没有返回导入物品后的文档。', 422);
+      }
+      const code = encodeBuildCode(result.data.xml);
+      activeSession = { fingerprint: canonicalXmlFingerprint(code), revision: expectedRevision + 1 };
+      const data = { ...result.data, code, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
+      delete data.xml;
+      return send(response, 200, { success: true, data });
+    }
+    if (request.method === 'POST' && request.url === '/api/build/commit') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_BUILD_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝构建修改。' } });
+      if (!payload.changes || typeof payload.changes !== 'object' || Array.isArray(payload.changes)) return send(response, 400, { success: false, error: { code: 'POB_BUILD_CHANGE_REQUIRED', message: '必须提供官方可保存的构建修改。' } });
+      const canonicalXML = decodeBuildCode(payload.code);
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const engineRequest = { action: 'commitBuildChanges', changes: payload.changes, canonicalXML, name: payload.name ?? '' };
+      if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+      const result = await engine.request(engineRequest);
+      if (!result?.success || typeof result?.data?.xml !== 'string') {
+        activeSession = { fingerprint: null, revision: null };
+        return send(response, 422, result?.success ? { success: false, error: { code: 'POB_BUILD_XML_MISSING', message: '官方 PoB 未返回构建修改后的文档。' } } : result);
+      }
+      const nextCode = encodeBuildCode(result.data.xml);
+      activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
+      const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
+      delete data.xml;
+      return send(response, 200, { success: true, action: 'commitBuildChanges', data });
+    }
+    if (request.method === 'POST' && request.url === '/api/config/commit') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_CONFIG_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝战斗配置修改。' } });
+      const canonicalXML = decodeBuildCode(payload.code);
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const engineRequest = { action: 'commitConfigChange', configSetId: payload.configSetId, variable: payload.variable, value: payload.value, canonicalXML, name: payload.name ?? '' };
+      if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+      const result = await engine.request(engineRequest);
+      if (!result?.success || typeof result?.data?.xml !== 'string') {
+        activeSession = { fingerprint: null, revision: null };
+        return send(response, 422, result?.success ? { success: false, error: { code: 'POB_CONFIG_XML_MISSING', message: '官方 PoB 未返回战斗配置修改后的文档。' } } : result);
+      }
+      const nextCode = encodeBuildCode(result.data.xml);
+      activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
+      const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
+      delete data.xml;
+      return send(response, 200, { success: true, action: 'commitConfigChange', data });
+    }
+    if (request.method === 'POST' && request.url === '/api/skills/commit') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_SKILL_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝技能修改。' } });
+      const canonicalXML = decodeBuildCode(payload.code);
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const engineRequest = { action: 'commitSkillChange', skillSetId: payload.skillSetId, operation: payload.operation, groupIndex: payload.groupIndex, gemIndex: payload.gemIndex, patch: payload.patch, label: payload.label, canonicalXML, name: payload.name ?? '' };
+      if (payload.projectionScope !== undefined) engineRequest.projectionScope = payload.projectionScope;
+      const result = await engine.request(engineRequest);
+      if (!result?.success || typeof result?.data?.xml !== 'string') {
+        activeSession = { fingerprint: null, revision: null };
+        return send(response, 422, result?.success ? { success: false, error: { code: 'POB_SKILL_XML_MISSING', message: '官方 PoB 未返回技能修改后的文档。' } } : result);
+      }
+      const nextCode = encodeBuildCode(result.data.xml);
+      activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
+      const data = { ...result.data, code: nextCode, sourceRevision: expectedRevision, revision: expectedRevision + 1 };
+      delete data.xml;
+      return send(response, 200, { success: true, action: 'commitSkillChange', data });
+    }
+    if (request.method === 'POST' && (request.url === '/api/items/preview' || request.url === '/api/items/commit')) {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_CRAFT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，已拒绝制作操作。' } });
+      const operation = payload.action;
+      if (!['create', 'edit', 'duplicate'].includes(operation)) return send(response, 400, { success: false, error: { code: 'POB_CRAFT_OPERATION_REQUIRED', path: 'action', message: '必须明确指定 create、edit 或 duplicate 操作。' } });
+      if (operation !== 'create' && (!Number.isInteger(payload.sourceItemId) || payload.sourceItemId <= 0)) {
+        return send(response, 400, { success: false, error: { code: 'POB_CRAFT_SOURCE_ITEM_REQUIRED', path: 'sourceItemId', message: '编辑或复制官方物品必须指定 sourceItemId。' } });
+      }
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) {
+        const conflict = loaded?.error?.code === 'POB_CANONICAL_REVISION_CONFLICT';
+        return send(response, conflict ? 409 : 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      }
+      const action = request.url.endsWith('/preview') ? 'craftPreview' : 'craftCommit';
+      // The Lua craft entrypoint requires the explicit semantic operation
+      // (create/edit/duplicate).  Always forward it; omitting it for
+      // `create` makes an otherwise valid request fail closed.
+      const craftRequest = { action, operation, target: payload.target, draft: payload.draft, name: payload.name ?? '' };
+      if (Number.isInteger(payload.sourceItemId)) craftRequest.sourceItemId = payload.sourceItemId;
+      const result = await engine.request(craftRequest);
+      if (!result?.success) return send(response, 422, result);
+      const responseData = { ...result.data, sourceRevision: expectedRevision, canonicalRevision: expectedRevision };
+      if (action === 'craftCommit') {
+        const nextCode = encodeBuildCode(result.data.xml);
+        activeSession = { fingerprint: canonicalXmlFingerprint(nextCode), revision: expectedRevision + 1 };
+        responseData.code = nextCode;
+        responseData.revision = expectedRevision + 1;
+        delete responseData.xml;
+      }
+      return send(response, 200, { success: true, action, data: responseData });
+    }
+    if (request.method === 'POST' && request.url === '/api/crafting/options') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_CRAFT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，无法读取官方制作选项。' } });
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const optionsRequest = { action: 'craftOptions', baseName: payload.baseName, itemLevel: payload.itemLevel, rarity: payload.rarity, corrupted: payload.corrupted === true, draft: payload.draft, canonicalRevision: expectedRevision };
+      if (typeof payload.action === 'string') optionsRequest.actionMode = payload.action;
+      if (Number.isInteger(payload.sourceItemId)) optionsRequest.sourceItemId = payload.sourceItemId;
+      const result = await engine.request(optionsRequest);
+      if (!result?.success) return send(response, 422, result);
+      return send(response, 200, { success: true, action: 'craftOptions', canonicalRevision: expectedRevision, data: { ...result.data, sourceRevision: expectedRevision, canonicalRevision: expectedRevision } });
+    }
+    if (request.method === 'POST' && request.url === '/api/crafting/catalog') {
+      const expectedRevision = Number.isInteger(payload.expectedRevision) && payload.expectedRevision > 0 ? payload.expectedRevision : null;
+      if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_CRAFT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，无法读取官方制作目录。' } });
+      const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
+      if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
+      const result = await engine.request({ action: 'craftCatalog', query: payload.query });
+      if (!result?.success) return send(response, 422, result);
+      return send(response, 200, { success: true, action: 'craftCatalog', canonicalRevision: expectedRevision, data: { ...result.data, sourceRevision: expectedRevision, canonicalRevision: expectedRevision } });
+    }
+    if (request.method === 'POST' && request.url === '/api/calculate') {
+      const inputKeys = ['level', 'allocNodes', 'className', 'socketGroups', 'mainSocketGroup', 'calcsSkillGroup', 'buffMode'];
+      if (inputKeys.some(key => payload[key] !== undefined)) return send(response, 400, { success: false, error: { code: 'POB_CANONICAL_WRITE_REQUIRED', message: '构建、技能和战斗状态修改必须通过官方 XML 提交接口。' } });
+      return send(response, 200, await engine.request({ action: 'calculate' }));
+    }
+    return send(response, 404, { success: false, error: 'route not found' });
+  } finally {
+    // 只记录已确认的官方文档。失败或超时不能覆盖恢复点。
+    if (activeSession.fingerprint !== null) session.document = activeSession;
+    else if (session.document.fingerprint !== null) session.needsRestore = true;
+  }
 }

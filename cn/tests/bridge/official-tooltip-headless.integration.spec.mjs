@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import test from 'node:test';
 import { PoBCoreEngine } from '../../bridge/engine.mjs';
@@ -8,15 +10,18 @@ const root = resolve(import.meta.dirname, '../../..');
 const runtime = resolve(root, 'Builds/luajit', process.platform === 'win32' ? 'luajit.exe' : 'luajit');
 
 test('真实官方核心的批量投影跳过浮窗，按需浮窗和制作内容保持完整', { skip: !existsSync(runtime) }, async t => {
+  const directory = await mkdtemp(resolve(tmpdir(), 'pob-tooltip-test-'));
+  await mkdir(resolve(directory, 'Builds'));
+  await mkdir(resolve(directory, 'files'));
   const engine = new PoBCoreEngine({
     command: runtime,
     args: [resolve(root, 'cn/tests/bridge/helpers/tooltip-probe.lua')],
     cwd: resolve(root, 'src'),
-    env: { ...process.env, LUA_PATH: '../runtime/lua/?.lua;../runtime/lua/?/init.lua;;', POB_CN_REVIEW_ADAPTER: resolve(root, 'cn/lua/real-calc-adapter.lua') },
+    env: { ...process.env, POB_CN_SESSION_DIR: directory, LUA_PATH: '../runtime/lua/?.lua;../runtime/lua/?/init.lua;;', POB_CN_REVIEW_ADAPTER: resolve(root, 'cn/lua/real-calc-adapter.lua') },
     startupTimeoutMs: 30000,
     requestTimeoutMs: 30000,
   });
-  t.after(() => engine.close());
+  t.after(async () => { await engine.close(); await rm(directory, { recursive: true, force: true }); });
   await engine.start();
   const request = async message => {
     const result = await engine.request(message);

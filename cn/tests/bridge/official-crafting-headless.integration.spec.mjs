@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -17,9 +17,11 @@ const luaJit = join(repoRoot, 'Builds', 'luajit', process.platform === 'win32' ?
 
 async function runOfficialCraftProbe() {
   const tempDir = await mkdtemp(join(tmpdir(), 'pob-cn-crafting-'));
+  await mkdir(join(tempDir, 'Builds'));
+  await mkdir(join(tempDir, 'files'));
   const scriptPath = join(tempDir, 'probe.lua');
   const script = String.raw`package.path = '../runtime/lua/?.lua;../runtime/lua/?/init.lua;' .. package.path
-dofile('HeadlessWrapper.lua')
+dofile('../cn/bridge/headless-runtime.lua')()
 local Adapter = assert(dofile('../cn/lua/real-calc-adapter.lua'))
 local adapter = Adapter.new(_G)
 
@@ -454,7 +456,7 @@ print('OFFICIAL_CRAFT_HEADLESS_OK')
   await writeFile(scriptPath, script, 'utf8');
   try {
     const output = await new Promise((resolvePromise, reject) => {
-      const child = spawn(luaJit, [scriptPath], { cwd: sourceDir, windowsHide: true });
+      const child = spawn(luaJit, [scriptPath], { cwd: sourceDir, windowsHide: true, env: { ...process.env, POB_CN_SESSION_DIR: tempDir } });
       let stdout = '';
       let stderr = '';
       child.stdout.on('data', chunk => { stdout += chunk.toString(); });

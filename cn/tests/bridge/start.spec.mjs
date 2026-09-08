@@ -25,3 +25,14 @@ test('starts a configured engine only after the complete manifest gate', async (
   assert.equal(engine.ready, true);
   await engine.close();
 });
+
+test('启动失败等待进程完全退出后才向调用方返回', async () => {
+  const child = new FakeProcess();
+  let killed = false;
+  child.kill = () => { killed = true; setTimeout(() => child.emit('exit', 1, null), 15); };
+  let exited = false;
+  child.on('exit', () => { exited = true; });
+  await assert.rejects(startBridge(process.cwd(), { command: 'lua', startupTimeoutMs: 5, spawn: () => child }), /startup timed out/);
+  assert.equal(killed, true);
+  assert.equal(exited, true);
+});

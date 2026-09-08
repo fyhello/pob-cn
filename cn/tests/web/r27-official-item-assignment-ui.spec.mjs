@@ -63,7 +63,8 @@ test('item hover requests only the current official tooltip and never writes it 
   assert.match(itemsPanel, /hoveredItem\.value = \{ \.\.\.request\.item, tooltip: tooltipResult\.tooltip \}/);
   assert.match(itemsPanel, /while \(pendingTooltipRequest\)/);
   assert.match(store, /async getOfficialItemTooltip\(itemId: number\)/);
-  assert.match(store, /fetch\('\/api\/items\/tooltip'/);
+  assert.match(store, /requestForBuild\(this, '\/api\/items\/tooltip'/);
+  assert.match(itemsPanel, /watch\(\[\(\) => store\.sessionId, \(\) => store\.documentEpoch/);
   assert.match(store, /sourceRevision !== document\.version \|\| data\.revision !== document\.version/);
   assert.doesNotMatch(itemsPanel, /store\.itemLibrary\s*(?:=|\.push|\.splice)/);
 });

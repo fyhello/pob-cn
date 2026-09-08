@@ -27,7 +27,7 @@
           class="break-words whitespace-pre-wrap"
           :class="index === 0 ? 'text-gray-300' : 'text-[#8888ff]'"
         >
-          {{ line }}
+          <ItemModifierLine :text="line" :unsupported="parsed.bodyLineUnsupported[index]" />
         </div>
       </div>
       <div v-else class="py-3 text-center text-xs text-gray-500">
@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { translateWebItemLine } from '../utils/webTranslation';
+import ItemModifierLine from './ItemModifierLine.vue';
 
 const props = defineProps<{
   item: any;
@@ -123,10 +124,16 @@ const parsed = computed(() => {
     ? item.tooltip.bodyLines.filter((line: unknown): line is string => typeof line === 'string' && line.length > 0)
       .map((line: string) => translateWebItemLine(line))
     : [];
+  const bodyLineUnsupported = Array.isArray(item?.tooltip?.bodyLines)
+    ? item.tooltip.bodyLines.map((line: unknown, index: number) => ({ line, unsupported: item.tooltip.bodyLineUnsupported?.[index] === true }))
+      .filter(({ line }: { line: unknown }) => typeof line === 'string' && line.length > 0)
+      .map(({ unsupported }: { unsupported: boolean }) => unsupported)
+    : [];
   return {
     headerTitle: officialTooltipTitle(item, header?.title),
     headerBase: typeof header?.base === 'string' ? translateWebItemLine(header.base) : '',
     bodyLines,
+    bodyLineUnsupported,
   };
 });
 </script>
