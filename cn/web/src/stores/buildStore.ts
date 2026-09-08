@@ -598,7 +598,7 @@ export const useBuildStore = defineStore('build', {
       }
     },
 
-    async getOfficialCraftOptions(input: { action?: 'create' | 'edit' | 'duplicate'; sourceItemId?: number; baseName: string; itemLevel: number; rarity: 'NORMAL' | 'MAGIC' | 'RARE'; corrupted: boolean; draft?: Record<string, unknown> }): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
+    async getOfficialCraftOptions(input: { action?: 'create' | 'edit' | 'duplicate'; sourceItemId?: number; baseName: string; itemLevel: number; rarity: 'NORMAL' | 'MAGIC' | 'RARE'; corrupted: boolean; draft?: Record<string, unknown> } | { action: 'create' | 'edit' | 'duplicate'; sourceItemId?: number; draft: { kind: 'unique'; [key: string]: unknown } }): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
       const document = this.canonicalBuild;
       if (!document) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_MISSING', message: '当前内容尚未保存为官方 PoB 文档。' } };
       if (this.hasUnsavedLocalEdits) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_DIRTY', message: '当前本地编辑尚未写入官方 PoB 文档，无法读取制作选项。' } };
@@ -622,14 +622,14 @@ export const useBuildStore = defineStore('build', {
       }
     },
 
-    async getOfficialCraftCatalog(query = ''): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
+    async getOfficialCraftCatalog(query = '', kind?: 'unique'): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
       const document = this.canonicalBuild;
       if (!document) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_MISSING', message: '当前内容尚未保存为官方 PoB 文档。' } };
       if (this.hasUnsavedLocalEdits) return { success: false, error: { code: 'POB_CANONICAL_DOCUMENT_DIRTY', message: '当前本地编辑尚未写入官方 PoB 文档，无法读取制作目录。' } };
       try {
         const response = await requestForBuild(this, '/api/crafting/catalog', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: document.code, expectedRevision: document.version, query }),
+          body: JSON.stringify({ code: document.code, expectedRevision: document.version, query, kind }),
         });
         const result = await response.json();
         if (!response.ok || result?.success !== true || !isRecord(result.data)) {
@@ -650,7 +650,10 @@ export const useBuildStore = defineStore('build', {
     },
 
     async commitOfficialCraft(action: 'create' | 'edit' | 'duplicate', target: OfficialItemTarget | null, draft: Record<string, unknown>, sourceItemId?: number): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
-      return enqueueCanonicalMutation(this, () => this.runOfficialCraft('/api/items/commit', action, target, draft, true, sourceItemId));
+      const document = this.canonicalBuild;
+      return enqueueCanonicalMutation(this, () => draft.kind === 'unique' && this.canonicalBuild !== document
+        ? Promise.resolve({ success: false, error: staleDocumentError })
+        : this.runOfficialCraft('/api/items/commit', action, target, draft, true, sourceItemId));
     },
 
     async runOfficialCraft(path: '/api/items/preview' | '/api/items/commit', action: 'create' | 'edit' | 'duplicate', target: OfficialItemTarget | null, draft: Record<string, unknown>, commit: boolean, sourceItemId?: number): Promise<{ success: boolean; data?: Record<string, any>; error?: { code: string; message: string } }> {
@@ -663,7 +666,7 @@ export const useBuildStore = defineStore('build', {
       try {
         const response = await requestForBuild(this, path, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: document.code, expectedRevision: document.version, action, sourceItemId, target, draft }),
+          body: JSON.stringify({ code: document.code, expectedRevision: document.version, action, sourceItemId, target, draft, ...(draft.kind === 'unique' ? { projectionScope: projectionScopeForTab(this.activeTab) } : {}) }),
         });
         const result = await response.json();
         const data = result?.data;

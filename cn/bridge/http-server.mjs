@@ -368,6 +368,7 @@ async function handleBuildRequest(request, response, payload, session, library) 
       // (create/edit/duplicate).  Always forward it; omitting it for
       // `create` makes an otherwise valid request fail closed.
       const craftRequest = { action, operation, target: payload.target, draft: payload.draft, name: payload.name ?? '' };
+      if (payload.projectionScope !== undefined) craftRequest.projectionScope = payload.projectionScope;
       if (Number.isInteger(payload.sourceItemId)) craftRequest.sourceItemId = payload.sourceItemId;
       const result = await engine.request(craftRequest);
       if (!result?.success) return send(response, 422, result);
@@ -398,7 +399,7 @@ async function handleBuildRequest(request, response, payload, session, library) 
       if (!expectedRevision) return send(response, 400, { success: false, error: { code: 'POB_CRAFT_REVISION_REQUIRED', message: '缺少当前 PoB 文档版本，无法读取官方制作目录。' } });
       const loaded = await ensureLoaded(payload.code, expectedRevision, payload.name ?? '');
       if (!loaded?.success) return send(response, 422, { success: false, error: loaded?.error ?? { code: 'POB_CANONICAL_LOAD_FAILED', message: '当前 PoB 文档无法由官方核心重新载入。' } });
-      const result = await engine.request({ action: 'craftCatalog', query: payload.query });
+      const result = await engine.request({ action: 'craftCatalog', query: payload.query, kind: payload.kind });
       if (!result?.success) return send(response, 422, result);
       return send(response, 200, { success: true, action: 'craftCatalog', canonicalRevision: expectedRevision, data: { ...result.data, sourceRevision: expectedRevision, canonicalRevision: expectedRevision } });
     }

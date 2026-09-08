@@ -95,6 +95,26 @@ for (const outcome of ['success', 'failure']) test(`切换 BD 后拒绝旧修改
   }
 });
 
+test('传奇保存排队期间文档更新后拒绝旧预览草稿', async () => {
+  let release;
+  const requests = [];
+  const store = await loadStore(async (url, init) => {
+    const payload = JSON.parse(init.body);
+    requests.push({ url, payload });
+    if (url === '/api/build/commit') return new Promise(resolve => { release = () => resolve({ ok: true, json: async () => ({ success: true, data: { sourceRevision: 1, revision: 2, code: 'new', build: { characterLevel: 2, output: { Life: 30 } } } }) }); });
+    throw new Error('旧传奇草稿不应发送到核心');
+  }, { useRealPinia: true });
+  store.canonicalBuild = { code: 'old', version: 1 };
+  const change = store.setLevel(2);
+  const queued = store.commitOfficialCraft('create', null, { kind: 'unique', templateId: '官方模板' });
+  await new Promise(resolve => setImmediate(resolve));
+  release();
+  assert.equal((await change).success, true);
+  assert.equal((await queued).error.code, 'POB_DOCUMENT_CHANGED');
+  assert.equal(requests.length, 1);
+  assert.equal(store.canonicalBuild.code, 'new');
+});
+
 test('当前文档的修改失败显示错误，且不改动官方文档与数值', async () => {
   for (const outcome of ['response', 'network']) {
     const store = await loadStore(async url => {

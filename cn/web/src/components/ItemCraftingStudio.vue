@@ -18,13 +18,15 @@
       </header>
 
       <div class="flex items-center px-6 py-2 border-b border-white/10 bg-black/60 gap-2">
-        <span class="px-3.5 py-1 rounded-lg text-xs font-bold bg-amber-600 text-white shadow-md flex items-center gap-1.5">
+        <button type="button" :disabled="itemToEdit?.rarity === 'UNIQUE'" @click="craftMode = 'normal'" :aria-pressed="craftMode === 'normal'" :class="['px-3.5 py-1 rounded text-xs font-bold flex items-center gap-1.5 disabled:opacity-40', craftMode === 'normal' ? 'bg-amber-600 text-white' : 'text-gray-400']">
           <Hammer class="w-3.5 h-3.5" />
-          <span>稀有、魔法与普通装备/珠宝制作</span>
-        </span>
-            <span v-if="itemToEdit?.rarity === 'UNIQUE'" class="text-xs text-amber-200">传奇暗金只读；当前操作会以底材新建稀有副本。</span>
+          <span>普通制作</span>
+        </button>
+        <button type="button" :disabled="Boolean(itemToEdit && itemToEdit.rarity !== 'UNIQUE')" @click="craftMode = 'unique'" :aria-pressed="craftMode === 'unique'" :class="['px-3.5 py-1 rounded text-xs font-bold flex items-center gap-1.5 disabled:opacity-40', craftMode === 'unique' ? 'bg-amber-600 text-white' : 'text-gray-400']"><Sparkles class="w-3.5 h-3.5" />传奇制作</button>
       </div>
 
+      <UniqueItemCraftingPanel v-if="craftMode === 'unique'" :item-to-edit="itemToEdit" :initial-category="initialCategory" :initial-target="initialTarget" @close="closeStudio" @created="emit('created', $event)" />
+      <template v-else>
       <div v-if="craftAction === 'duplicate' && nonInheritedStates.length" class="px-6 py-2 border-b border-amber-500/30 bg-amber-950/20 text-xs text-amber-100">
         <span>该副本不会继承以下官方状态：</span>
         <span v-for="state in nonInheritedStates" :key="state" class="ml-1.5 inline-block rounded border border-amber-500/40 px-1.5 py-0.5 text-[11px]">
@@ -357,16 +359,18 @@
           </button>
         </div>
       </footer>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { computed, reactive, ref, watch, onMounted, onUnmounted, nextTick, defineAsyncComponent } from 'vue';
 import { Clipboard, Code, Hammer, Sparkles } from 'lucide-vue-next';
 import { useBuildStore } from '../stores/buildStore';
 import { translateRuneName, translateWebItemLine, translateWebItemName, translateWebItemType, translateWebText } from '../utils/webTranslation';
 import ItemModifierLine from './ItemModifierLine.vue';
+const UniqueItemCraftingPanel = defineAsyncComponent(() => import('./UniqueItemCraftingPanel.vue'));
 
 function handleGlobalKeyDown(e: KeyboardEvent) {
   if (e.key === 'Escape' && props.isOpen) {
@@ -441,6 +445,7 @@ const props = defineProps<{
   initialTarget?: Target;
 }>();
 const emit = defineEmits<{ close: []; created: [itemId: string | number] }>();
+const craftMode = ref<'normal' | 'unique'>(props.itemToEdit?.rarity === 'UNIQUE' ? 'unique' : 'normal');
 
 const store = useBuildStore();
 const catalog = ref<OfficialCraftBase[]>([]);
@@ -880,6 +885,7 @@ function scheduleOfficialOptionsRefresh() {
   if (optionsRefreshTimer) clearTimeout(optionsRefreshTimer);
   optionsRefreshTimer = setTimeout(() => {
     optionsRefreshTimer = undefined;
+    if (craftMode.value !== 'normal') return;
     void refreshOfficialOptions();
   }, 120);
 }
@@ -961,6 +967,10 @@ function clearCraftSelections() {
 
 watch(() => props.isOpen, async open => {
   if (!open) return;
+  if (props.itemToEdit) {
+    const item = props.itemToEdit;
+    if (item.rarity === 'UNIQUE') { craftMode.value = 'unique'; return; }
+  }
   // The source base can arrive only after the asynchronous official catalog.
   // Keep its structured draft intact until that catalog has selected the base.
   preserveNextBaseDraft = Boolean(props.itemToEdit);
@@ -1000,18 +1010,14 @@ watch(() => props.isOpen, async open => {
       ? item.implicitRanges.filter((range: any) => range && Number.isInteger(range.index) && typeof range.roll === 'number')
       : [];
     isCorrupted.value = item.corrupted === true;
-    const editedRarity = item.rarity === 'UNIQUE' ? 'RARE' : item.rarity;
+    const editedRarity = item.rarity;
     rarity.value = allowedRarities.value.includes(editedRarity) ? editedRarity : 'RARE';
     selectedVariantIndex.value = item.variant || 1;
-    if (item.rarity === 'UNIQUE') {
-      clearCraftSelections();
-    } else {
-      draft.prefixes = (item.prefixes || []).filter((affix: any) => affix.essence !== true).map((affix: any) => ({ id: affix.id, roll: affix.roll }));
-      draft.suffixes = (item.suffixes || []).filter((affix: any) => affix.essence !== true).map((affix: any) => ({ id: affix.id, roll: affix.roll }));
-      selectedEssenceId.value = item.essence?.id ?? '';
-      essenceRoll.value = item.essence?.roll ?? 0;
-      selectedRunes.value = Array.isArray(item.runes) ? [...item.runes] : [];
-    }
+    draft.prefixes = (item.prefixes || []).filter((affix: any) => affix.essence !== true).map((affix: any) => ({ id: affix.id, roll: affix.roll }));
+    draft.suffixes = (item.suffixes || []).filter((affix: any) => affix.essence !== true).map((affix: any) => ({ id: affix.id, roll: affix.roll }));
+    selectedEssenceId.value = item.essence?.id ?? '';
+    essenceRoll.value = item.essence?.roll ?? 0;
+    selectedRunes.value = Array.isArray(item.runes) ? [...item.runes] : [];
   }
   try {
     await nextTick();
@@ -1023,6 +1029,13 @@ watch(() => props.isOpen, async open => {
     preserveNextBaseDraft = false;
   }
 }, { immediate: true });
+
+watch(craftMode, async mode => {
+  if (mode !== 'normal' || !props.isOpen) return;
+  if (await refreshOfficialCatalog()) {
+    if (await refreshOfficialOptions()) await preview();
+  }
+});
 
 watch(() => basesForCategory.value, list => {
   if (list.length > 0 && !list.some(b => b.id === baseName.value)) {

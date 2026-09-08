@@ -103,7 +103,7 @@
                   v-if="store.equippedItems[slot.id]"
                   @click.stop="openStudioWithItem(store.equippedItems[slot.id])"
                   class="px-2.5 py-1 bg-amber-600/25 hover:bg-amber-600 border border-amber-500/50 hover:border-amber-400 rounded-lg text-amber-300 hover:text-white text-xs font-semibold transition-all shadow-sm flex items-center space-x-1"
-                  title="以此物品底材创建官方结构化副本"
+                  :title="store.equippedItems[slot.id].rarity === 'UNIQUE' ? '编辑传奇物品' : '以此物品底材创建官方结构化副本'"
                 >
                   <span>✏️ 修改</span>
                 </button>
@@ -250,7 +250,7 @@
                     v-if="store.equippedItems[slot.id]"
                     @click.stop="openStudioWithItem(store.equippedItems[slot.id])"
                     class="px-2.5 py-1 bg-amber-600/25 hover:bg-amber-600 border border-amber-500/50 hover:border-amber-400 rounded-lg text-amber-300 hover:text-white text-xs font-semibold transition-all shadow-sm flex items-center space-x-1"
-                    title="以此物品底材创建官方结构化副本"
+                  :title="store.equippedItems[slot.id].rarity === 'UNIQUE' ? '编辑传奇物品' : '以此物品底材创建官方结构化副本'"
                   >
                     <span>✏️ 修改</span>
                   </button>
@@ -385,7 +385,7 @@
                   <button 
                     @click.stop="openStudioWithItem(item)" 
                     class="p-1 hover:bg-amber-950/60 rounded text-gray-500 hover:text-amber-400 text-xs transition-colors"
-                    title="以此物品底材创建官方结构化副本"
+                    :title="item.rarity === 'UNIQUE' ? '编辑传奇物品' : '以此物品底材创建官方结构化副本'"
                   >
                     <Wrench class="w-3.5 h-3.5" />
                   </button>

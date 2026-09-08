@@ -1608,7 +1608,9 @@ function Adapter:applyStrictCraftRunes(itemsTab, item, draft)
 	if #draft.runes ~= capabilities.socketCount then return nil, craftInputError("draft.runes", "符文数量必须与官方底材已有孔数完全一致") end
 	local requested = {}
 	for index, name in ipairs(draft.runes) do
-		if type(name) ~= "string" or not capabilities.allowedByName[name] then
+		-- 传奇由官方模板/源物品克隆，允许原孔保留已有只读符文，不允许新增或挪用。
+		local unchanged = draft.kind == "unique" and item.runes[index] == name
+		if type(name) ~= "string" or not (capabilities.allowedByName[name] or unchanged) then
 			return nil, craftInputError("draft.runes["..index.."]", "符文不适用于该官方底材")
 		end
 		requested[index] = name
@@ -1884,7 +1886,10 @@ function Adapter:createStrictCraftItem(draft, itemsTab)
 	return item, nil, capabilities
 end
 
-function Adapter:validateCraftDraft(draft, itemsTab)
+function Adapter:validateCraftDraft(draft, itemsTab, sourceItem)
+	if type(draft) == "table" and draft.kind == "unique" then
+		return dofile('../cn/lua/unique-crafting.lua').create(self, draft, itemsTab, sourceItem)
+	end
 	if type(draft) == "table" and (draft.kind == "rawItem" or type(draft.raw) == "string") then
 		return nil, craftInputError("draft", "制作只能提交由官方规则接口校验的结构化草稿")
 	end
@@ -1926,6 +1931,9 @@ function Adapter:craftOptions(request)
 	local build, unavailable = self:available()
 	if not build then unavailable.action = "craftOptions"; return unavailable end
 	if type(request) ~= "table" then return craftInputError("request", "制作选项请求不能为空") end
+	if type(request.draft) == "table" and request.draft.kind == "unique" then
+		return dofile('../cn/lua/unique-crafting.lua').options(self, request, officialValidTargetSlots)
+	end
 	if type(request.baseName) ~= "string" or request.baseName == "" then return craftInputError("baseName", "必须选择官方装备底材") end
 	-- `execute` routes this method with the transport action "craftOptions";
 	-- never mistake that endpoint name for the requested craft operation.  The
@@ -2164,6 +2172,9 @@ end
 function Adapter:craftCatalog(request)
 	local build, unavailable = self:available()
 	if not build then unavailable.action = "craftCatalog"; return unavailable end
+	if type(request) == "table" and request.kind == "unique" then
+		return dofile('../cn/lua/unique-crafting.lua').catalog(self.runtime)
+	end
 	local data = type(build.data) == "table" and build.data or nil
 	if type(data) ~= "table" or type(data.itemBases) ~= "table" then
 		return failure("POB_HEADLESS_API_UNAVAILABLE", "build.data.itemBases", "PoB 未暴露官方底材目录")
@@ -2259,6 +2270,7 @@ function Adapter:craft(action, request)
 	local build, unavailable = self:available()
 	if not build then unavailable.action = action; return unavailable end
 	local operation = type(request) == "table" and (request.operation or request.actionMode) or nil
+	local uniqueDraft = type(request) == "table" and type(request.draft) == "table" and request.draft.kind == "unique"
 	if operation ~= "create" and operation ~= "edit" and operation ~= "duplicate" then
 		return craftInputError("operation", "必须明确指定 create、edit 或 duplicate 操作")
 	end
@@ -2269,7 +2281,7 @@ function Adapter:craft(action, request)
 			return craftInputError("sourceItemId", "编辑或复制必须指定当前官方物品库中的物品 ID")
 		end
 		sourceItem = build.itemsTab.items[sourceId]
-		if operation == "edit" then
+		if operation == "edit" and not uniqueDraft then
 			local readOnlyState = readOnlyCraftState(sourceItem)
 			if sourceItem.rarity ~= "RARE" or readOnlyState then
 				return craftInputError("sourceItemId", "该官方物品包含不可由制作草案表达的只读状态（"..tostring(readOnlyState or "rarity").."），必须使用 duplicate 创建副本")
@@ -2279,7 +2291,7 @@ function Adapter:craft(action, request)
 	-- Editing is an in-place update.  Preserve official state that is not
 	-- explicitly represented by the structured draft (sockets/runes, quality,
 	-- catalyst and immutable flags) instead of silently resetting it.
-	if operation == "edit" and type(request.draft) == "table" and type(sourceItem) == "table" then
+	if operation == "edit" and not uniqueDraft and type(request.draft) == "table" and type(sourceItem) == "table" then
 		local draft = {}
 		for key, value in pairs(request.draft) do draft[key] = value end
 		for _, key in ipairs({ "quality", "catalyst", "catalystQuality", "corrupted", "variant", "socketCount", "runes", "title", "jewelRadiusLabel" }) do
@@ -2305,13 +2317,13 @@ function Adapter:craft(action, request)
 	-- below so the new ID is actually assigned to the requested equipment or
 	-- passive-jewel slot.
 	if (operation == "create" and request.target == nil) or (operation == "duplicate" and request.target == nil) then
-		local item, itemError, runeCapabilities = self:validateCraftDraft(request.draft, build.itemsTab)
+		local item, itemError, runeCapabilities = self:validateCraftDraft(request.draft, build.itemsTab, sourceItem)
 		if not item then itemError.action = action; return itemError end
 		if action == "craftPreview" then
 			local projected, projectionError = self:projectOfficialItem(item, true)
 			if not projected then projectionError.action = action; return projectionError end
 			local previewData = { item = projected, output = outputScalars(build.calcsTab.mainOutput), runeCapabilities = { socketCount = runeCapabilities.socketCount, allowed = runeCapabilities.allowed }, validTargetSlots = officialValidTargetSlots(build.itemsTab, item) }
-			if operation == "duplicate" then previewData.nonInheritedStates = nonInheritedCraftStates(sourceItem, request.draft, build.data) end
+			if operation == "duplicate" and not uniqueDraft then previewData.nonInheritedStates = nonInheritedCraftStates(sourceItem, request.draft, build.data) end
 			return { success = true, action = action, data = previewData }
 		end
 		local snapshot, snapshotError = self:createCalculationSnapshot(build)
@@ -2319,15 +2331,12 @@ function Adapter:craft(action, request)
 		if type(build.itemsTab) ~= "table" or type(build.itemsTab.AddItem) ~= "function" then
 			return self:restoreCalculationSnapshot(snapshot, failure("POB_HEADLESS_API_UNAVAILABLE", "itemsTab:AddItem", "PoB 未暴露官方物品库写入接口"))
 		end
-		-- Both create and duplicate allocate a fresh official ID.  Duplicate's
-		-- source item is validated above (so read-only uniques can be copied),
-		-- but no hidden state is inherited unless it is explicitly present in the
-		-- structured draft.
+		-- 新建/副本分配新 ID；传奇构造器已保留源物品完整状态。
 		build.itemsTab:AddItem(item, true)
 		local projected, projectionError = self:projectOfficialItem(item)
 		if not projected then return self:restoreCalculationSnapshot(snapshot, projectionError) end
 	local result = { success = true, action = action, data = { item = projected, output = outputScalars(build.calcsTab.mainOutput), runeCapabilities = { socketCount = runeCapabilities.socketCount, allowed = runeCapabilities.allowed }, validTargetSlots = officialValidTargetSlots(build.itemsTab, item) } }
-		if operation == "duplicate" then result.data.nonInheritedStates = nonInheritedCraftStates(sourceItem, request.draft, build.data) end
+		if operation == "duplicate" and not uniqueDraft then result.data.nonInheritedStates = nonInheritedCraftStates(sourceItem, request.draft, build.data) end
 		build.buildFlag = true
 		local calculated, calculationError = pcall(build.calcsTab.BuildOutput, build.calcsTab)
 		if not calculated then return self:restoreCalculationSnapshot(snapshot, failure("POB_CALCULATION_FAILED", "build.calcsTab:BuildOutput", tostring(calculationError))) end
@@ -2335,14 +2344,14 @@ function Adapter:craft(action, request)
 		local exported = self:exportXML()
 		if not exported.success then return self:restoreCalculationSnapshot(snapshot, exported) end
 		result.data.xml = exported.data.xml
-		local projection, buildError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime)
+		local projection, buildError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, uniqueDraft or nil, nil, uniqueDraft and request.projectionScope or nil)
 		if not projection then return self:restoreCalculationSnapshot(snapshot, buildError) end
 		result.data.build = projection
 		return result
 	end
 	if operation == "edit" and request.target == nil then
 		local sourceId = validInteger(request.sourceItemId)
-		local item, itemError, runeCapabilities = self:validateCraftDraft(request.draft, build.itemsTab)
+		local item, itemError, runeCapabilities = self:validateCraftDraft(request.draft, build.itemsTab, sourceItem)
 		if not item then itemError.action = action; return itemError end
 		local snapshot, snapshotError = self:createCalculationSnapshot(build)
 		if not snapshot then snapshotError.action = action; return snapshotError end
@@ -2360,9 +2369,10 @@ function Adapter:craft(action, request)
 		if not calculated then return self:restoreCalculationSnapshot(snapshot, failure("POB_CALCULATION_FAILED", "build.calcsTab:BuildOutput", tostring(calculationError))) end
 		local projected, projectionError = self:projectOfficialItem(item)
 		if not projected then return self:restoreCalculationSnapshot(snapshot, projectionError) end
+		if uniqueDraft and action == "craftPreview" then return self:restoreCalculationSnapshot(snapshot, { success = true, action = action, data = { item = projected, output = outputScalars(build.calcsTab.mainOutput), runeCapabilities = { socketCount = runeCapabilities.socketCount, allowed = runeCapabilities.allowed }, validTargetSlots = officialValidTargetSlots(build.itemsTab, item) } }) end
 		local exported = self:exportXML()
 		if not exported.success then return self:restoreCalculationSnapshot(snapshot, exported) end
-		local projection, buildError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime)
+		local projection, buildError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, uniqueDraft or nil, nil, uniqueDraft and request.projectionScope or nil)
 		if not projection then return self:restoreCalculationSnapshot(snapshot, buildError) end
 		if action == "craftPreview" then return self:restoreCalculationSnapshot(snapshot, { success = true, action = action, data = { item = projected, output = outputScalars(build.calcsTab.mainOutput), runeCapabilities = { socketCount = runeCapabilities.socketCount, allowed = runeCapabilities.allowed }, validTargetSlots = officialValidTargetSlots(build.itemsTab, item) } }) end
 		return { success = true, action = action, data = { item = projected, output = outputScalars(build.calcsTab.mainOutput), runeCapabilities = { socketCount = runeCapabilities.socketCount, allowed = runeCapabilities.allowed }, validTargetSlots = officialValidTargetSlots(build.itemsTab, item), xml = exported.data.xml, build = projection } }
@@ -2377,7 +2387,7 @@ function Adapter:craft(action, request)
 	end
 	local snapshot, snapshotError = self:createCalculationSnapshot(build)
 	if not snapshot then snapshotError.action = action; return snapshotError end
-	local item, itemError, runeCapabilities = self:validateCraftDraft(request.draft, build.itemsTab)
+	local item, itemError, runeCapabilities = self:validateCraftDraft(request.draft, build.itemsTab, sourceItem)
 	if not item then return self:restoreCalculationSnapshot(snapshot, itemError) end
 	local itemsTab = build.itemsTab
 	if type(itemsTab.AddItem) ~= "function" or type(itemsTab.IsItemValidForSlot) ~= "function" then
@@ -2454,7 +2464,7 @@ function Adapter:craft(action, request)
 	if not projected then return self:restoreCalculationSnapshot(snapshot, projectionError) end
 	local targetOutput = outputScalars(build.calcsTab.mainOutput)
 	local result = { success = true, action = action, data = { item = projected, output = targetOutput, runeCapabilities = { socketCount = runeCapabilities.socketCount, allowed = runeCapabilities.allowed }, validTargetSlots = officialValidTargetSlots(build.itemsTab, item) } }
-	if operation == "duplicate" then result.data.nonInheritedStates = nonInheritedCraftStates(sourceItem, request.draft, build.data) end
+	if operation == "duplicate" and not uniqueDraft then result.data.nonInheritedStates = nonInheritedCraftStates(sourceItem, request.draft, build.data) end
 	if action == "craftPreview" then return self:restoreCalculationSnapshot(snapshot, result) end
 	if restoreTarget then
 		local restoreError = restoreTarget()
@@ -2468,7 +2478,7 @@ function Adapter:craft(action, request)
 	local exported = self:exportXML()
 	if not exported.success then return self:restoreCalculationSnapshot(snapshot, exported) end
 	result.data.xml = exported.data.xml
-	local projection, buildError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime)
+	local projection, buildError = projectBuild(build, request.name, build.calcsTab.mainOutput, self.runtime, uniqueDraft or nil, nil, uniqueDraft and request.projectionScope or nil)
 	if not projection then return self:restoreCalculationSnapshot(snapshot, buildError) end
 	result.data.build = projection
 	return result
