@@ -16,6 +16,7 @@ const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 const fixtureFiles = [
   'cn/config/content-source-lock.json', 'cn/config/content-contract.json', 'cn/config/version-lock.json',
   'cn/config/pipeline-ownership.json', 'cn/config/ownership.yml', 'cn/config/upstream-content-snapshot.json',
+  'cn/pipeline/schemas/game-text-tables.json', 'cn/pipeline/schemas/game-text-tools.json',
   'cn/pipeline/sources/dictionary/ninja-poe2/poe2.json.gz', 'cn/pipeline/overrides/zh-CN/terms.json',
   'cn/pipeline/overrides/zh-CN/glossary.json',
   'cn/pipeline/sources/crafting/slot-tag-map.zh-CN.json', 'cn/pipeline/sources/crafting/seed.zh-CN.json',
@@ -29,7 +30,11 @@ const fixtureFiles = [
 async function makeFixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'pob-cn-m2-2-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const inputs = [...fixtureFiles, ...(await readdir(join(repoRoot, 'src/Data/Bases'))).filter(name => name.endsWith('.lua')).map(name => `src/Data/Bases/${name}`)];
+  const lock = JSON.parse(await readFile(join(repoRoot, 'cn/config/content-source-lock.json')));
+  const version = JSON.parse(await readFile(join(repoRoot, 'cn/config/version-lock.json')));
+  const inputs = [...fixtureFiles, ...lock.inputs.filter(input => input.stage === 'I18N').map(input => input.path),
+    `cn/pipeline/sources/translations/reviews/${version.content_versions.translations.review_sha256}.json.gz`,
+    ...(await readdir(join(repoRoot, 'src/Data/Bases'))).filter(name => name.endsWith('.lua')).map(name => `src/Data/Bases/${name}`)];
   for (const path of inputs) {
     const target = join(root, path);
     await mkdir(join(target, '..'), { recursive: true });
@@ -55,7 +60,8 @@ test('writes only the complete M2-2 contract set and is byte-stable on the secon
     'cn/generated/manifest.json', 'cn/generated/web-data/affixes.json',
     'cn/generated/web-data/bases.json', 'cn/generated/web-data/crafting-authority-v2.json', 'cn/generated/web-data/crafting-legacy.json', 'cn/generated/web-data/crafting.json',
     'cn/generated/web-data/gems.json', 'cn/generated/web-data/translations.json', 'cn/generated/web-data/tree_0_5.json', 'cn/generated/web-data/uniques.json',
-  ]);
+    'cn/generated/web-data/translations.zh-TW.json', 'cn/generated/web-data/translations-report.json',
+  ].sort());
   const secondResult = await generateContent(fixtureRoot);
   const second = await snapshotBusinessTree(fixtureRoot, ownership);
   assert.equal(formatBusinessSnapshotDiff(diffBusinessSnapshots(first, second)), '');
@@ -67,25 +73,25 @@ test('emits a complete manifest with locked crafting provenance and no unreviewe
   await generateContent(fixtureRoot);
   const manifest = JSON.parse(await readFile(join(fixtureRoot, 'cn/generated/manifest.json'), 'utf8'));
   assert.equal(manifest.completeness, 'complete');
-  assert.equal(manifest.outputs.length, 9);
+  assert.equal(manifest.outputs.length, 11);
   assert.equal(manifest.outputs.find(output => output.id === 'web.crafting-authority-v2').record_count > 2800, true);
   assert.equal(manifest.outputs[0].id, 'web.translation');
-  assert.equal(manifest.untranslated.count, 0);
+  const report = JSON.parse(await readFile(join(fixtureRoot, manifest.untranslated.report_path)));
+  assert.equal(manifest.untranslated.count, report.coverage['zh-CN'].missing.length);
   assert.doesNotThrow(() => validateManifest(manifest));
   assert.doesNotThrow(() => assertManifestComplete(manifest, 'cn/generated/manifest.json'));
   await assert.doesNotReject(assertManifestCompleteFromRepo(fixtureRoot));
 });
 
-test('rejects an untranslated override that is outside the reviewed allowlist', async t => {
+test('审核来源中的空译文不能写入正式产物', async t => {
   const fixtureRoot = await makeFixture(t);
-  const overridePath = join(fixtureRoot, 'cn/pipeline/overrides/zh-CN/terms.json');
+  const overridePath = join(fixtureRoot, 'cn/pipeline/sources/translations/reviewed.json');
   const dictionary = JSON.parse(await readFile(join(fixtureRoot, 'cn/config/content-source-lock.json'), 'utf8'));
-  const firstId = 'Rewarded an Exile\'s Hood Microtransaction!\r\nPress K to Equip';
   const override = JSON.parse(await readFile(overridePath, 'utf8'));
-  override.entries[firstId] = '';
+  override.entries[0].translated = '';
   const contents = `${JSON.stringify(override, null, 2)}\n`;
   await writeFile(overridePath, contents);
-  dictionary.inputs.find(input => input.id === 'override.zh-CN.terms').sha256 = createHash('sha256').update(contents).digest('hex');
+  dictionary.inputs.find(input => input.id === 'translation.reviewed').sha256 = createHash('sha256').update(contents).digest('hex');
   await writeFile(join(fixtureRoot, 'cn/config/content-source-lock.json'), `${JSON.stringify(dictionary, null, 2)}\n`);
-  await assert.rejects(generateContent(fixtureRoot), /untranslated|override translation is invalid/);
+  await assert.rejects(generateContent(fixtureRoot), /审核记录|审核译文/);
 });

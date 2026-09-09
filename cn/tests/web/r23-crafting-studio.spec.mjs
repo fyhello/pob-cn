@@ -81,7 +81,7 @@ test('crafting preview card renders only the structured Lua tooltip projection',
   assert.match(studio, /officialTooltipTitle\(previewItem\)/);
   assert.match(studio, /previewItem\.tooltip\.header\.base/);
   assert.match(studio, /Array\.isArray\(previewItem\.tooltip\.bodyLines\)/);
-  assert.match(studio, /v-for="\(line, index\) in previewItem\.tooltip\.bodyLines"/);
+  assert.match(studio, /<ItemDisplayLines :lines="previewItem\.tooltip\.bodyLines" :unsupported="previewItem\.tooltip\.bodyLineUnsupported"/);
   assert.match(studio, /等待官方预览/);
   assert.doesNotMatch(studio, /getLineColor/);
 });
@@ -187,7 +187,8 @@ test('every Lua-reported duplicate state has a generated single-dictionary trans
 });
 
 test('catalog and official crafting options runtime display values are covered by the generated dictionary', async () => {
-  const translations = JSON.parse(await source('../../generated/web-data/translations.json'));
+  const { loadLocalizer } = await import('../helpers/web-localizer.mjs');
+  const { translateWebText } = await loadLocalizer();
   const catalogAndOptionTerms = [
     ['NORMAL', '普通'], ['MAGIC', '魔法'], ['Rarity', '稀有度'],
     ['Hysteria', '歇斯底里'], ['ColdResist', '冰霜抗性'], ['FireResist', '火焰抗性'], ['LightningResist', '闪电抗性'], ['SpeedCaster', '施法速度'],
@@ -195,10 +196,8 @@ test('catalog and official crafting options runtime display values are covered b
     ["Uul-Netol's", '乌尔尼多的'], ["Xoph's", '索伏的'], ["Tul's", '托沃的'], ["Esh's", '艾许的'], ["Chayula's", '夏乌拉的'],
     ['Reaver', '攻击'], ['Sibilant', '施法'], ['Skittering', '速度'], ['Adaptive', '全属性'], ['Necrotic', '召唤'],
   ];
-  const domains = ['items', 'stats', 'tooltip', 'ui', 'terms'];
-
   for (const [value, expected] of catalogAndOptionTerms) {
-    const translated = domains.map(domain => translations[domain]?.[value]).find(Boolean);
+    const translated = translateWebText(value);
     assert.equal(translated, expected, `runtime crafting value ${value} must resolve through translations.json`);
   }
 });

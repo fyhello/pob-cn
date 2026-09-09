@@ -299,6 +299,48 @@
         "reviewed": false,
         "review_status": "migration-baseline"
       }
+    },
+    {
+      "id": "translation.game",
+      "path": "cn/pipeline/sources/translations/snapshots/game-72eeafc9cea70bd422529f3ae4d4f4e65d61914f4cddc322760a76598c0bb136.json.gz",
+      "sha256": "72eeafc9cea70bd422529f3ae4d4f4e65d61914f4cddc322760a76598c0bb136",
+      "format": "gzip-json",
+      "kind": "NATIVE_SNAPSHOT",
+      "stage": "I18N",
+      "language": "zh-CN,zh-TW",
+      "provenance": {
+        "source": "translation.game",
+        "upstream_commit": "5d173cbf8c9cf394a975cbb813f19d0b6dc67ea6",
+        "reviewed_report_sha256": "c6094ca43d147eeb72b3913c02ae5e577c19ac4a531240650cc42458725635ed"
+      }
+    },
+    {
+      "id": "translation.core",
+      "path": "cn/pipeline/sources/translations/snapshots/core-0ce636c33f9c93651eadefd76796e8462ba324cad2a69acab88873306bcec275.json.gz",
+      "sha256": "0ce636c33f9c93651eadefd76796e8462ba324cad2a69acab88873306bcec275",
+      "format": "gzip-json",
+      "kind": "NATIVE_SNAPSHOT",
+      "stage": "I18N",
+      "language": "zh-CN,zh-TW",
+      "provenance": {
+        "source": "translation.core",
+        "upstream_commit": "5d173cbf8c9cf394a975cbb813f19d0b6dc67ea6",
+        "reviewed_report_sha256": "c6094ca43d147eeb72b3913c02ae5e577c19ac4a531240650cc42458725635ed"
+      }
+    },
+    {
+      "id": "translation.reviewed",
+      "path": "cn/pipeline/sources/translations/reviewed.json",
+      "sha256": "996650b6e8bd51090a69711c99062bdbc9df904bf10a33948891aa2f13858412",
+      "format": "json",
+      "kind": "CN_SOURCE",
+      "stage": "I18N",
+      "language": "zh-CN,zh-TW",
+      "provenance": {
+        "source": "translation.reviewed",
+        "upstream_commit": "5d173cbf8c9cf394a975cbb813f19d0b6dc67ea6",
+        "reviewed_report_sha256": "c6094ca43d147eeb72b3913c02ae5e577c19ac4a531240650cc42458725635ed"
+      }
     }
   ]
 }

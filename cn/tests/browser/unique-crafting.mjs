@@ -9,6 +9,7 @@ import { startBridge } from '../../bridge/start.mjs';
 import { BuildSessions } from '../../bridge/build-sessions.mjs';
 import { LibraryStore } from '../../bridge/library-store.mjs';
 import { createBridgeHttpServer } from '../../bridge/http-server.mjs';
+import { verifyTranslationDisplays } from './translation-displays.mjs';
 
 const root = resolve(import.meta.dirname, '../../..');
 process.chdir(join(root, 'cn/web'));
@@ -32,7 +33,7 @@ const origin = `http://127.0.0.1:${vite.httpServer.address().port}`;
 const browser = await chromium.launch({ headless: true, ...(process.env.POB_CN_BROWSER ? { executablePath: process.env.POB_CN_BROWSER } : {}) });
 const context = await browser.newContext({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 });
 const a = await context.newPage(), b = await context.newPage();
-const errors = [], measurements = [];
+const errors = [], measurements = [], languageChecks = [];
 for (const page of [a, b]) {
   page.setDefaultTimeout(30_000);
   page.on('pageerror', error => errors.push(error.message));
@@ -83,6 +84,31 @@ async function save() {
   measurements.push({ operation: '保存传奇至浏览器显示', milliseconds: Math.round(performance.now() - start) });
   return next;
 }
+
+async function assertLocaleIsolation(label) {
+  const before = await state(a), requests = [];
+  const count = request => { if (request.url().includes('/api/') && !request.url().endsWith('/sessions/heartbeat')) requests.push(request.url()); };
+  a.on('request', count);
+  try {
+    const terms = await a.evaluate(async () => {
+      const translation = await import('/src/utils/webTranslation.ts');
+      await translation.setTranslationLocale('zh-TW');
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      return [translation.translateWebItemName('Dueling Wand'), translation.translateWebItemName('Efficiency I'), translation.translateWebItemType('Warstaff')];
+    });
+    assert.deepEqual(terms, ['單挑法杖', '效率 I', '細杖']);
+    const after = await state(a);
+    for (const key of ['session', 'version', 'code', 'stats']) assert.deepEqual(after[key], before[key], `${label}切换显示语言不能改变 ${key}`);
+    assert.deepEqual(after.items.map(item => [item.id, item.raw]), before.items.map(item => [item.id, item.raw]));
+    assert.equal(await b.evaluate(async () => (await import('/src/utils/webTranslation.ts')).getTranslationLocale()), 'zh-CN');
+    await a.evaluate(async () => {
+      await (await import('/src/utils/webTranslation.ts')).setTranslationLocale('zh-CN');
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    assert.deepEqual(requests, [], '语言变化不得请求核心或保存数据');
+    languageChecks.push({ view: label, requests: requests.length, unchanged: true });
+  } finally { a.off('request', count); }
+}
 try {
   console.log(`传奇浏览器验收证据：${evidence}`);
   for (const [page, name] of [[a, '传奇验证 A'], [b, '传奇验证 B']]) {
@@ -95,6 +121,28 @@ try {
   const unchanged = await state(b);
   await open();
   assert.equal(await panel().getByLabel('官方传奇目录').locator('option').count(), 443);
+  for (const [id, expected, forbidden] of [
+    ["Alpha's Howl, Armoured Cap", /自然滋养着强悍的灵魂/, /Nature respects|snow red|blood of the weak/],
+    ['Amor Mandragora, Changeling Talisman', /艾兹麦魔符/, /Ezomyte|Weapon Range|Adds .* Physical Damage/],
+    ["Apep's Supremacy, Voodoo Focus", /瓦尔法器/, /Vaal Focus/],
+  ]) {
+    await choose(id);
+    const text = await panel().getByTestId('unique-preview').innerText();
+    assert.match(text, expected); assert.doesNotMatch(text, forbidden);
+    if (id.startsWith('Amor')) {
+      assert.match(text, /武器范围：1\.2 米/);
+      assert.match(text, /附加 18 - 25 物理伤害/);
+      assert.match(text, /不生效/);
+    }
+    await a.screenshot({ path: join(evidence, `传奇漏译-${id.split(',')[0]}.png`), fullPage: true });
+  }
+  await choose('Against the Darkness, Time-Lost Diamond');
+  const chaosOption = await panel().getByLabel('选项 1', { exact: true }).locator('option').evaluateAll(options => options.find(option => /Chaos Resistance|混沌抗性/.test(option.textContent))?.value);
+  assert.ok(chaosOption, '必须覆盖截图中的混沌抗性选项');
+  await panel().getByLabel('选项 1', { exact: true }).selectOption(chaosOption); await ready();
+  assert.match(await panel().getByTestId('unique-preview').innerText(), /范围内的小型天赋同时提供.*混沌抗性/);
+  assert.doesNotMatch(await panel().innerText(), /Small Passive Skills|Source: Drops/);
+  await assertLocaleIsolation('传奇身份和动态句式');
   await choose('Megalomaniac, Diamond');
   assert.equal(await panel().getByLabel('选项 1', { exact: true }).locator('option').count(), 874);
   await panel().getByLabel('搜索选项 1', { exact: true }).fill('Attack');
@@ -133,6 +181,12 @@ try {
   a.off('request', count);
   assert.equal(optionsRequests, 1);
   assert.equal(calcRequests, 0);
+  const translatedPreview = await panel().getByTestId('unique-preview').innerText();
+  assert.match(translatedPreview, /凝望之眼绝不会退缩/);
+  assert.match(translatedPreview, /插槽：S S S S/);
+  assert.match(translatedPreview, /需求：等级 65/);
+  assert.doesNotMatch(translatedPreview, /The Unblinking Eye|Requires Level|Sockets:/);
+  await assertLocaleIsolation('传奇制作');
   for (const width of [1440, 390]) {
     await a.setViewportSize({ width, height: 960 });
     assert.equal(await panel().evaluate(element => element.scrollWidth <= element.clientWidth), true);
@@ -173,9 +227,72 @@ try {
   await a.reload();
   await settle(a);
   assert.equal((await state(a)).items[0].raw, edited.items[0].raw);
+  for (const [tab, heading] of [['生存与防御', '全维度生存与防御计算大盘'], ['战斗状态配置', '战斗条件与状态']]) {
+    await a.getByRole('button', { name: tab, exact: true }).click();
+    await a.getByRole('heading', { name: heading }).waitFor();
+    if (tab === '生存与防御') {
+      await a.getByText('生命池', { exact: true }).click();
+      const detail = a.getByTestId('defence-detail');
+      await detail.waitFor();
+      assert.doesNotMatch(await detail.innerText(), /\bLifeRegen|\bLife Regeneration|\(base\)|\bper second\b|\bfalse\b/);
+      await assertLocaleIsolation('生命池二级明细');
+      await a.screenshot({ path: join(evidence, '生命池-二级明细.png'), fullPage: true });
+      await detail.getByRole('button', { name: '关闭明细', exact: true }).click();
+    }
+    await assertLocaleIsolation(tab);
+    await a.screenshot({ path: join(evidence, `${tab}-简中.png`), fullPage: true });
+  }
+  await a.getByRole('button', { name: '技能与宝石', exact: true }).click();
+  await a.getByText('金字塔中层：击中秒伤与单次击中伤害核心拆解', { exact: true }).waitFor();
+  let previousSkill = await state(a);
+  await a.getByRole('button', { name: '新建技能组', exact: true }).click();
+  await settle(a, previousSkill.version);
+  await a.getByRole('button', { name: /新技能组.*空技能组/ }).click();
+  await a.locator('select').filter({ has: a.locator('option').filter({ hasText: '选择要插入插槽的宝石...' }) }).selectOption('Ice Nova');
+  previousSkill = await state(a);
+  await a.getByRole('button', { name: '插入宝石', exact: true }).click();
+  await settle(a, previousSkill.version);
+  const mainSkill = a.getByRole('button', { name: '设为主技能', exact: true });
+  if (await mainSkill.count() && await mainSkill.isEnabled()) {
+    previousSkill = await state(a);
+    await mainSkill.click();
+    await settle(a, previousSkill.version);
+  }
+  await a.getByText('① 各元素击中伤害构成', { exact: true }).click();
+  await a.getByRole('button', { name: /^[1-9][\d,.]* 至 [\d,.]+ ▶$/ }).first().click();
+  const damageDetail = a.getByTestId('calcs-secondary-detail');
+  await damageDetail.waitFor();
+  const damageText = await damageDetail.innerText();
+  assert.match(damageText, /来自技能石的基础伤害/);
+  assert.match(damageText, /转换所得伤害/);
+  assert.doesNotMatch(damageText, /\bto\b|damage from|Converted Damage|Inc\/red|More\/less|\bfalse\b/);
+  await assertLocaleIsolation('冰霜伤害二级明细');
+  await a.screenshot({ path: join(evidence, '冰霜伤害-二级明细.png'), fullPage: true });
+  await assertLocaleIsolation('技能与伤害');
+  await a.screenshot({ path: join(evidence, '技能与伤害-简中.png'), fullPage: true });
+  await a.getByRole('button', { name: '装备与物品', exact: true }).click();
+  await a.getByRole('button', { name: /装备与珠宝制作工坊/ }).click();
+  const ordinaryPreview = a.getByRole('button', { name: /官方预览/ });
+  await ordinaryPreview.click({ trial: true });
+  await ordinaryPreview.click();
+  await a.getByRole('button', { name: /保存到物品库/ }).click({ trial: true });
+  await assertLocaleIsolation('普通制作');
+  await a.screenshot({ path: join(evidence, '普通制作-简中.png'), fullPage: true });
+  let actualBuildDisplayCheck;
+  if (process.env.POB_CN_TRANSLATION_FIXTURE) {
+    const displayPage = await context.newPage();
+    displayPage.setDefaultTimeout(30_000);
+    displayPage.on('pageerror', error => errors.push(error.message));
+    try {
+      actualBuildDisplayCheck = await verifyTranslationDisplays(displayPage, origin, process.env.POB_CN_TRANSLATION_FIXTURE, evidence);
+    } catch (error) {
+      await displayPage.screenshot({ path: join(evidence, '实际流派-失败现场.png'), fullPage: true });
+      throw error;
+    } finally { await displayPage.close(); }
+  }
   assert.deepEqual(errors, []);
-  await writeFile(join(evidence, 'results.json'), JSON.stringify({ success: true, measurements, optionsRequests, calcRequests, errors }, null, 2), 'utf8');
-  console.log(JSON.stringify({ success: true, measurements, optionsRequests, calcRequests, errors }, null, 2));
+  await writeFile(join(evidence, 'results.json'), JSON.stringify({ success: true, measurements, optionsRequests, calcRequests, languageChecks, actualBuildDisplayCheck, errors }, null, 2), 'utf8');
+  console.log(JSON.stringify({ success: true, measurements, optionsRequests, calcRequests, languageChecks, actualBuildDisplayCheck, errors }, null, 2));
 } catch (error) {
   await a.screenshot({ path: join(evidence, '失败现场.png'), fullPage: true });
   throw error;

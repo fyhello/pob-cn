@@ -1,206 +1,131 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
-import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { loadLocalizer } from '../helpers/web-localizer.mjs';
+import { readFile } from 'node:fs/promises';
+import { createTranslationRuntime } from '../../shared/translation-runtime.mjs';
 
-const trans = JSON.parse(readFileSync('cn/generated/web-data/translations.json', 'utf8'));
-const CALC_TERMS_DICT = trans.terms || {};
-const CALC_EXACT_PHRASES = trans.terms || {};
-const GEM_NAME_MAPPINGS = trans.terms || {};
+test('完整消耗结构覆盖全部官方资源类型，参数符号和精度原样保留', async () => {
+  const { translateCalcFormulaLine: translate } = await loadLocalizer();
+  const runtime = createTranslationRuntime(JSON.parse(await readFile('cn/generated/web-data/translations.json')));
+  const numericTokens = text => text.match(/[+-]?\d[\d,.]*%?/g);
+  const lines = ['x 1.3200 (cost multiplier)', 'x 0.92 (8% paid for with life)', '4.00s (base duration)', 'x 1.09 (duration modifier)', 'x 0.08 (mana cost conversion)'];
+  for (const resource of ['mana', 'life', 'ES', 'soul', 'rage', 'mana/s', 'life/s', 'ES/s']) {
+    lines.push(`12.30% (base ${resource} cost)`, `+ 162 (additional ${resource} cost)`, `x 1.35 (increased/reduced ${resource} cost)`,
+      `x 2.00 (more/less ${resource} cost)`, `/ 1.25 (${resource} cost efficiency)`, `-15 (total ${resource} cost)`);
+  }
+  for (const source of lines) {
+    const display = translate(source);
+    assert.notEqual(display, source, source);
+    assert.equal(runtime.hasUntranslated(display), false, display);
+    assert.deepEqual(numericTokens(display), numericTokens(source), source);
+  }
+  assert.equal(translate('x 1.35 (experimental mana rule)'), 'x 1.35 (experimental mana rule)');
+});
 
-const BUILDUPS = {
-  'HeavyStun': '眩晕积蓄',
-  'Heavy Stun': '眩晕积蓄',
-  'Freeze': '冻结积蓄',
-  'Shock': '感电积蓄',
-  'Ignite': '点燃积蓄',
-  'Chill': '冰缓积蓄',
-  'Bleed': '流血积蓄',
-  'Poison': '中毒积蓄',
-  'Electrocute': '电击积蓄',
-  'Pin': '钉刺积蓄',
-  'Immobilisation': '定身积蓄'
-};
-
-function translateAilmentBuildup(ailment) {
-  return BUILDUPS[ailment] || `${ailment}积蓄`;
-}
-
-function translateAilmentName(name) {
-  const map = {
-    'Shock': '感电',
-    'Ignite': '点燃',
-    'Freeze': '冻结',
-    'Chill': '冰缓',
-    'Bleed': '流血',
-    'Poison': '中毒',
-    'Electrocute': '电击',
-    'HeavyStun': '眩晕',
-    'Heavy Stun': '眩晕'
-  };
-  return map[name] || name;
-}
-
-const ALL_DICT = { ...CALC_TERMS_DICT, ...CALC_EXACT_PHRASES };
-
-const SORTED_CALC_TERMS = Object.entries(ALL_DICT)
-  .filter(([k]) => k.length > 1 && !['to', 'as', 's', 'm', 'ms', 'x'].includes(k.toLowerCase()))
-  .sort((a, b) => b[0].length - a[0].length);
-
-function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function translateCalcFormulaLine(line) {
-  if (!line || typeof line !== 'string') return '';
-  let res = line.trim();
-  if (!res) return '';
-
-  if (GEM_NAME_MAPPINGS[res]) return GEM_NAME_MAPPINGS[res];
-  const directClean = res.replace(/^Skill:\s*/i, '').replace(/^Item:\s*/i, '').trim();
-  if (GEM_NAME_MAPPINGS[directClean]) return GEM_NAME_MAPPINGS[directClean];
-
-  res = res.replace(/\^[0-9A-Fa-f]/g, '').replace(/\^x[0-9A-Fa-f]{6}/g, '').trim();
-
-  // 1. 【第 1 优先级】：官方整句长模板与动态模板正则匹配
-  res = res.replace(/Ailment mode:\s*Average Damage\s*\(can be changed in the Configuration tab\)/gi, '异常计算模式: 平均伤害 (可在【配置】选项卡修改)');
-  res = res.replace(/Ailment mode:\s*Crits Only\s*\(can be changed in the Configuration tab\)/gi, '异常计算模式: 仅限暴击 (可在【配置】选项卡修改)');
-  res = res.replace(/Ailment mode:\s*(.+?)\s*\(can be changed in the Configuration tab\)/gi, '异常计算模式: $1 (可在【配置】选项卡修改)');
-  
-  res = res.replace(/If hitting constantly,\s*your average strongest ailment currently achieves\s*([\d\.]+%?)\s*of its max damage/gi, '若持续击中，你平均最强的异常状态目前能达到其最大伤害的 $1');
-  res = res.replace(/The percentage of your max stacks that are applied on average if you are attacking constantly/gi, '在持续攻击状态下，平均能施加的最大层数比例');
-  res = res.replace(/Uses a weighted average formula when stack potential is over 100%/gi, '当堆叠潜力超过 100% 时使用加权平均公式计算');
-  res = res.replace(/This is the average roll of an ailment affecting the enemy if you are constantly attacking/gi, '这是在持续攻击情况下，影响敌人的异常状态的平均伤害期望');
-  
-  res = res.replace(/Total base DPS per\s+([a-zA-Z\s]+):/gi, (m, p1) => `每 ${translateAilmentName(p1.trim())} 基础每秒伤害:`);
-  
-  res = res.replace(/Regular Hit\s+(Heavy\s*Stun|Freeze|Shock|Ignite|Chill|Bleed|Poison|Electrocute|Pin|Immobilisation)\s+buildup/gi, (m, p1) => `常规击中 ${translateAilmentBuildup(p1)}`);
-  res = res.replace(/Crit\s+(Heavy\s*Stun|Freeze|Shock|Ignite|Chill|Bleed|Poison|Electrocute|Pin|Immobilisation)\s+buildup/gi, (m, p1) => `暴击 ${translateAilmentBuildup(p1)}`);
-  res = res.replace(/Average\s+(Heavy\s*Stun|Freeze|Shock|Ignite|Chill|Bleed|Poison|Electrocute|Pin|Immobilisation)\s+buildup/gi, (m, p1) => `平均 ${translateAilmentBuildup(p1)}`);
-  
-  res = res.replace(/Enemy poise:\s*(\d+)/gi, '敌人韧性值: $1');
-  res = res.replace(/Enemy level:\s*(\d+)/gi, '敌人等级: $1');
-  res = res.replace(/Enemy resistance:\s*(\d+%?)/gi, '敌人抗性: $1');
-  res = res.replace(/Effective DPS modifier:/gi, '有效秒伤修正倍率:');
-  res = res.replace(/Effective DoT Multiplier:/gi, '有效持续伤害倍率:');
-  res = res.replace(/Effective resistance:/gi, '有效抗性:');
-  res = res.replace(/Combined chance:/gi, '综合触发几率:');
-  
-  res = res.replace(/\(can be overridden in the Configuration tab\)/gi, '(可在【配置】选项卡修改)');
-  res = res.replace(/\(overridden from the Configuration tab\)/gi, '(已在【配置】选项卡修改)');
-  res = res.replace(/\(chance from non-crits?\)/gi, '(非暴击触发贡献)');
-  res = res.replace(/\(chance from crits?\)/gi, '(暴击触发贡献)');
-  res = res.replace(/\(resistance\)/gi, '(抗性减免)');
-  res = res.replace(/\(penetration\)/gi, '(抗性穿透)');
-  res = res.replace(/\(Duration \/ Attack Time\)/gi, '(持续时间 / 攻击耗时)');
-  res = res.replace(/\(Duration \/ Cast Time\)/gi, '(持续时间 / 施法耗时)');
-  res = res.replace(/\(Duration \/ max\(Cooldown, Cast Time\)\)/gi, '(持续时间 / max(冷却时间, 施法耗时))');
-  res = res.replace(/\(max number of stacks\)/gi, '(最大层数上限)');
-  res = res.replace(/\(number of stacks\)/gi, '(堆叠层数)');
-  res = res.replace(/\(chance to apply\)/gi, '(施加几率)');
-  res = res.replace(/\(chance to hit\)/gi, '(命中几率)');
-  res = res.replace(/\(damage from weapon\)/gi, '(来自武器的基础伤害)');
-  res = res.replace(/\(damage from skill\)/gi, '(来自技能石的基础伤害)');
-  res = res.replace(/\(damage from main hand\)/gi, '(来自主手的基础伤害)');
-  res = res.replace(/\(damage from off hand\)/gi, '(来自副手的基础伤害)');
-  res = res.replace(/\(damage from non-crits?\)/gi, '(非暴击伤害)');
-  res = res.replace(/\(damage from crits?\)/gi, '(暴击伤害)');
-  res = res.replace(/\(total damage\)/gi, '(总伤害)');
-  res = res.replace(/\(base damage\)/gi, '(基础伤害)');
-  res = res.replace(/\(increased\/reduced\)/gi, '(提高/降低加成)');
-  res = res.replace(/\(more\/less\)/gi, '(更多/更少乘区)');
-  res = res.replace(/\(effective DPS modifier\)/gi, '(有效秒伤修正倍率)');
-  res = res.replace(/\(source damage\)/gi, '(基础伤害来源)');
-  res = res.replace(/\(source damage from non-crits?\)/gi, '(非暴击基础伤害来源)');
-  res = res.replace(/\(source damage from crits?\)/gi, '(暴击基础伤害来源)');
-  res = res.replace(/\(portion of instances created by non-crits?\)/gi, '(非暴击生成实例占比)');
-  res = res.replace(/\(portion of instances created by crits?\)/gi, '(暴击生成实例占比)');
-  res = res.replace(/\(portion of instances created by main hand\)/gi, '(主手生成实例占比)');
-  res = res.replace(/\(portion of instances created by off hand\)/gi, '(副手生成实例占比)');
-  res = res.replace(/\(portion of damage from non-crits?\)/gi, '(非暴击伤害占比)');
-  res = res.replace(/\(portion of damage from crits?\)/gi, '(暴击伤害占比)');
-
-  // 2. 【第 2 优先级】：完全精准匹配
-  if (ALL_DICT[res]) return ALL_DICT[res];
-
-  // 3. 【第 3 优先级】：按长度降序词典正则安全替换
-  for (const [k, v] of SORTED_CALC_TERMS) {
-    if (new RegExp(escapeRegExp(k), 'i').test(res)) {
-      const regex = /^[a-zA-Z0-9_]+$/.test(k) 
-        ? new RegExp(`\\b${escapeRegExp(k)}\\b`, 'gi')
-        : new RegExp(escapeRegExp(k), 'gi');
-      res = res.replace(regex, v);
+test('装备对比覆盖官方完整标签目录，替换名称按实际物品身份显示', async () => {
+  const localizer = await loadLocalizer();
+  const payload = JSON.parse(await readFile('cn/generated/web-data/translations.json'));
+  const runtime = createTranslationRuntime(payload);
+  assert.ok(payload.comparisonLabels.length > 100);
+  for (const label of payload.comparisonLabels) {
+    for (const prefix of ['+1,234.50', '-0.05%', '+0']) {
+      const source = `${prefix} ${label} (-0.5%)`, display = localizer.translateWebItemLine(source);
+      assert.equal(runtime.hasUntranslated(display), false, source);
+      assert.ok(display.startsWith(prefix + ' '), source);
+      assert.ok(display.endsWith('（-0.5%）'), source);
     }
   }
+  const officialFormats = await readFile('src/Modules/BuildDisplayStats.lua', 'utf8');
+  const unitLabels = [...officialFormats.matchAll(/label = "([^"]+)".*?fmt = "([^"]+)"/g)]
+    .map(([, label, format]) => ({ label, unit: format.match(/[ms]$/)?.[0] })).filter(row => row.unit);
+  assert.deepEqual([...new Set(unitLabels.map(row => row.unit))].sort(), ['m', 's']);
+  for (const { label, unit } of unitLabels) {
+    const prefix = `-0.050${unit}`, source = `${prefix} ${label} (-0.5%)`;
+    const display = localizer.translateWebItemLine(source);
+    assert.equal(runtime.hasUntranslated(display), false, source);
+    assert.deepEqual(display.match(/[+-]?\d[\d,.]*%?/g), source.match(/[+-]?\d[\d,.]*%?/g), source);
+    assert.ok(display.includes(unit === 'm' ? '米' : '秒'), source);
+    assert.ok(display.endsWith('（-0.5%）'), source);
+  }
+  const item = { id: 19, title: 'Armageddon Turn', name: 'Armageddon Turn, Emerald Ring', base: 'Emerald Ring', rarity: 'RARE' };
+  const display = localizer.translateWebItemLine('(replacing Armageddon Turn, Emerald Ring)', { items: [item] });
+  assert.equal(runtime.hasUntranslated(display), false, display);
+  assert.equal(localizer.translateWebItemLine('(replacing My Custom Ring)', { items: [{ title: 'My Custom Ring', name: 'My Custom Ring', rarity: 'RARE', crafted: true }] }), '（替换 My Custom Ring）');
+  assert.equal(localizer.translateWebItemLine('+12 Unknown Experimental Stat (+3.0%)'), '+12 Unknown Experimental Stat (+3.0%)');
+  for (const locale of ['zh-CN', 'zh-TW']) {
+    await localizer.setTranslationLocale(locale);
+    for (const source of ['Equipping this item in Socket #2 will give you:', 'Removing this item from Socket #3 will give you:']) {
+      const display = localizer.translateWebItemLine(source);
+      assert.equal(runtime.hasUntranslated(display), false, display);
+      assert.equal(display.match(/#\d+/)?.[0], source.match(/#\d+/)?.[0]);
+    }
+    for (const source of ['PresenceArea', 'ManaCost']) assert.equal(runtime.hasUntranslated(localizer.translateCalcFormulaLine(source)), false);
+  }
+});
 
-  // 4. 【第 4 优先级】：基础单词与单位收尾
-  res = res.replace(/\bper second\b/gi, '每秒');
-  res = res.replace(/\bper minute\b/gi, '每分');
-  res = res.replace(/\btotal damage\b/gi, '总伤害');
-  res = res.replace(/\bbase damage\b/gi, '基础伤害');
-  res = res.replace(/\bhit damage\b/gi, '击中伤害');
-  res = res.replace(/\bdamage\b/gi, '伤害');
-  res = res.replace(/\btotal\b/gi, '总计');
-  res = res.replace(/\bbase\b/gi, '基础');
-  res = res.replace(/\bto\b/gi, '至');
-  res = res.replace(/\bas\b/gi, '为');
+test('天赋和装备语境分开使用原生词缀，简繁同名实体及固定参数不混淆', async () => {
+  const l = await loadLocalizer();
+  assert.equal(l.localizePassiveNode({ name: 'Ruin', type: 'Socket', stats: ['25% increased Totem Placement speed', 'Regenerate 0.5% of maximum Life per second', '25% reduced Armour, Evasion and Energy Shield'] }).stats_cn.join('\n'), '你的图腾放置速度提高 25%\n生命每秒再生 0.5%\n护甲、闪避和能量护盾降低 25%');
+  assert.equal(l.translateWebItemName('Spirit Spark', { item: { rarity: 'RARE', base: 'Sapphire' } }), '精魂 夜星');
+  assert.equal(l.translateVariantName('Shield'), '能量护盾');
+  await l.setTranslationLocale('zh-TW');
+  assert.equal(l.translateWebItemLine('+1 to Level of all Cold Skills', { scope: 'passive' }), '全部冰冷技能等級+1');
+  assert.equal(l.translateWebItemName('Spirit Spark', { item: { rarity: 'RARE', base: 'Sapphire' } }), '精魂 電球');
+});
 
-  return res;
-}
+test('公式翻译测试执行实际前端模块，保留原始参数与运算符', async () => {
+  const { translateCalcFormulaLine: translate } = await loadLocalizer();
+  for (const [source, expected] of [
+    ['Ail. Thresh.', '异常状态门槛'], ['Enemy Ail. Thresh.', '敌人异常状态门槛'],
+    ['Max Ignite Stacks', '最大点燃层数'], ['Stack Potential', '堆叠潜力'],
+    ['Chance to Ignite', '点燃几率'], ['Chance to Shock', '感电几率'],
+    ['Source Lightning', '闪电伤害来源'], ['Source Cold', '冰霜伤害来源'],
+    ['Source Fire', '火焰伤害来源'], ['Source Chaos', '混沌伤害来源'],
+    ['182376.9 ^8(source damage from non-crits)', '182376.9 (非暴击基础伤害来源)'],
+    ['x 0.008 ^8(portion of instances created by non-crits)', 'x 0.008 (非暴击生成实例占比)'],
+    ['Physical:', '物理：'], ['Unknown Experimental Formula', 'Unknown Experimental Formula'],
+    ['330 to 495 (damage from skill)', '330 至 495 (来自技能石的基础伤害)'],
+    ['3042 to 4562 (total damage)', '3042 至 4562 (总伤害)'],
+    ['1521 (base)', '1521 (基础)'], ['73.5 per second', '73.5 每秒'],
+    ['Life Regeneration:', '生命再生：'], ['LifeRegen', '固定生命再生'],
+    ['Inc/red', '提高／降低'], ['More/less', '总增／总降'],
+    ['Converted Damage', '转换所得伤害'],
+    ['DamageGainAsCold', '获得额外冰霜伤害（基于所有伤害）'],
+    ['ElementalDamageGainAsCold', '获得额外冰霜伤害（基于元素伤害）'],
+  ]) assert.equal(translate(source), expected, source);
+  for (const source of ['123.00 x (1 + 0.007)', '-1.50 + 2.500 / 100', 'min(0.000, 12.20)']) assert.equal(translate(source), source);
+});
 
-describe('Strict Formula Translation Integrity', () => {
-  it('correctly translates user 4 latest screenshot batches: full breakdown sentences, ailments and roll averages', () => {
-    // 截图 1 & 3: Ailments & Roll averages
-    assert.strictEqual(translateCalcFormulaLine('Ail. Thresh.'), '异常状态门槛');
-    assert.strictEqual(translateCalcFormulaLine('Enemy Ail. Thresh.'), '敌人异常状态门槛');
-    assert.strictEqual(translateCalcFormulaLine('Max Ignite Stacks'), '最大点燃层数');
-    assert.strictEqual(translateCalcFormulaLine('Stack Potential'), '堆叠潜力');
-    assert.strictEqual(translateCalcFormulaLine('Average Ignite Roll'), '平均点燃伤害期望');
-    assert.strictEqual(translateCalcFormulaLine('Chance to Ignite'), '点燃几率');
-    assert.strictEqual(translateCalcFormulaLine('Chance to Shock'), '感电几率');
-    assert.strictEqual(translateCalcFormulaLine('Source Lightning'), '闪电伤害来源');
-    assert.strictEqual(translateCalcFormulaLine('Source Cold'), '冰霜伤害来源');
-    assert.strictEqual(translateCalcFormulaLine('Source Fire'), '火焰伤害来源');
-    assert.strictEqual(translateCalcFormulaLine('Source Chaos'), '混沌伤害来源');
-    assert.strictEqual(translateCalcFormulaLine('Effective DPS Mod'), '有效DPS修正');
-    assert.strictEqual(translateCalcFormulaLine('Dmg. of All Ignites'), '全部点燃总伤害');
+test('明细表空值遵循 Lua 显示语义，数字范围与未知字段不会被静默放行', async () => {
+  const { translateCalcCell: cell, translateWebText, translateCalcFormulaLine, getMissingTranslations } = await loadLocalizer();
+  assert.equal(cell(false, 'convSrc'), '');
+  assert.equal(cell(null, 'base'), '');
+  assert.equal(cell(0, 'base'), '0');
+  assert.equal(cell('0.00', 'total'), '0.00');
+  assert.equal(cell('1.20 to 2.500', 'base'), '1.20 至 2.500');
+  assert.equal(translateWebText('1 to 2'), '1 to 2', '数值范围规则仅用于官方明细语境');
+  const unknown = '330 to 495 (experimental damage mode)';
+  assert.equal(translateCalcFormulaLine(unknown), unknown);
+  assert.ok(getMissingTranslations().some(row => row.source === unknown));
+});
 
-    // 截图 2 & 4: 推导长句与注释
-    assert.strictEqual(translateCalcFormulaLine('Non-Crit Dmg Derivation:'), '非暴击伤害推导:');
-    assert.strictEqual(translateCalcFormulaLine('Crit Dmg Derivation:'), '暴击伤害推导:');
-    assert.strictEqual(translateCalcFormulaLine('Damage from Non-crits:'), '来自非暴击的伤害:');
-    assert.strictEqual(translateCalcFormulaLine('Damage from Crits:'), '来自暴击的伤害:');
-    assert.strictEqual(
-      translateCalcFormulaLine('min combined sources + (max combined sources - min combined sources) * average roll'),
-      '最小来源总和 + (最大来源总和 - 最小来源总和) * 平均Roll点'
-    );
-    assert.strictEqual(
-      translateCalcFormulaLine('This is the average roll of an ailment affecting the enemy if you are constantly attacking'),
-      '这是在持续攻击情况下，影响敌人的异常状态的平均伤害期望'
-    );
-    assert.strictEqual(
-      translateCalcFormulaLine('Uses a weighted average formula when stack potential is over 100%'),
-      '当堆叠潜力超过 100% 时使用加权平均公式计算'
-    );
-    assert.strictEqual(
-      translateCalcFormulaLine('Average Roll:'),
-      '平均伤害期望:'
-    );
-    assert.strictEqual(
-      translateCalcFormulaLine('182376.9 ^8(source damage from non-crits)'),
-      '182376.9 (非暴击基础伤害来源)'
-    );
-    assert.strictEqual(
-      translateCalcFormulaLine('x 0.008 ^8(portion of instances created by non-crits)'),
-      'x 0.008 (非暴击生成实例占比)'
-    );
-
-    // 积蓄度与速度
-    assert.strictEqual(translateCalcFormulaLine('Avg: 0.3%'), '平均: 0.3%');
-    assert.strictEqual(translateCalcFormulaLine('Crit Min: 2.2%'), '暴击最小: 2.2%');
-    assert.strictEqual(translateCalcFormulaLine('Crit Max: 3.3%'), '暴击最大: 3.3%');
-    assert.strictEqual(translateCalcFormulaLine('Crit Avg: 2.7%'), '暴击平均: 2.7%');
-    assert.strictEqual(translateCalcFormulaLine('More Cast Speed'), '施法速度更多');
-    assert.strictEqual(translateCalcFormulaLine('More施法速度'), '施法速度更多');
-    assert.strictEqual(translateCalcFormulaLine('= 0.72 casts per second'), '= 0.72 每秒施法次数');
-  });
+test('语言变化只重做显示投影，原始字段、物品身份与数字不变', async () => {
+  const localizer = await loadLocalizer();
+  const raw = { itemLibrary: [{ id: 7, name: 'Dueling Wand', base: 'Dueling Wand', rawLines: ['60% increased Runic Ward'] }], socketGroups: [{ gems: [{ name: 'Efficiency I' }] }] };
+  const before = JSON.stringify(raw), display = localizer.localizeImportedBuild(raw);
+  assert.equal(display.itemLibrary[0].name_cn, '决斗法杖');
+  assert.equal(display.socketGroups[0].gems[0].name_cn, '效能 I');
+  await localizer.setTranslationLocale('zh-TW');
+  assert.equal(display.itemLibrary[0].name_cn, '單挑法杖');
+  assert.equal(display.socketGroups[0].gems[0].name_cn, '效率 I');
+  assert.equal(display.itemLibrary[0].id, 7);
+  assert.equal(JSON.stringify(raw), before);
+  await assert.rejects(localizer.setTranslationLocale('invalid'), /不支持/);
+  assert.equal(localizer.getTranslationLocale(), 'zh-TW');
+  assert.equal(localizer.translateWebText('Flask 1'), '藥劑 1');
+  assert.equal(localizer.translateWebText('Charm 3'), '護符 3');
+  await localizer.setTranslationLocale('zh-CN');
+  assert.equal(localizer.translateWebText('Flask 2'), '药剂 2');
+  assert.equal(localizer.translateWebText('Charm 1'), '咒符 1');
+  assert.equal(display.itemLibrary[0].name_cn, '决斗法杖');
 });

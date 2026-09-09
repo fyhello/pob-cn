@@ -14,7 +14,7 @@
       <ul class="min-h-0 overflow-y-auto divide-y divide-white/10">
         <li v-for="entry in filtered" :key="entry.id" class="flex items-center gap-1 px-3 py-3" :class="selectedId === entry.id ? 'bg-white/10' : ''">
           <button class="min-w-0 flex-1 py-1 text-left" @click="selectedId = entry.id">
-            <span class="block break-words text-sm text-poe-gold">{{ translateWebText(entry.name) }}</span>
+            <span class="block break-words text-sm text-poe-gold">{{ entry.name === entry.item?.name ? translateWebItemName(entry.name, { item: entry.item }) : entry.name }}</span>
             <span class="mt-1 block text-xs text-gray-500">{{ translateWebText(entry.item?.base || '') }}</span>
           </button>
           <button title="重命名物品" aria-label="重命名物品" :disabled="library.busy" class="p-2 text-gray-400 hover:text-white" @click="library.rename('items', entry)"><Pencil :size="15" /></button>
@@ -24,9 +24,9 @@
       </ul>
       <section class="pool-detail min-h-0 overflow-y-auto border-l border-white/10 p-4">
         <template v-if="selected">
-          <h3 class="break-words text-base font-medium text-poe-gold">{{ translateWebText(selected.name) }}</h3>
+          <h3 class="break-words text-base font-medium text-poe-gold">{{ selected.name === selected.item?.name ? translateWebItemName(selected.name, { item: selected.item }) : selected.name }}</h3>
           <div class="my-3 space-y-1 border-y border-white/10 py-3 text-xs leading-relaxed text-gray-300">
-            <ItemDisplayLines :lines="displayItem?.displayLines ?? []" :unsupported="displayItem?.displayLineUnsupported" />
+            <ItemDisplayLines :lines="displayItem?.displayLines ?? []" :unsupported="displayItem?.displayLineUnsupported" :item="displayItem" />
           </div>
           <div v-if="store.sessionId" class="space-y-4">
             <button :disabled="library.busy || store.isCalculating" class="btn-primary flex items-center gap-2 disabled:opacity-40" @click="library.useItem(selected.id, null)"><Plus :size="16" />加入当前流派</button>
@@ -52,7 +52,7 @@ import { Archive, Check, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'luci
 import { useLibraryStore } from '../stores/libraryStore';
 import { useBuildStore } from '../stores/buildStore';
 import { requestForBuild } from '../api/bridgeClient';
-import { translateWebText } from '../utils/webTranslation';
+import { translateWebText, translateWebItemName } from '../utils/webTranslation';
 import ItemDisplayLines from './ItemDisplayLines.vue';
 
 const props = withDefaults(defineProps<{ embedded?: boolean }>(), { embedded: false });
@@ -67,7 +67,7 @@ const preview = ref<Record<string, any> | null>(null);
 const previewBusy = ref(false);
 const previewError = ref('');
 let requestId = 0;
-const filtered = computed(() => library.items.filter(entry => `${entry.name} ${translateWebText(entry.name)} ${translateWebText(entry.item?.base || '')}`.toLocaleLowerCase().includes(query.value.trim().toLocaleLowerCase())));
+const filtered = computed(() => library.items.filter(entry => `${entry.name} ${entry.name === entry.item?.name ? translateWebItemName(entry.name, { item: entry.item }) : entry.name} ${translateWebText(entry.item?.base || '')}`.toLocaleLowerCase().includes(query.value.trim().toLocaleLowerCase())));
 const selected = computed(() => library.items.find(entry => entry.id === selectedId.value));
 const displayItem = computed(() => preview.value ?? selected.value?.item);
 const targets = computed(() => {

@@ -388,7 +388,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -416,7 +416,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -444,7 +444,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -472,7 +472,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -500,7 +500,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -528,7 +528,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -574,7 +574,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
             <!-- 躲避行 -->
             <div 
@@ -584,7 +584,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -612,7 +612,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -638,7 +638,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -662,7 +662,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -683,7 +683,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -704,7 +704,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -737,7 +737,7 @@
             class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
           >
             <span>{{ translateRowLabel(row.label) }}</span>
-            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
           </div>
         </div>
       </div>
@@ -765,7 +765,7 @@
             class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
           >
             <span>{{ translateRowLabel(row.label) }}</span>
-            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
           </div>
         </div>
       </div>
@@ -793,7 +793,7 @@
             class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
           >
             <span>{{ translateRowLabel(row.label) }}</span>
-            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
           </div>
         </div>
       </div>
@@ -816,7 +816,7 @@
             class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
           >
             <span>{{ translateRowLabel(row.label) }}</span>
-            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
           </div>
         </div>
       </div>
@@ -844,7 +844,7 @@
             class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
           >
             <span>{{ translateRowLabel(row.label) }}</span>
-            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+            <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
           </div>
         </div>
       </div>
@@ -876,7 +876,7 @@
               class="flex justify-between items-center text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
             >
               <span>{{ translateRowLabel(row.label) }}</span>
-              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ row.value }}</span>
+              <span :class="['font-mono font-bold', getRowValueClass(row.value)]">{{ translateCalcCell(row.value, 'value') }}</span>
             </div>
           </div>
         </div>
@@ -889,7 +889,7 @@
       class="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-50 flex justify-end"
       @click.self="activeDrawer = null"
     >
-      <div class="w-full max-w-2xl h-full bg-[#0d0e17] border-l border-poe-border shadow-2xl flex flex-col animate-slide-left">
+      <div data-testid="defence-detail" class="w-full max-w-2xl h-full bg-[#0d0e17] border-l border-poe-border shadow-2xl flex flex-col animate-slide-left">
         <!-- 抽屉头部 -->
         <div class="p-4 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div class="flex items-center gap-2.5">
@@ -900,7 +900,7 @@
               <div class="flex items-center gap-2">
                 <h3 class="text-sm font-bold text-white font-poe-title">{{ activeDrawer.title }}</h3>
                 <span v-if="activeDrawer.value !== undefined && activeDrawer.value !== ''" class="px-2 py-0.5 rounded-md bg-poe-gold/15 text-poe-gold border border-poe-gold/30 font-mono text-xs font-bold">
-                  {{ activeDrawer.value }}
+                  {{ translateCalcCell(activeDrawer.value, 'value') }}
                 </span>
               </div>
               <p class="text-[11px] text-gray-400">PoB 官方底层公式推导与专属词缀溯源明细</p>
@@ -908,6 +908,7 @@
           </div>
           <button 
             @click="activeDrawer = null"
+            aria-label="关闭明细"
             class="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
           >
             <X class="h-4 w-4" />
@@ -949,7 +950,7 @@
                 <div class="px-3 py-2 bg-poe-surface-elevated/60 border-b border-poe-border/60 text-xs font-bold text-gray-200 flex items-center justify-between">
                   <span class="flex items-center gap-1.5">
                     <Layers class="h-3.5 w-3.5 text-poe-gold" />
-                    {{ tab.label ? translateWebText(tab.label) : '-' }}
+                    {{ tab.label ? translateCalcFormulaLine(tab.label) : '-' }}
                   </span>
                   <span class="text-[10px] text-gray-400 font-mono">共 {{ tab.rows.length }} 行</span>
                 </div>
@@ -957,7 +958,7 @@
                   <thead class="bg-black/60 text-gray-400 border-b border-poe-border/40">
                     <tr>
                       <th v-for="col in tab.columns" :key="col.key" class="py-2 px-3 font-semibold">
-                        {{ translateWebText(col.label || col.key) }}
+                        {{ translateCalcFormulaLine(col.label || col.key) }}
                       </th>
                     </tr>
                   </thead>
@@ -965,16 +966,16 @@
                     <tr v-for="(tRow, rIdx) in tab.rows" :key="'trow_' + rIdx" class="hover:bg-white/[0.04] transition-colors">
                       <td v-for="col in tab.columns" :key="col.key" class="py-2.5 px-3">
                         <span v-if="col.key === 'base' || col.key === 'total'" class="font-bold text-poe-gold">
-                          {{ tRow[col.key] !== undefined && tRow[col.key] !== false ? tRow[col.key] : '-' }}
+                          {{ translateCalcCell(tRow[col.key], col.key, store.itemLibrary) || '-' }}
                         </span>
                         <span v-else-if="col.key === 'source'" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-poe-gold/10 text-poe-gold border border-poe-gold/30">
-                          {{ translateWebText(tRow[col.key]) }}
+                          {{ translateCalcCell(tRow[col.key], col.key, store.itemLibrary) || '-' }}
                         </span>
                         <span v-else-if="col.key === 'sourceLabel' || col.key === 'sourceName' || col.key === 'name'" class="text-gray-200 font-sans">
-                          {{ tRow[col.key] ? translateWebItemName(tRow[col.key]) : '-' }}
+                          {{ translateCalcCell(tRow[col.key], col.key, store.itemLibrary) || '-' }}
                         </span>
                         <span v-else class="text-gray-300">
-                          {{ tRow[col.key] !== undefined && tRow[col.key] !== false ? tRow[col.key] : '-' }}
+                          {{ translateCalcCell(tRow[col.key], col.key, store.itemLibrary) || '-' }}
                         </span>
                       </td>
                     </tr>
@@ -1079,6 +1080,8 @@ import {
 import { useBuildStore } from '../stores/buildStore';
 import { 
   translateCalcFormulaLine, 
+  translateCalcCell,
+  translateCalcSourceName,
   translateWebItemName, 
   translateWebItemLine, 
   translateWebText,
@@ -1300,8 +1303,8 @@ function translateText(text: string): string {
 }
 
 function displayOfficialSourceName(src: any): string {
-  const raw = typeof src?.sourceName === 'string' && src.sourceName ? src.sourceName : src?.source;
-  return typeof raw === 'string' && raw ? (translateCalcFormulaLine(raw) || raw) : '-';
+  const item = store.itemLibrary.find(item => String(item.id) === String(src?.sourceRef?.id));
+  return src ? translateCalcSourceName(src, item) || '-' : '-';
 }
 
 function displayOfficialSourceType(type: unknown): string {

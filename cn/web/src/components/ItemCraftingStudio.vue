@@ -322,8 +322,8 @@
                   <div v-if="previewItem.tooltip.header.base" class="mt-0.5 text-gray-300">{{ translateWebItemLine(previewItem.tooltip.header.base) }}</div>
                 </div>
                 <div v-if="Array.isArray(previewItem.tooltip.bodyLines) && previewItem.tooltip.bodyLines.length" class="space-y-1 py-0.5 text-xs">
-                  <div v-for="(line, index) in previewItem.tooltip.bodyLines" :key="index" class="break-words leading-relaxed text-[#8888ff]">
-                    <ItemModifierLine :text="translateWebItemLine(line)" :unsupported="previewItem.tooltip.bodyLineUnsupported?.[index] === true" />
+                  <div class="space-y-1 leading-relaxed text-[#8888ff]">
+                    <ItemDisplayLines :lines="previewItem.tooltip.bodyLines" :unsupported="previewItem.tooltip.bodyLineUnsupported" :item="previewItem" />
                   </div>
                 </div>
               </div>
@@ -369,7 +369,7 @@ import { computed, reactive, ref, watch, onMounted, onUnmounted, nextTick, defin
 import { Clipboard, Code, Hammer, Sparkles } from 'lucide-vue-next';
 import { useBuildStore } from '../stores/buildStore';
 import { translateRuneName, translateWebItemLine, translateWebItemName, translateWebItemType, translateWebText } from '../utils/webTranslation';
-import ItemModifierLine from './ItemModifierLine.vue';
+import ItemDisplayLines from './ItemDisplayLines.vue';
 const UniqueItemCraftingPanel = defineAsyncComponent(() => import('./UniqueItemCraftingPanel.vue'));
 
 function handleGlobalKeyDown(e: KeyboardEvent) {
@@ -508,14 +508,14 @@ const affixTypes: Array<{ key: AffixKey; label: string; type: OfficialCraftMod['
   { key: 'suffixes', label: '后缀', type: 'Suffix' },
 ];
 
-const attributeOptions: Array<{ id: AttributeFilter; label: string }> = [
+const attributeOptions = computed<Array<{ id: AttributeFilter; label: string }>>(() => [
   { id: 'ALL', label: translateWebText('All') },
   { id: 'STR', label: translateWebText('Strength') },
   { id: 'DEX', label: translateWebText('Dexterity') },
   { id: 'INT', label: translateWebText('Intelligence') },
   { id: 'HYBRID', label: translateWebText('Hybrid Attribute') },
   { id: 'NONE', label: translateWebText('No Attribute') },
-];
+]);
 
 const minimumItemLevel = computed(() => selectedBase.value?.requiredItemLevel ?? 1);
 const previewRawText = computed(() => previewItem.value?.raw ?? '');
@@ -582,7 +582,7 @@ function optionModFor(modId: string): OfficialCraftMod | undefined {
 }
 
 function officialModLines(mod: OfficialCraftMod | null | undefined): string[] {
-  return (mod?.lines ?? []).filter((line): line is string => typeof line === 'string').map(translateWebItemLine);
+  return (mod?.lines ?? []).filter((line): line is string => typeof line === 'string').map(line => translateWebItemLine(line));
 }
 
 function officialModLabel(mod: OfficialCraftMod): string {
@@ -592,7 +592,7 @@ function officialModLabel(mod: OfficialCraftMod): string {
 function officialTooltipTitle(item: any): string {
   const title = item?.tooltip?.header?.title;
   if (item?.rarity === 'RARE' && item?.crafted === true && typeof item?.title === 'string' && item.title.length > 0) return item.title;
-  return typeof title === 'string' ? translateWebItemLine(title) : '';
+  return typeof title === 'string' ? translateWebItemName(title, { item }) : '';
 }
 
 function formatRoll(value: number | undefined): string {

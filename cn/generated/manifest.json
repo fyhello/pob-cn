@@ -3,33 +3,34 @@
   "completeness": "complete",
   "generator": {
     "command": "node cn/pipeline/generate-content.mjs",
-    "version": 6
+    "version": 7
   },
   "upstream": {
     "commit": "5d173cbf8c9cf394a975cbb813f19d0b6dc67ea6"
   },
   "dictionary": {
-    "gzip_sha256": "2af6460f94ef0fc6ef9826e7ca8b06f485013b4828993e0480391b9138bcc779",
-    "payload_sha256": "18f613924fe3a8092bc00194ff1082309484c454773f76566674db1feba4057a",
-    "schema_path": "tools/upstream-builder/poe2dict/vendor/schema.min.json",
-    "schema_sha256": "0d0844dd3a049cb806cb9be6299e6427c86a8c48f355f3fe878100fe254d8688",
-    "schema_version": 7
+    "kind": "native-clients",
+    "schema_version": 3,
+    "game_sha256": "72eeafc9cea70bd422529f3ae4d4f4e65d61914f4cddc322760a76598c0bb136",
+    "core_sha256": "0ce636c33f9c93651eadefd76796e8462ba324cad2a69acab88873306bcec275",
+    "reviewed_sha256": "996650b6e8bd51090a69711c99062bdbc9df904bf10a33948891aa2f13858412",
+    "schema_sha256": "35739f16b08d2fe56f18728f7393476720bc4eec9c0c19182199d8740e09515d"
   },
   "inputs": [
     {
-      "id": "dictionary.ninja-poe2.poe2-runtime-gzip",
-      "path": "cn/pipeline/sources/dictionary/ninja-poe2/poe2.json.gz",
-      "sha256": "2af6460f94ef0fc6ef9826e7ca8b06f485013b4828993e0480391b9138bcc779"
+      "id": "translation.game",
+      "path": "cn/pipeline/sources/translations/snapshots/game-72eeafc9cea70bd422529f3ae4d4f4e65d61914f4cddc322760a76598c0bb136.json.gz",
+      "sha256": "72eeafc9cea70bd422529f3ae4d4f4e65d61914f4cddc322760a76598c0bb136"
     },
     {
-      "id": "override.zh-CN.terms",
-      "path": "cn/pipeline/overrides/zh-CN/terms.json",
-      "sha256": "b6539c50f8b05cae59af7ef2e04cb5bdc97427918c5c2d88be268f16427bc0d4"
+      "id": "translation.core",
+      "path": "cn/pipeline/sources/translations/snapshots/core-0ce636c33f9c93651eadefd76796e8462ba324cad2a69acab88873306bcec275.json.gz",
+      "sha256": "0ce636c33f9c93651eadefd76796e8462ba324cad2a69acab88873306bcec275"
     },
     {
-      "id": "override.zh-CN.glossary",
-      "path": "cn/pipeline/overrides/zh-CN/glossary.json",
-      "sha256": "148d868c835903ca4c425df84a3797fad8e238d617e1185c76284515a25e9b95"
+      "id": "translation.reviewed",
+      "path": "cn/pipeline/sources/translations/reviewed.json",
+      "sha256": "996650b6e8bd51090a69711c99062bdbc9df904bf10a33948891aa2f13858412"
     },
     {
       "id": "upstream.crafting.runes",
@@ -101,13 +102,35 @@
     {
       "id": "web.translation",
       "path": "cn/generated/web-data/translations.json",
-      "sha256": "77ffe5a2dd4567cba5c305305f78eea9f061ec6f76172e5052ad50d1468f56f7",
       "input_ids": [
-        "dictionary.ninja-poe2.poe2-runtime-gzip",
-        "override.zh-CN.terms",
-        "override.zh-CN.glossary"
+        "translation.game",
+        "translation.core",
+        "translation.reviewed"
       ],
-      "record_count": 71107
+      "record_count": 51350,
+      "sha256": "4caffa16531b8cc1116f2e298a782f05891098775c590aab610bc5699c788c4a"
+    },
+    {
+      "id": "web.translation.zh-TW",
+      "path": "cn/generated/web-data/translations.zh-TW.json",
+      "input_ids": [
+        "translation.game",
+        "translation.core",
+        "translation.reviewed"
+      ],
+      "record_count": 49591,
+      "sha256": "6f7c10dd8ea715b5980658b11dfab128342038f8a687364d00b83ee2d69f5457"
+    },
+    {
+      "id": "web.translation-report",
+      "path": "cn/generated/web-data/translations-report.json",
+      "input_ids": [
+        "translation.game",
+        "translation.core",
+        "translation.reviewed"
+      ],
+      "record_count": 256788,
+      "sha256": "8ad248a4c906321323fb069a6119af7f38ec57492a34a6d14a00776ca8e49db5"
     },
     {
       "id": "web.crafting",
@@ -195,14 +218,9 @@
     }
   ],
   "untranslated": {
-    "count": 0,
-    "allowlist": {
-      "items": [],
-      "stats": [],
-      "tooltip": [],
-      "ui": [],
-      "terms": []
-    }
+    "count": 3907,
+    "allowlist": [],
+    "report_path": "cn/generated/web-data/translations-report.json"
   },
   "crafting": {
     "seed_sha256": "fa7a75717b70199ecec4c2adb48591f870a654364ff7912e340eb9df4721ab1f",

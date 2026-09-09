@@ -1,6 +1,7 @@
 <template>
   <div 
     v-if="item && isVisible" 
+    data-testid="official-item-tooltip"
     class="fixed z-[9999] pointer-events-none transition-transform duration-75 shadow-[0_10px_40px_rgba(0,0,0,0.95)] rounded-lg overflow-y-auto max-h-[88vh] border font-sans"
     :class="borderClass"
     :style="{ left: `${clampedX}px`, top: `${clampedY}px`, maxWidth: '370px', minWidth: '290px' }"
@@ -20,18 +21,20 @@
       </div>
 
       <!-- Native Lua supplies body rows separately from its header. -->
-      <div v-if="parsed.bodyLines.length > 0" class="space-y-1 py-1 text-xs font-medium leading-relaxed">
+      <div v-if="loading" class="py-3 text-center text-xs text-gray-400" role="status">{{ translateWebText('Loading official item display…') }}</div>
+      <div v-else-if="error" class="py-3 text-center text-xs text-red-300" role="alert">{{ translateWebText(error) }}</div>
+      <div v-else-if="parsed.bodyLines.length > 0" class="space-y-1 py-1 text-xs font-medium leading-relaxed">
         <div
           v-for="(line, index) in parsed.bodyLines"
           :key="`${index}-${line}`"
           class="break-words whitespace-pre-wrap"
           :class="index === 0 ? 'text-gray-300' : 'text-[#8888ff]'"
         >
-          <ItemModifierLine :text="line" :unsupported="parsed.bodyLineUnsupported[index]" />
+          <ItemModifierLine :text="line.translated" :unsupported="line.unsupported" />
         </div>
       </div>
       <div v-else class="py-3 text-center text-xs text-gray-500">
-        暂无官方物品显示数据
+        {{ translateWebText('This item has no official display lines.') }}
       </div>
     </div>
   </div>
@@ -39,7 +42,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { translateWebItemLine } from '../utils/webTranslation';
+import { localizeWebItemRows, translateWebItemName, translateWebText } from '../utils/webTranslation';
+import { useBuildStore } from '../stores/buildStore';
+import { useOfficialItemTooltip } from '../utils/useOfficialItemTooltip';
 import ItemModifierLine from './ItemModifierLine.vue';
 
 const props = defineProps<{
@@ -48,6 +53,10 @@ const props = defineProps<{
   mouseX: number;
   mouseY: number;
 }>();
+
+const store = useBuildStore();
+const { tooltip, loading, error } = useOfficialItemTooltip(store, () => props.item, () => props.isVisible);
+const displayedItem = computed(() => ({ ...props.item, tooltip: tooltip.value }));
 
 // 自适应边缘防溢出坐标（智能保证顶部标题与横幅 100% 完整可见）
 const clampedX = computed(() => {
@@ -61,7 +70,7 @@ const clampedX = computed(() => {
 const clampedY = computed(() => {
   const h = typeof window !== 'undefined' ? window.innerHeight : 1080;
   const idealTop = props.mouseY - 60;
-  const lineCount = Array.isArray(props.item?.tooltip?.bodyLines) ? props.item.tooltip.bodyLines.length : 0;
+  const lineCount = Array.isArray(tooltip.value?.bodyLines) ? tooltip.value.bodyLines.length : 0;
   const estimatedHeight = Math.min(h * 0.88, 120 + lineCount * 24);
   const maxTop = Math.max(12, h - estimatedHeight - 12);
   return Math.max(12, Math.min(idealTop, maxTop));
@@ -112,28 +121,23 @@ const titleColorClass = computed(() => {
 
 function officialTooltipTitle(item: any, title: unknown): string {
   if (item?.rarity === 'RARE' && item?.crafted === true && typeof item?.title === 'string' && item.title.length > 0) return item.title;
-  return typeof title === 'string' ? translateWebItemLine(title) : '';
+  return typeof title === 'string' ? translateWebItemName(title, { item }) : '';
 }
 
 // Lua owns the title/base metadata and body rows. This component must not
 // infer duplicate headers from text.
 const parsed = computed(() => {
-  const item = props.item;
+  const item = displayedItem.value;
   const header = item?.tooltip?.header;
-  const bodyLines = Array.isArray(item?.tooltip?.bodyLines)
-    ? item.tooltip.bodyLines.filter((line: unknown): line is string => typeof line === 'string' && line.length > 0)
-      .map((line: string) => translateWebItemLine(line))
-    : [];
-  const bodyLineUnsupported = Array.isArray(item?.tooltip?.bodyLines)
+  const sourceRows = Array.isArray(item?.tooltip?.bodyLines)
     ? item.tooltip.bodyLines.map((line: unknown, index: number) => ({ line, unsupported: item.tooltip.bodyLineUnsupported?.[index] === true }))
       .filter(({ line }: { line: unknown }) => typeof line === 'string' && line.length > 0)
-      .map(({ unsupported }: { unsupported: boolean }) => unsupported)
     : [];
   return {
-    headerTitle: officialTooltipTitle(item, header?.title),
-    headerBase: typeof header?.base === 'string' ? translateWebItemLine(header.base) : '',
-    bodyLines,
-    bodyLineUnsupported,
+    headerTitle: officialTooltipTitle(item, header?.title ?? item.title ?? item.name),
+    headerBase: translateWebItemName(header?.base ?? item.base ?? ''),
+    bodyLines: localizeWebItemRows(sourceRows.map((row: { line: string }) => row.line),
+      sourceRows.map((row: { unsupported: boolean }) => row.unsupported), { item, items: store.itemLibrary }),
   };
 });
 </script>

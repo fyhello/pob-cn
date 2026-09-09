@@ -10,9 +10,17 @@ export function validateManifest(manifest) {
   if (!['partial_crafting_seed_pending', 'complete'].includes(manifest.completeness)) throw new Error('manifest completeness is invalid');
   if (manifest.generator?.command !== 'node cn/pipeline/generate-content.mjs' || !Number.isInteger(manifest.generator?.version) || manifest.generator.version < 1) throw new Error('manifest generator provenance is invalid');
   if (!/^[a-f0-9]{40}$/.test(manifest.upstream?.commit ?? '')) throw new Error('manifest upstream commit is invalid');
-  if (!manifest.dictionary || !sha256(manifest.dictionary.gzip_sha256) || !sha256(manifest.dictionary.payload_sha256) || !sha256(manifest.dictionary.schema_sha256)) throw new Error('manifest dictionary provenance is invalid');
+  const native = manifest.dictionary?.kind === 'native-clients';
+  if (native) {
+    if (manifest.dictionary.schema_version !== 3 || !['game_sha256', 'core_sha256', 'reviewed_sha256', 'schema_sha256'].every(key => sha256(manifest.dictionary[key]))) throw new Error('原生词典来源证据无效');
+  } else if (!manifest.dictionary || !sha256(manifest.dictionary.gzip_sha256) || !sha256(manifest.dictionary.payload_sha256) || !sha256(manifest.dictionary.schema_sha256)) throw new Error('manifest dictionary provenance is invalid');
   if (!Array.isArray(manifest.inputs) || !manifest.inputs.length || manifest.inputs.some(input => !input?.id || !safe(input.path) || !sha256(input.sha256))) throw new Error('manifest inputs are invalid');
-  if (!Array.isArray(manifest.outputs) || !manifest.outputs.length || manifest.outputs.length > 10) throw new Error('manifest outputs are invalid');
+  if (!Array.isArray(manifest.outputs) || !manifest.outputs.length || manifest.outputs.length > (native ? 11 : 10)) throw new Error('manifest outputs are invalid');
+  if (new Set(manifest.outputs.map(output => output.id)).size !== manifest.outputs.length || new Set(manifest.outputs.map(output => output.path)).size !== manifest.outputs.length) throw new Error('manifest outputs are duplicated');
+  if (native) for (const [id, path] of [['web.translation.zh-TW', 'cn/generated/web-data/translations.zh-TW.json'], ['web.translation-report', 'cn/generated/web-data/translations-report.json']]) {
+    const output = manifest.outputs.find(value => value.id === id);
+    if (!output || output.path !== path || !sha256(output.sha256) || !Number.isInteger(output.record_count) || output.record_count < 1 || JSON.stringify(output.input_ids) !== JSON.stringify(['translation.game', 'translation.core', 'translation.reviewed'])) throw new Error('原生双语言产物或报告缺少有效来源');
+  }
   const output = manifest.outputs.find(value => value.id === 'web.translation');
   if (!output || output.path !== 'cn/generated/web-data/translations.json' || !sha256(output.sha256) || !Number.isInteger(output.record_count) || output.record_count < 1 || !Array.isArray(output.input_ids) || !output.input_ids.length) throw new Error('manifest output input_ids or provenance is invalid');
   const allowlist = manifest.untranslated?.allowlist;

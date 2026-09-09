@@ -83,6 +83,20 @@
       "status": "UNPROBED",
       "version": null,
       "source_commit": null
+    },
+    "translations": {
+      "schema_version": 3,
+      "source_ids": [
+        "translation.game",
+        "translation.core",
+        "translation.reviewed"
+      ],
+      "review_sha256": "c6094ca43d147eeb72b3913c02ae5e577c19ac4a531240650cc42458725635ed",
+      "upstream_commit": "5d173cbf8c9cf394a975cbb813f19d0b6dc67ea6",
+      "locales": [
+        "zh-CN",
+        "zh-TW"
+      ]
     }
   }
 }

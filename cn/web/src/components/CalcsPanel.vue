@@ -230,6 +230,7 @@
         @mouseenter="onCardMouseEnter('otherEffects', $event)"
         @mouseleave="onCardMouseLeave"
         @click="onCardClick('otherEffects', $event)"
+        data-testid="calcs-other-effects"
         :class="[
           'p-4 rounded-xl border transition-all cursor-pointer select-none relative group flex flex-col justify-between space-y-3',
           isPrimaryPinned('otherEffects') ? 'bg-cyan-950/50 border-cyan-400 ring-2 ring-cyan-400/60 shadow-2xl' : 'bg-black/60 border-white/10 hover:border-cyan-500/60'
@@ -243,7 +244,7 @@
         </div>
         <div class="space-y-1 font-mono">
           <div v-if="otherEffectsPreview" class="text-xl font-black text-cyan-200">
-            {{ otherEffectsPreview.value }}
+            {{ translateCalcCell(otherEffectsPreview.value, 'value') }}
           </div>
           <div v-else class="h-7" aria-hidden="true"></div>
           <div v-if="otherEffectsPreview" class="text-[10px] text-cyan-400/80 truncate">
@@ -285,6 +286,7 @@
         @mouseenter="onCardMouseEnter('manaCost', $event)"
         @mouseleave="onCardMouseLeave"
         @click="onCardClick('manaCost', $event)"
+        data-testid="calcs-mana-cost"
         :class="[
           'p-3.5 rounded-xl border transition-all cursor-pointer select-none space-y-2 font-mono relative group',
           isPrimaryPinned('manaCost') ? 'bg-blue-950/60 border-blue-400 ring-2 ring-blue-400 shadow-2xl' : 'bg-black/60 border-white/10 hover:border-blue-500/60'
@@ -336,6 +338,7 @@
         <!-- 6.1 一级主浮窗 (宽 336px [总体宽度减少 30% 紧凑版]，在 Flex 容器内稳固立足) -->
         <div 
           ref="primaryPopoverRef"
+          data-testid="calcs-primary-detail"
           :style="{ maxHeight: popoverMaxHeight }"
           :class="[
             'bg-[#0b0d14]/98 border shadow-2xl rounded-2xl p-3.5 flex flex-col backdrop-blur-2xl w-[336px] text-gray-200 transition-colors shrink-0',
@@ -437,7 +440,7 @@
                         (activeRow === column.row || pinnedSecondaryRow === column.row) ? 'bg-amber-950/80 text-white ring-1 ring-poe-gold' : 'hover:bg-white/10'
                       ]"
                     >
-                      {{ column.row.value }}
+                      {{ translateCalcCell(column.row.value, 'value') }}
                       <span v-if="column.row.details?.length" class="ml-0.5 text-[9px] font-normal text-gray-500">{{ pinnedSecondaryRow === column.row ? '📌' : '▶' }}</span>
                     </button>
                     <div v-else class="min-h-9" />
@@ -461,6 +464,7 @@
                   <tbody class="divide-y divide-white/10 bg-black/60 text-gray-300">
                     <tr 
                       v-for="(r, rIdx) in activeSubSection.rows" 
+                      data-testid="calcs-detail-row"
                       :key="r.cellId || rIdx"
                       @mouseenter="onRowMouseEnter(r)" 
                       @mouseleave="onRowMouseLeave"
@@ -475,7 +479,7 @@
                         <span :class="(activeRow === r || pinnedSecondaryRow === r) ? 'text-amber-300' : 'text-gray-300'">{{ translateCalcFormulaLine(r.label) }}</span>
                       </td>
                       <td class="px-3 py-1.5 font-bold text-right truncate">
-                        <span :class="(activeRow === r || pinnedSecondaryRow === r) ? 'text-poe-gold' : 'text-gray-200'">{{ r.value }}</span>
+                        <span :class="(activeRow === r || pinnedSecondaryRow === r) ? 'text-poe-gold' : 'text-gray-200'">{{ translateCalcCell(r.value, 'value') }}</span>
                         <span class="ml-1 text-[10px] text-gray-500 font-normal">
                           {{ r.details?.length ? (pinnedSecondaryRow === r ? '📌' : '▶') : '' }}
                         </span>
@@ -517,6 +521,7 @@
         <!-- 6.2 🌟 二级专属推导浮窗 (同容器并排对齐，CSS 层面 100% 杜绝任何重叠遮挡！) -->
         <div 
           v-if="effectiveSecondaryRow?.details?.length || isHitDamageSummarySelected || effectiveSecondaryRow?.radiusVisual"
+          data-testid="calcs-secondary-detail"
           @mouseenter="onSecondaryPopoverMouseEnter"
           @mouseleave="onSecondaryPopoverMouseLeave"
           :style="{ maxHeight: popoverMaxHeight }"
@@ -534,7 +539,7 @@
                 <span>【{{ translateCalcFormulaLine(effectiveSecondaryRow.label) }}】组成明细</span>
               </div>
               <div class="text-base font-black font-mono text-poe-gold mt-0.5">
-                {{ effectiveSecondaryRow.value }}
+                {{ translateCalcCell(effectiveSecondaryRow.value, 'value') }}
               </div>
             </div>
 
@@ -574,12 +579,12 @@
                 class="flex items-center justify-between gap-3 border-b border-white/10 px-2.5 py-2 last:border-b-0"
               >
                 <span class="min-w-0 text-cyan-300">{{ translateCalcFormulaLine(row.columnLabel || row.label) }}</span>
-                <span class="shrink-0 font-bold text-gray-100">{{ row.value }}</span>
+                <span class="shrink-0 font-bold text-gray-100">{{ translateCalcCell(row.value, 'value') }}</span>
               </div>
             </div>
             <div v-if="hitDamageSummaryTotalRow" class="flex items-center justify-between gap-3 rounded-lg border border-poe-gold/30 bg-amber-950/20 px-2.5 py-2 font-mono text-xs">
               <span class="min-w-0 text-amber-300">{{ translateCalcFormulaLine(hitDamageSummaryTotalRow.columnLabel || hitDamageSummaryTotalRow.label) }}</span>
-              <span class="shrink-0 font-bold text-poe-gold">{{ hitDamageSummaryTotalRow.value }}</span>
+              <span class="shrink-0 font-bold text-poe-gold">{{ translateCalcCell(hitDamageSummaryTotalRow.value, 'value') }}</span>
             </div>
             <button
               v-if="hitDamageSummaryAverageRow"
@@ -588,7 +593,7 @@
               class="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/60 px-2.5 py-2 text-left font-mono text-xs transition-colors hover:border-poe-gold/50 hover:bg-white/5"
             >
               <span class="min-w-0 text-cyan-300">{{ translateCalcFormulaLine(hitDamageSummaryAverageRow.label) }}</span>
-              <span class="shrink-0 font-bold text-gray-100">{{ hitDamageSummaryAverageRow.value }} <span v-if="hitDamageSummaryAverageRow.details?.length" class="ml-0.5 text-[9px] font-normal text-gray-500">▶</span></span>
+              <span class="shrink-0 font-bold text-gray-100">{{ translateCalcCell(hitDamageSummaryAverageRow.value, 'value') }} <span v-if="hitDamageSummaryAverageRow.details?.length" class="ml-0.5 text-[9px] font-normal text-gray-500">▶</span></span>
             </button>
           </template>
           <template v-else>
@@ -610,15 +615,15 @@
                     <tr><th v-for="column in section.columns" :key="column.key" class="px-2 py-1.5 text-left font-semibold whitespace-nowrap">{{ translateCalcFormulaLine(column.label) }}</th></tr>
                   </thead>
                   <tbody class="divide-y divide-white/10">
-                    <tr v-for="(row, rowIdx) in section.rows" :key="rowIdx"><td v-for="column in section.columns" :key="column.key" class="px-2 py-1.5 align-top whitespace-nowrap">{{ row[column.key] == null ? '' : translateCalcFormulaLine(String(row[column.key])) }}</td></tr>
+                    <tr v-for="(row, rowIdx) in section.rows" :key="rowIdx"><td v-for="column in section.columns" :key="column.key" class="px-2 py-1.5 align-top whitespace-nowrap">{{ translateCalcCell(row[column.key], column.key, store.itemLibrary) }}</td></tr>
                   </tbody>
                 </table>
               </div>
             </template>
             <div v-if="detail.sources?.length" class="space-y-1 max-h-56 overflow-y-auto pr-1 font-mono">
-              <div v-for="(src, sIdx) in detail.sources" :key="sIdx" @mouseenter="onSourceMouseEnter(src, $event)" @mousemove="onSourceMouseMove($event)" @mouseleave="onSourceMouseLeave" class="p-2 rounded-lg bg-black/50 border border-white/5 flex items-center justify-between gap-2 hover:bg-white/5 hover:border-poe-gold/40 transition-colors cursor-pointer">
+              <div v-for="(src, sIdx) in detail.sources" :key="sIdx" data-testid="calcs-source-row" :data-source-kind="src.sourceRef?.kind" :data-source-id="src.sourceRef?.id" @mouseenter="onSourceMouseEnter(src, $event)" @mousemove="onSourceMouseMove($event)" @mouseleave="onSourceMouseLeave" class="p-2 rounded-lg bg-black/50 border border-white/5 flex items-center justify-between gap-2 hover:bg-white/5 hover:border-poe-gold/40 transition-colors cursor-pointer">
                 <div class="min-w-0 flex-1">
-                  <div class="text-gray-200 text-xs font-semibold truncate flex items-center gap-1 font-sans"><span :class="getSourceTypeColor(src.sourceType)" class="text-[10px] font-bold shrink-0">[{{ translateSourceType(src.sourceType) }}]</span><span class="truncate">{{ translateCalcFormulaLine(src.sourceName) }}</span></div>
+                  <div class="text-gray-200 text-xs font-semibold truncate flex items-center gap-1 font-sans"><span :class="getSourceTypeColor(src.sourceType)" class="text-[10px] font-bold shrink-0">[{{ translateSourceType(src.sourceType) }}]</span><span class="truncate">{{ translateCalcSourceName(src, store.itemLibrary.find(item => String(item.id) === String(src.sourceRef?.id))) }}</span></div>
                   <div class="text-[10px] text-gray-500 truncate mt-0.5">{{ translateCalcFormulaLine(src.name) }} ({{ translateCalcFormulaLine(src.modType) }})</div>
                 </div>
                 <span class="text-xs font-bold shrink-0 px-1.5 py-0.5 rounded bg-black/60 border border-white/10" :class="Number(src.value) >= 0 ? 'text-emerald-400' : 'text-red-400'">{{ typeof src.value === 'number' ? (src.value > 0 ? `+${src.value}` : src.value) : src.value }}</span>
@@ -633,7 +638,6 @@
       <!-- 🌟 3 级官方来源专属 Tooltip (挂载在根节点，pointer-events-none 彻底杜绝遮挡闪烁) -->
       <!-- 6.3.1 官方装备 / 珠宝卡片 -->
       <PoEItemTooltip 
-        v-if="hoveredSourceItem"
         :item="hoveredSourceItem"
         :is-visible="isSourceTooltipVisible && !hoveredSourceNode && !hoveredSourceSkill"
         :mouse-x="sourceMousePos.x"
@@ -653,7 +657,7 @@
               {{ getNodeTypeLabel(hoveredSourceNode.nodeType) }}
             </div>
             <h3 class="font-bold text-sm font-poe-title tracking-wide text-amber-300">
-              {{ translateCalcFormulaLine(hoveredSourceNode.name || '') }}
+              {{ translateWebText(hoveredSourceNode.name || '', { scope: 'passive' }) }}
             </h3>
           </div>
 
@@ -661,7 +665,7 @@
           <div v-if="hoveredSourceNode.sd && hoveredSourceNode.sd.length > 0" class="space-y-1.5 py-1 text-xs text-[#8888ff] font-medium leading-relaxed">
             <div v-for="(stat, sIdx) in hoveredSourceNode.sd" :key="sIdx" class="flex items-start gap-1.5">
               <span class="text-emerald-400 shrink-0">◆</span>
-              <span>{{ translateWebItemLine(stat) }}</span>
+              <span>{{ translateWebItemLine(stat, { scope: 'passive' }) }}</span>
             </div>
           </div>
           <div v-else class="text-gray-400 italic py-1 text-center">
@@ -706,7 +710,7 @@
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { Calculator, Flame, Wand2, Activity, Zap, Sparkles, Droplet, ShieldAlert, Pin } from 'lucide-vue-next';
 import { useBuildStore } from '../stores/buildStore';
-import { translateWebText, translateCalcFormulaLine, translateWebItemLine, translateSourceType } from '../utils/webTranslation';
+import { translateWebText, translateCalcFormulaLine, translateCalcCell, translateCalcSourceName, translateWebItemLine, translateSourceType } from '../utils/webTranslation';
 import PoEItemTooltip from './PoEItemTooltip.vue';
 import PresenceRangeDiagram, { type OfficialRadiusVisual } from './PresenceRangeDiagram.vue';
 
@@ -755,6 +759,9 @@ interface ModSource {
 
 // 🌟 3 级官方来源专属悬浮 Tooltip 状态引擎
 const activeHoveredSource = ref<ModSource | null>(null);
+watch([() => store.sessionId, () => store.documentEpoch, () => store.canonicalBuild?.version], () => {
+  activeHoveredSource.value = null;
+}, { flush: 'sync' });
 const sourceMousePos = ref({ x: 0, y: 0 });
 
 const isSourceTooltipVisible = computed(() => {

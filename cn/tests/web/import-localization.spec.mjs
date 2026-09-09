@@ -53,13 +53,13 @@ test('real PoB import projection localizes names, gems, and generated numeric it
   assert.equal(gem.name, 'Cast on Elemental Ailment');
   assert.equal(gem.nameSpec, 'Cast on Elemental Ailment');
   assert.equal(gem.name_cn, '元素异常状态时施放');
-  assert.match(translateWebItemLine('Adds 12 to 24 Fire Damage'), /12.*24.*火焰/);
+  assert.equal(translateWebItemLine('Adds 12 to 24 Fire Damage'), 'Adds 12 to 24 Fire Damage', '局部和全局属性的原生译文有差异，缺少属性身份时保留原文');
   assert.match(translateWebItemLine('Gain 18% of Damage as Extra Fire Damage'), /18%.*火焰/);
-  assert.match(translateWebItemLine('Socketed Skills have +12% to Critical Strike Multiplier'), /暴击.*12%/);
+  assert.equal(translateWebItemLine('Socketed Skills have +12% to Critical Strike Multiplier'), 'Socketed Skills have +12% to Critical Strike Multiplier', '当前核心未匹配的旧版本原文不能套用碎片翻译');
   assert.match(translateWebItemLine('60% increased Runic Ward'), /符文结界.*60%/);
   assert.equal(translateWebItemLine('Tempest Bells are destroyed after an additional (4-5) Hits'), '风雷钟在受到 (4-5) 次额外击中后被摧毁');
   assert.equal(translateWebItemLine('(39-47)% increased Cast Speed'), '施法速度提高 (39-47)%');
-  assert.equal(translateWebItemLine('Rune: 36% chance when collecting an Elemental Infusion to gain an additional Elemental Infusion of the same type'), '符文：收集元素灌注时有 36% 的几率 额外获得一个同类型的元素灌注');
+  assert.equal(translateWebItemLine('Rune: 36% chance when collecting an Elemental Infusion to gain an additional Elemental Infusion of the same type'), '符文：收集元素灌注时有 36% 的几率\n额外获得一个同类型的元素灌注');
   assert.equal(translateWebItemLine('Rune: +3% to all maximum Elemental Resistances while on full Runic Ward'), '符文：符文结界全满时，所有元素抗性上限 +3%');
   assert.equal(translateWebItemLine('Rune: Archon recovery period expires 90% faster'), '符文：执政官间隔期的消减速度加快 90%');
   assert.deepEqual([...translateWebItemLines([
@@ -94,8 +94,8 @@ test('real PoB import projection localizes names, gems, and generated numeric it
     '范围内的核心天赋同时提供 法术暴击率提高 6%',
     '范围内的核心天赋同时提供 你的暴击造成的伤害性异常状态强度提高 8%',
   ]);
-  assert.equal(translateWebItemName('Rune Mitts'), '奇术护手');
+  assert.equal(translateWebItemName('Rune Mitts'), 'Rune Mitts', '当前锁定核心与客户端中没有此旧名称');
   assert.equal(translateWebItemName('Absent Amulet'), '失神项链');
   assert.equal(translateWebItemName('Cast on Block, Ball Lightning'), '格挡时施放, 天雷之珠');
-  assert.equal(translateWebItemLine('Unknown Experimental Affix'), '未知 Experimental Affix');
+  assert.equal(translateWebItemLine('Unknown Experimental Affix'), 'Unknown Experimental Affix');
 });

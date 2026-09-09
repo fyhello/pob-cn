@@ -23,7 +23,7 @@ test('其他效果卡片的新增官方行名只来自唯一词典', async () =>
   const expectedTerms = {
     'Other Effects': '其他效果',
     'Chance to Daze': '昏迷几率',
-    'Chance to Rearm': '重新部署几率',
+    'Chance to Rearm': '重新待发几率',
     'Enemy ES Recovery': '敌人能量护盾回复',
     'Enemy Life Recovery': '敌人生命回复',
     'Enemy Mana Recovery': '敌人魔力回复',

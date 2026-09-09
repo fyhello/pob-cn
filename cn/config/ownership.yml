@@ -31,6 +31,7 @@ ownership_categories:
       - "/cn/bridge/**"
       - "/cn/web/**"
       - "/cn/pipeline/**"
+      - "/cn/shared/**"
       - "/cn/tests/**"
       - "/cn/config/**"
       - "/docs/architecture/**"

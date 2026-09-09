@@ -30,19 +30,21 @@ test('item tooltip renders the official structured tooltip projection through th
 
   assert.match(tooltip, /const header = item\?\.tooltip\?\.header/);
   assert.match(tooltip, /Array\.isArray\(item\?\.tooltip\?\.bodyLines\)/);
-  assert.match(tooltip, /item\.tooltip\.bodyLines\.filter/);
-  assert.match(tooltip, /\.map\(\(line(?:: string)?\) => translateWebItemLine\(line\)\)/);
+  assert.match(tooltip, /const sourceRows = Array\.isArray/);
+  assert.match(tooltip, /bodyLines: localizeWebItemRows\(sourceRows\.map/);
   assert.match(tooltip, /v-for="\(line, index\) in parsed\.bodyLines"/);
   assert.match(tooltip, /function officialTooltipTitle\(item: any, title: unknown\): string/);
-  assert.match(tooltip, /headerTitle: officialTooltipTitle\(item, header\?\.title\)/);
-  assert.match(tooltip, /headerBase: typeof header\?\.base === 'string' \? translateWebItemLine\(header\.base\) : ''/);
-  assert.match(tooltip, /暂无官方物品显示数据/);
-  assert.match(tooltip, /translateWebItemLine/);
+  assert.match(tooltip, /headerTitle: officialTooltipTitle\(item, header\?\.title \?\? item\.title \?\? item\.name\)/);
+  assert.match(tooltip, /headerBase: translateWebItemName\(header\?\.base \?\? item\.base \?\? ''\)/);
+  assert.match(tooltip, /Loading official item display/);
+  assert.match(tooltip, /v-else-if="error"/);
+  assert.match(tooltip, /This item has no official display lines/);
+  assert.match(tooltip, /translateWebItemName/);
 
   // Canonical raw text, legacy display rows, and hand-built stat parsing are
   // not a hover-tooltip display API.
   assert.doesNotMatch(tooltip, /item\.(?:raw|rawLines|lines|displayLines)\b/);
-  assert.doesNotMatch(tooltip, /localizeWebItemLines/);
+  assert.match(tooltip, /:unsupported="line\.unsupported"/);
   assert.doesNotMatch(tooltip, /parseInt|parseFloat|Number\(/);
   assert.doesNotMatch(tooltip, /(?:Quality|Sockets|Armour|Evasion|EnergyShield|LevelReq).*?match\(/s);
 });
@@ -66,7 +68,7 @@ test('official tooltip runtime text and dynamic values are covered by the genera
     ['Equipping this item in {1} will give you:', '装备此物品至{1}将获得：'],
     ['Equipping This Item in {1} will give you:', '装备此物品至{1}将获得：'],
     ['Intelligence Required', '智慧需求'],
-    ['+# Intelligence Required', '需要 +# 智慧'],
+    ['+{0} Intelligence Required', '需要 +{0} 智慧'],
   ];
   const domains = ['items', 'stats', 'tooltip', 'ui', 'terms'];
 
@@ -78,16 +80,16 @@ test('official tooltip runtime text and dynamic values are covered by the genera
 
 test('official comparison rows keep PoB numeric formatting while translating dynamic labels and headers', async () => {
   const { translateWebItemLine } = await loadLocalizer();
-  assert.equal(translateWebItemLine('+1,234.5 Average Hit (+12.3%)'), '+1,234.5 平均击中（+12.3%）');
-  assert.equal(translateWebItemLine('+1,234.56 Hit Rate (+12.3%)'), '+1,234.56 击中率（+12.3%）');
+  assert.equal(translateWebItemLine('+1,234.5 Average Hit (+12.3%)'), '+1,234.5 平均击中伤害（+12.3%）');
+  assert.equal(translateWebItemLine('+1,234.56 Hit Rate (+12.3%)'), '+1,234.56 击中频率（+12.3%）');
   assert.equal(translateWebItemLine('+123 Crit Multiplier (+4.0%)'), '+123 暴击伤害倍率（+4.0%）');
   assert.equal(translateWebItemLine('+12,345.6 Hit DPS (+7.8%)'), '+12,345.6 击中秒伤（+7.8%）');
   assert.equal(translateWebItemLine('+98,765.4 Total DPS inc. DoT (+6.5%)'), '+98,765.4 包含持续伤害的总秒伤（+6.5%）');
   assert.equal(translateWebItemLine('+123 Mana Cost (-4.0%)'), '+123 魔力消耗（-4.0%）');
   assert.equal(translateWebItemLine('+1.25 Mana per second (+2.5%)'), '+1.25 每秒魔力（+2.5%）');
   assert.equal(translateWebItemLine('+1.25 Mana Cost per second (+2.5%)'), '+1.25 每秒魔力消耗（+2.5%）');
-  assert.equal(translateWebItemLine('Equipping this item in Amulet will give you:\n(replacing Foo)'), '装备此物品至项链将获得：\n（替换Foo）');
-  assert.equal(translateWebItemLine('Equipping This Item in Amulet will give you:\n(replacing Foo)'), '装备此物品至项链将获得：\n（替换Foo）');
+  assert.equal(translateWebItemLine('Equipping this item in Amulet will give you:\n(replacing Foo)'), '装备此物品至项链将获得：\n（替换 Foo）');
+  assert.equal(translateWebItemLine('Equipping This Item in Amulet will give you:\n(replacing Foo)'), '装备此物品至项链将获得：\n（替换 Foo）');
 });
 
 test('custom item titles stay verbatim while ordinary official headers remain translatable', async () => {

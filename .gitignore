@@ -6,6 +6,7 @@ imgui.ini
 /node_modules/
 /cn/web/node_modules/
 /cn/web/dist/
+/cn/generated/web-data/translations-report.json
 /cn/web/.env*.local
 /tools/last_imported_build.xml
 *.exe

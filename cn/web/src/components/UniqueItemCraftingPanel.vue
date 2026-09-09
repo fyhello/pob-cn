@@ -26,7 +26,7 @@
             <label :for="variant.field" class="text-xs text-gray-300">选项 {{ index + 1 }}</label>
             <input v-if="options.variantList.length > 20" v-model="variantSearch[variant.field]" :aria-label="`搜索选项 ${index + 1}`" placeholder="筛选选项" class="unique-input" />
             <select :id="variant.field" :value="variants[variant.field] ?? variant.value" class="unique-input" @change="setVariant(variant.field, $event)">
-              <option v-for="entry in variantChoices(variant.field, variant.value)" :key="entry.id" :value="entry.id">{{ translateWebItemLine(entry.label) }}</option>
+              <option v-for="entry in variantChoices(variant.field, variant.value)" :key="entry.id" :value="entry.id">{{ translateVariantName(entry.label) }}</option>
             </select>
           </div>
           <div class="grid grid-cols-2 gap-3">
@@ -43,7 +43,7 @@
             </select>
           </div>
           <div v-for="range in options.ranges" :key="range.id" class="space-y-2 border-t border-white/10 pt-3">
-            <label :for="range.id" class="block break-words text-xs leading-relaxed text-indigo-200">{{ translateWebItemLine(range.line) }}</label>
+            <label :for="range.id" class="block break-words text-xs leading-relaxed text-indigo-200">{{ translateWebItemLine(range.line, { item: options.item }) }}</label>
             <div class="flex items-center gap-3"><input :id="range.id" type="range" min="0" max="1" step="0.001" :value="rangeValue(range)" class="h-5 min-w-0 flex-1 accent-amber-400" @input="setRoll(range.id, $event)" /><input type="number" min="0" max="1" step="0.001" :value="rangeValue(range)" :aria-label="`词条范围 ${range.id}`" class="unique-input w-24" @change="setRoll(range.id, $event)" /></div>
           </div>
           <p v-if="sourceItemId && !options.ranges.length && !options.variants.length" class="text-xs text-gray-400">当前物品没有可调范围或变体元数据，原词缀保持不变。</p>
@@ -62,7 +62,7 @@
         <pre v-if="showRaw && currentItem" class="max-h-[55vh] overflow-auto whitespace-pre-wrap break-words text-xs text-amber-100">{{ currentItem.raw }}</pre>
         <div v-else-if="currentItem?.tooltip?.header" class="rounded border border-amber-500/40 bg-black/50 p-3 text-xs" data-testid="unique-preview">
           <div class="border-b border-amber-500/30 pb-2 text-center"><div class="font-semibold text-amber-300">{{ translateWebItemName(currentItem.tooltip.header.title) }}</div><div class="mt-1 text-gray-300">{{ translateWebItemLine(currentItem.tooltip.header.base || '') }}</div></div>
-          <div class="space-y-1 pt-2 leading-relaxed text-indigo-200"><div v-for="(line, index) in currentItem.tooltip.bodyLines" :key="index" class="break-words"><ItemModifierLine :text="translateWebItemLine(line)" :unsupported="currentItem.tooltip.bodyLineUnsupported?.[index] === true" /></div></div>
+          <div class="space-y-1 pt-2 leading-relaxed text-indigo-200"><ItemDisplayLines :lines="currentItem.tooltip.bodyLines" :unsupported="currentItem.tooltip.bodyLineUnsupported" :item="currentItem" /></div>
         </div>
         <p v-else class="py-6 text-center text-xs text-gray-400">请选择传奇</p>
       </aside>
@@ -79,8 +79,8 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { Clipboard, Save, Search } from 'lucide-vue-next';
 import { useBuildStore } from '../stores/buildStore';
-import { translateRuneName, translateWebItemLine, translateWebItemName, translateWebItemType, translateWebText } from '../utils/webTranslation';
-import ItemModifierLine from './ItemModifierLine.vue';
+import { translateRuneName, translateVariantName, translateWebItemLine, translateWebItemName, translateWebItemType, translateWebText } from '../utils/webTranslation';
+import ItemDisplayLines from './ItemDisplayLines.vue';
 
 type Target = { kind: 'equipment'; itemSetId: number; slotName: string } | { kind: 'jewel'; specId: number; nodeId: number };
 type Draft = { kind: 'unique'; templateId?: string; variants?: Record<string, number>; ranges?: Array<{ id: string; roll: number }>; rangeBasis?: string; quality?: number; socketCount?: number; catalyst?: number; catalystQuality?: number; runes?: string[] };
@@ -141,7 +141,7 @@ let initialTargetPending = true;
 
 function variantChoices(field: string, current: number) {
   const query = (variantSearch[field] || '').trim().toLowerCase();
-  return (options.value?.variantList ?? []).map((label, index) => ({ id: index + 1, label })).filter(entry => entry.id === (variants.value[field] ?? current) || !query || `${entry.label} ${translateWebItemLine(entry.label)}`.toLowerCase().includes(query));
+  return (options.value?.variantList ?? []).map((label, index) => ({ id: index + 1, label })).filter(entry => entry.id === (variants.value[field] ?? current) || !query || `${entry.label} ${translateVariantName(entry.label)}`.toLowerCase().includes(query));
 }
 function clearRanges() { delete draft.value.ranges; delete draft.value.rangeBasis; }
 function setVariant(field: string, event: Event) {

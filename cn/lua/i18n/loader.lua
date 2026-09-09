@@ -16,31 +16,28 @@ local function resolveScriptPath()
 end
 
 local scriptPath = resolveScriptPath()
-local dictionaryPath = scriptPath .. "/../cn/generated/web-data/translations.json"
 local json = require("dkjson")
-local dictionaryFile, dictionaryOpenError = io.open(dictionaryPath, "rb")
-if not dictionaryFile then
-	error("ERROR: CN i18n could not load generated translations at " .. dictionaryPath .. ": " .. tostring(dictionaryOpenError))
-end
-local dictionarySource = dictionaryFile:read("*a")
-dictionaryFile:close()
-local dictionaryDecoded, _, dictionaryDecodeError = json.decode(dictionarySource, 1, nil)
-if type(dictionaryDecoded) ~= "table" then
-	error("ERROR: CN i18n could not decode generated translations at " .. dictionaryPath .. ": " .. tostring(dictionaryDecodeError))
-end
-
-local translations = { }
-for _, domainName in ipairs({ "items", "stats", "tooltip", "ui", "terms" }) do
-	local domain = dictionaryDecoded[domainName]
-	if type(domain) ~= "table" then
-		error("ERROR: CN i18n generated translations domain is missing: " .. domainName)
+local languageCache = {}
+local function loadLanguage(locale)
+	if locale ~= "zh-CN" and locale ~= "zh-TW" then error("不支持的显示语言：" .. tostring(locale)) end
+	if languageCache[locale] then return languageCache[locale] end
+	local relativePath = locale == "zh-CN" and "/../cn/generated/web-data/translations.json" or "/../cn/generated/web-data/translations.zh-TW.json"
+	local dictionaryPath = scriptPath .. relativePath
+	local file, openError = io.open(dictionaryPath, "rb")
+	if not file then error("无法读取生成词典：" .. dictionaryPath .. ": " .. tostring(openError)) end
+	local source = file:read("*a")
+	file:close()
+	local payload, _, decodeError = json.decode(source, 1, nil)
+	if type(payload) ~= "table" or payload.schema_version ~= 3 or payload.locale ~= locale or not payload.revision then
+		error("生成词典的语言或版本无效：" .. tostring(decodeError))
 	end
-	for sourceText, translatedText in pairs(domain) do
-		if type(sourceText) == "string" and type(translatedText) == "string" and translatedText ~= "" then
-			translations[sourceText] = translatedText
-		end
+	for _, domain in ipairs({ "terms", "ui", "items", "stats", "tooltip" }) do
+		if type(payload[domain]) ~= "table" then error("生成词典缺少语境：" .. domain) end
 	end
+	languageCache[locale] = payload
+	return payload
 end
+loadLanguage("zh-CN")
 
 local loader = { }
 local state = { }
@@ -66,7 +63,7 @@ local function splitLeadingColorPrefixes(text)
 	return string.sub(text, 1, offset - 1), string.sub(text, offset)
 end
 
-function loader.Translate(text)
+function loader.Translate(text, domain, locale, entity)
 	if type(text) ~= "string" or text == "" then
 		return text
 	end
@@ -75,7 +72,19 @@ function loader.Translate(text)
 	if sourceText == "" then
 		return text
 	end
-	local translated = translations[sourceText]
+	local payload = loadLanguage(locale or "zh-CN")
+	local translated
+	if entity then
+		local key = json.encode({ entity.table, entity.id, entity.field, entity.element or 0 })
+		if payload.entitySources and payload.entitySources[key] == sourceText then translated = payload.entities[key] end
+	elseif domain then
+		translated = payload[domain] and payload[domain][sourceText]
+	else
+		for _, name in ipairs({ "terms", "ui", "items", "stats", "tooltip" }) do
+			translated = payload[name][sourceText]
+			if translated then break end
+		end
+	end
 	if type(translated) == "string" then
 		return prefix .. translated
 	end

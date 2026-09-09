@@ -601,7 +601,7 @@ import WeaponSetSelector from './WeaponSetSelector.vue';
 import ItemTextImport from './ItemTextImport.vue';
 import SharedItemPool from './SharedItemPool.vue';
 import PoEItemTooltip from './PoEItemTooltip.vue';
-import { translateWebText } from '../utils/webTranslation';
+import { localizePassiveNode, translateWebText } from '../utils/webTranslation';
 import treeDataRaw from '../../../generated/web-data/tree_0_5.json';
 
 const loadItemCraftingStudio = () => import('./ItemCraftingStudio.vue');
@@ -888,80 +888,15 @@ function showNotice(text: string, type: 'info' | 'warn' = 'info') {
 const hoveredItem = ref<any>(null);
 const isTooltipVisible = ref(false);
 const mousePos = ref({ x: 0, y: 0 });
-const itemTooltipCache = new Map<string, Record<string, any>>();
-let hoverRequestGeneration = 0;
-let tooltipRequestActive = false;
-let pendingTooltipRequest: { item: any; itemId: number; version: number; generation: number } | null = null;
-
-function clearItemTooltipCache() {
-  hoverRequestGeneration += 1;
-  pendingTooltipRequest = null;
-  itemTooltipCache.clear();
+watch([() => store.sessionId, () => store.documentEpoch, () => store.canonicalBuild?.version], () => {
   isTooltipVisible.value = false;
   hoveredItem.value = null;
-}
-
-watch([() => store.sessionId, () => store.documentEpoch, () => store.canonicalBuild?.version], clearItemTooltipCache);
-
-async function loadHoveredItemTooltip() {
-  if (tooltipRequestActive) return;
-  tooltipRequestActive = true;
-  try {
-    while (pendingTooltipRequest) {
-      const request = pendingTooltipRequest;
-      pendingTooltipRequest = null;
-      const cacheKey = `${request.version}:${request.itemId}`;
-      const cachedTooltip = itemTooltipCache.get(cacheKey);
-      const result = cachedTooltip
-        ? { success: true as const, data: { itemId: request.itemId, tooltip: cachedTooltip } }
-        : await store.getOfficialItemTooltip(request.itemId);
-      if (request.generation !== hoverRequestGeneration || request.version !== store.canonicalBuild?.version) {
-        continue;
-      }
-      const tooltipResult = result.data;
-      if (!result.success || !tooltipResult) {
-        if (result.error?.code !== 'POB_CANONICAL_REVISION_CONFLICT') showNotice(result.error?.message ?? '官方 PoB 未返回物品浮窗。', 'warn');
-        continue;
-      }
-      if (!cachedTooltip) itemTooltipCache.set(cacheKey, tooltipResult.tooltip);
-      hoveredItem.value = { ...request.item, tooltip: tooltipResult.tooltip };
-      isTooltipVisible.value = true;
-    }
-  } finally {
-    tooltipRequestActive = false;
-    if (pendingTooltipRequest) void loadHoveredItemTooltip();
-  }
-}
+}, { flush: 'sync' });
 
 function onHoverItem(item: any, e: MouseEvent) {
-  const canonicalVersion = store.canonicalBuild?.version;
-  const version = typeof canonicalVersion === 'number' && Number.isInteger(canonicalVersion) && canonicalVersion > 0 ? canonicalVersion : null;
-  hoverRequestGeneration += 1;
-  const generation = hoverRequestGeneration;
   mousePos.value = { x: e.clientX, y: e.clientY };
-  if (!item) {
-    isTooltipVisible.value = false;
-    hoveredItem.value = null;
-    return;
-  }
-  const itemId = Number(item.id);
-  if (!Number.isInteger(itemId) || itemId <= 0 || version === null) {
-    isTooltipVisible.value = false;
-    hoveredItem.value = null;
-    showNotice('当前物品或官方 PoB 文档版本无效，无法读取浮窗。', 'warn');
-    return;
-  }
-  const cacheKey = `${version}:${itemId}`;
-  const cachedTooltip = itemTooltipCache.get(cacheKey);
-  if (cachedTooltip) {
-    hoveredItem.value = { ...item, tooltip: cachedTooltip };
-    isTooltipVisible.value = true;
-    return;
-  }
-  isTooltipVisible.value = false;
-  hoveredItem.value = null;
-  pendingTooltipRequest = { item, itemId, version, generation };
-  void loadHoveredItemTooltip();
+  hoveredItem.value = item;
+  isTooltipVisible.value = !!item;
 }
 
 function onMouseMove(e: MouseEvent) {
@@ -969,8 +904,6 @@ function onMouseMove(e: MouseEvent) {
 }
 
 function onMouseLeave() {
-  hoverRequestGeneration += 1;
-  pendingTooltipRequest = null;
   isTooltipVisible.value = false;
   hoveredItem.value = null;
 }
@@ -981,7 +914,7 @@ const activeJewelSockets = computed(() => {
   for (const node of nodes) {
     if (store.allocatedNodes.has(node.id)) {
       if (node.type === 'Socket' || (node.name && node.name.includes('Jewel Socket'))) {
-        list.push(node);
+        list.push(localizePassiveNode(node));
       }
     }
   }

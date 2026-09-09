@@ -27,15 +27,11 @@ const sources = Object.fromEntries(
 const generatedTranslations = JSON.parse(sources.translations);
 sources.translations = JSON.stringify({
   schema_version: generatedTranslations.schema_version,
-  items: { Jewel: generatedTranslations.items?.Jewel },
-  stats: { Damage: generatedTranslations.stats?.Damage },
-  tooltip: { Skills: generatedTranslations.tooltip?.Skills },
-  ui: { Jewel: generatedTranslations.ui?.Jewel },
-  terms: {
-    Damage: generatedTranslations.terms?.Damage,
-    Skills: generatedTranslations.terms?.Skills,
-    Jewel: generatedTranslations.terms?.Jewel,
-  },
+  locale: generatedTranslations.locale,
+  revision: generatedTranslations.revision,
+  ...Object.fromEntries(['terms', 'ui', 'items', 'stats', 'tooltip'].map(domain => [domain,
+    Object.fromEntries(['Damage', 'Skills', 'Jewel', 'Sapphire'].filter(key => generatedTranslations[domain]?.[key]).map(key => [key, generatedTranslations[domain][key]])),
+  ])),
 });
 
 function createLua51() {

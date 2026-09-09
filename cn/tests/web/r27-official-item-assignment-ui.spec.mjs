@@ -56,12 +56,13 @@ test('item hover requests only the current official tooltip and never writes it 
     source('../../web/src/stores/buildStore.ts'),
   ]);
 
-  assert.match(itemsPanel, /const itemTooltipCache = new Map<string, Record<string, any>>\(\)/);
-  assert.match(itemsPanel, /await store\.getOfficialItemTooltip\(request\.itemId\)/);
-  assert.match(itemsPanel, /request\.generation !== hoverRequestGeneration/);
-  assert.match(itemsPanel, /request\.version !== store\.canonicalBuild\?\.version/);
-  assert.match(itemsPanel, /hoveredItem\.value = \{ \.\.\.request\.item, tooltip: tooltipResult\.tooltip \}/);
-  assert.match(itemsPanel, /while \(pendingTooltipRequest\)/);
+  const tooltip = await source('../../web/src/components/PoEItemTooltip.vue');
+  const loader = await source('../../web/src/utils/useOfficialItemTooltip.ts');
+  assert.match(tooltip, /useOfficialItemTooltip\(store/);
+  assert.match(loader, /await store\.getOfficialItemTooltip\(request\.id\)/);
+  assert.match(loader, /request\.generation !== generation/);
+  assert.match(loader, /request\.documentKey !== identity\(\)/);
+  assert.doesNotMatch(itemsPanel, /getOfficialItemTooltip|itemTooltipCache/);
   assert.match(store, /async getOfficialItemTooltip\(itemId: number\)/);
   assert.match(store, /requestForBuild\(this, '\/api\/items\/tooltip'/);
   assert.match(itemsPanel, /watch\(\[\(\) => store\.sessionId, \(\) => store\.documentEpoch/);

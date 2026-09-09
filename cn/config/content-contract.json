@@ -7,56 +7,101 @@
       "stage": "M8",
       "consumer_id": "web.import-display-localizer",
       "consumer_target": "cn/web/src/utils/webTranslation.ts",
-      "consumer_owner": "M8",
+      "consumer_owner": "I18N",
       "field_mapping": {
-        "translation_id": {
-          "source": "locked dictionary items, stats, tooltip, ui and terms keys; reviewed overrides apply to terms",
-          "target": "same-domain JSON object key"
-        },
-        "zh_CN": {
-          "source": "locked dictionary zh-CN value plus reviewed terms override value",
-          "target": "same-domain JSON object value"
+        "text": {
+          "source": "按客户端独立采集的原文、稳定身份、官方词缀参数以及审核过的 PoB／项目译文",
+          "target": "语言与语境唯一映射"
         }
       },
       "input_schema": {
-        "dictionary": "gzip-json five-domain payload",
-        "overrides": "reviewed zh-CN JSON entries"
+        "game": "原生游戏资源快照 v1",
+        "core": "PoB 原文语料 v1",
+        "reviewed": "审核译文 v1"
       },
       "output_schema": {
         "format": "json-object",
         "encoding": "utf-8",
-        "shape": "{ schema_version: 2, items: Record<string, string>, stats: Record<string, string>, tooltip: Record<string, string>, ui: Record<string, string>, terms: Record<string, string> }"
+        "schema_version": 3
       },
-      "minimum_record_count": 70227,
+      "minimum_record_count": 40000,
       "id_coverage_rule": {
-        "type": "exact_locked_translation_domains_with_allowlist",
-        "source_id": "dictionary.ninja-poe2.poe2-runtime-gzip",
-        "domains": [
-          "items",
-          "stats",
-          "tooltip",
-          "ui",
-          "terms"
-        ],
-        "expected_counts": {
-          "items": 13609,
-          "stats": 29358,
-          "tooltip": 2592,
-          "ui": 499,
-          "terms": 24169
-        },
-        "allowlist": {
-          "items": [],
-          "stats": [],
-          "tooltip": [],
-          "ui": [],
-          "terms": []
-        }
+        "type": "native_snapshot_compilation",
+        "locale": "zh-CN",
+        "minimum_verified_stat_forms": 24000
       },
       "source_ids": [
-        "dictionary.ninja-poe2.poe2-runtime-gzip",
-        "override.zh-CN.terms",
-        "override.zh-CN.glossary"
+        "translation.game",
+        "translation.core",
+        "translation.reviewed"
+      ]
+    },
+    {
+      "id": "web.translation.zh-TW",
+      "path": "cn/generated/web-data/translations.zh-TW.json",
+      "stage": "M8",
+      "consumer_id": "web.import-display-localizer",
+      "consumer_target": "cn/web/src/utils/webTranslation.ts",
+      "consumer_owner": "I18N",
+      "field_mapping": {
+        "text": {
+          "source": "按客户端独立采集的原文、稳定身份、官方词缀参数以及审核过的 PoB／项目译文",
+          "target": "语言与语境唯一映射"
+        }
+      },
+      "input_schema": {
+        "game": "原生游戏资源快照 v1",
+        "core": "PoB 原文语料 v1",
+        "reviewed": "审核译文 v1"
+      },
+      "output_schema": {
+        "format": "json-object",
+        "encoding": "utf-8",
+        "schema_version": 3
+      },
+      "minimum_record_count": 40000,
+      "id_coverage_rule": {
+        "type": "native_snapshot_compilation",
+        "locale": "zh-TW",
+        "minimum_verified_stat_forms": 24000
+      },
+      "source_ids": [
+        "translation.game",
+        "translation.core",
+        "translation.reviewed"
+      ]
+    },
+    {
+      "id": "web.translation-report",
+      "path": "cn/generated/web-data/translations-report.json",
+      "stage": "M8",
+      "consumer_id": "pipeline.translation-audit",
+      "consumer_target": "cn/pipeline/generate-content.mjs",
+      "consumer_owner": "I18N",
+      "field_mapping": {
+        "text": {
+          "source": "按客户端独立采集的原文、稳定身份、官方词缀参数以及审核过的 PoB／项目译文",
+          "target": "出处、冲突、保真拒绝及动态缺译报告"
+        }
+      },
+      "input_schema": {
+        "game": "原生游戏资源快照 v1",
+        "core": "PoB 原文语料 v1",
+        "reviewed": "审核译文 v1"
+      },
+      "output_schema": {
+        "format": "json-object",
+        "encoding": "utf-8",
+        "schema_version": 1
+      },
+      "minimum_record_count": 1,
+      "id_coverage_rule": {
+        "type": "native_snapshot_compilation"
+      },
+      "source_ids": [
+        "translation.game",
+        "translation.core",
+        "translation.reviewed"
       ]
     },
     {

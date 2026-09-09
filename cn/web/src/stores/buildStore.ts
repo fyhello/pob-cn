@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { resolveImportOutcome, type ImportOutcome } from './importContract';
-import { localizeImportedBuild, localizeImportedItem, localizeImportedSocketGroups } from '../utils/webTranslation';
+import { localizeImportedBuild } from '../utils/webTranslation';
 import { bridgeFetch, closeBuildSession, createBuildSession, requestForBuild, staleDocumentError } from '../api/bridgeClient';
 
 export interface CharacterStats {
@@ -125,8 +125,9 @@ function officialProjectionState(value: Record<string, unknown>): OfficialProjec
   const itemLibrary: Item[] = Array.isArray(build.itemLibrary) ? [...build.itemLibrary] : [];
   const itemsById = new Map(itemLibrary.filter(item => item.id !== undefined && item.id !== null).map(item => [String(item.id), item]));
   const includeItem = (value: unknown): Item => {
-    const item = localizeImportedItem(value) as Item;
-    if (item.id === undefined || item.id === null) throw new Error('官方 PoB 投影返回了缺少 ID 的物品。');
+    if (!isRecord(value) || value.id === undefined || value.id === null) throw new Error('官方 PoB 投影返回了缺少 ID 的物品。');
+    // 本次 localizeImportedBuild 已处理库、装备及珠宝；再次展开会执行显示 getter。
+    const item = value as Item;
     const key = String(item.id);
     if (!itemsById.has(key)) {
       itemsById.set(key, item);
@@ -158,7 +159,7 @@ function officialProjectionState(value: Record<string, unknown>): OfficialProjec
     itemLibrary,
     equippedSlots,
     socketedJewels,
-    socketGroups: Array.isArray(build.socketGroups) ? localizeImportedSocketGroups(build.socketGroups) : [],
+    socketGroups: Array.isArray(build.socketGroups) ? build.socketGroups : [],
     ...(hasSkillBreakdown ? { skillBreakdown: build.skillBreakdown ?? null } : {}),
     calcsSkillGroup: Number.isInteger(build.calcsSkillGroup) && Number(build.calcsSkillGroup) > 0 ? Number(build.calcsSkillGroup) : 1,
     buffMode: validBuffMode,

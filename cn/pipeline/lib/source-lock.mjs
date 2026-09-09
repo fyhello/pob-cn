@@ -100,11 +100,13 @@ export async function validateSourceLock(lock, repoRoot, options = {}) {
   const inputs = selectedStage ? lock.inputs.filter(input => input.stage === selectedStage) : lock.inputs;
   if (selectedStage === 'M2-3' && inputs.length !== 7) throw new Error('M2-3 source lock must contain exactly seven crafting inputs');
   if (selectedStage === 'M3' && inputs.length !== 6) throw new Error('M3 source lock must contain exactly six approved web seed inputs');
+  if (selectedStage === 'I18N' && JSON.stringify(inputs.map(input => input.id).sort()) !== JSON.stringify(['translation.core', 'translation.game', 'translation.reviewed'])) throw new Error('原生词典必须锁定游戏资源、核心语料和审核译文三个来源');
   const allPaths = new Set(); const allIds = new Set();
   for (const input of inputs) {
     if (!input.id || !input.kind || !input.stage || !input.sha256 || !input.format || !input.language || !input.provenance) throw new Error('source lock input has missing required fields');
     if (allIds.has(input.id) || allPaths.has(input.path)) throw new Error('duplicate source lock id or path');
     allIds.add(input.id); allPaths.add(input.path); safePath(input.path);
+    if (input.stage === 'I18N' && (!validHash(input.provenance.reviewed_report_sha256) || !/^[a-f0-9]{40}$/.test(input.provenance.upstream_commit))) throw new Error('原生词典缺少差异审核或 PoB 版本证据');
     if (input.kind === 'UPSTREAM_COLLECTION') {
       input.collection_files = await validateUpstreamCollection(repoRoot, input);
     } else {
@@ -213,7 +215,9 @@ export async function importNinjaPoe2Dictionary({ repoRoot, artifactPath, extern
     const glossaryPath = resolve(root, 'cn/pipeline/overrides/zh-CN/glossary.json');
     const version = JSON.parse(await readFile(resolve(root, versionLockPath), 'utf8'));
     const upstream = JSON.parse(await readFile(resolve(root, 'cn/config/upstream-content-snapshot.json'), 'utf8'));
-    const sourceLock = { schema_version: 1, inputs: [
+    const existingLock = JSON.parse(await readFile(resolve(root, sourceLockPath), 'utf8'));
+    const sourceLock = { ...existingLock, schema_version: 1, inputs: [
+      ...existingLock.inputs.filter(input => !fixedM22.includes(input.id)),
       { id: dictionaryId, kind: 'dictionary', stage: 'M2-2', path: dictionaryPath, sha256: evidence.artifact.sha256, format: 'gzip-json', language: 'zh-CN', provenance: { source: 'ninja-poe2-final-runtime-gzip', reviewed: true }, artifact: { size_bytes: evidence.artifact.size_bytes, source_mtime_local: evidence.artifact.source_mtime_local }, payload: evidence.payload, schema: evidence.schema, build_evidence: evidence.build_evidence, compatibility_report: report, upstream_snapshot: { path: 'cn/config/upstream-content-snapshot.json', sha256: hash(await readFile(resolve(root, 'cn/config/upstream-content-snapshot.json'))), upstream_commit: upstream.upstream_commit, source_tree_sha256: upstream.source_tree_sha256, file_count: upstream.file_count } },
       { id: 'override.zh-CN.terms', kind: 'override', stage: 'M2-2', path: 'cn/pipeline/overrides/zh-CN/terms.json', sha256: hash(await readFile(termsPath)), format: 'json', language: 'zh-CN', provenance: { reviewed: false, review_status: 'pending' } },
       { id: 'override.zh-CN.glossary', kind: 'override', stage: 'M2-2', path: 'cn/pipeline/overrides/zh-CN/glossary.json', sha256: hash(await readFile(glossaryPath)), format: 'json', language: 'zh-CN', provenance: { reviewed: false, review_status: 'pending' } },

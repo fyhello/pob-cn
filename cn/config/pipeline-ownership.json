@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "ownership_yml_path": "cn/config/ownership.yml",
-  "ownership_yml_sha256": "2b87676e84c874db0a3479bdfe30f1ecb54cc0990f7f16676b64940b1c1a1c21",
+  "ownership_yml_sha256": "b7e1f0a7daf7e1165c6d460937ba9e9be22aada76e06bdb4f899443fd4493b97",
   "generated_rules": [
     { "output": "cn/generated/web-data/**", "producer": "node cn/pipeline/generate-content.mjs" },
     { "output": "cn/generated/manifest.json", "producer": "node cn/pipeline/generate-content.mjs" }

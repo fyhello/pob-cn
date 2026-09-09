@@ -84,7 +84,7 @@
 
         <!-- 珠宝插槽额外信息与已镶嵌珠宝完整属性词条 -->
         <div v-if="isJewelSocketNode(hoveredNode)" class="pt-2 border-t border-white/10 space-y-2">
-          <div v-if="store.socketedJewels[hoveredNode.id]" class="space-y-1.5 bg-amber-950/40 p-2.5 rounded-lg border border-amber-500/40">
+          <div v-if="store.socketedJewels[hoveredNode.id]" data-testid="socketed-jewel-detail" class="space-y-1.5 bg-amber-950/40 p-2.5 rounded-lg border border-amber-500/40">
             <div class="flex items-center justify-between border-b border-amber-500/20 pb-1">
               <span class="text-xs font-bold text-amber-300 font-poe-title flex items-center space-x-1">
                 <Sparkles class="w-3.5 h-3.5 text-amber-400" />
@@ -96,11 +96,11 @@
             <!-- 珠宝词条列表 -->
             <div class="space-y-0.5 text-xs">
               <div 
-                v-for="(line, lIdx) in (getSocketedJewel(hoveredNode.id)?.lines_cn || getSocketedJewel(hoveredNode.id)?.lines || [])"
+                v-for="(line, lIdx) in (getSocketedJewel(hoveredNode.id)?.displayRows || [])"
                 :key="lIdx"
                 class="text-amber-200/90 text-[11px] leading-snug"
               >
-                {{ line }}
+                <ItemModifierLine :text="line.translated" :unsupported="line.unsupported" />
               </div>
             </div>
             <div class="text-[10px] text-gray-400 italic pt-1 border-t border-amber-500/10 flex items-center justify-between">
@@ -270,8 +270,10 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useBuildStore } from '../stores/buildStore';
 import WeaponSetSelector from './WeaponSetSelector.vue';
+import ItemModifierLine from './ItemModifierLine.vue';
 import { Plus, Minus, RotateCcw, Search, Sparkles, X, Trash2 } from 'lucide-vue-next';
 import treeDataRaw from '../../../generated/web-data/tree_0_5.json';
+import { getTranslationLocale, localizePassiveNode } from '../utils/webTranslation';
 
 const store = useBuildStore();
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -306,12 +308,13 @@ interface TreeNode {
   ascendancyName?: string;
 }
 
-const allNodes: TreeNode[] = (treeDataRaw.nodes || []) as TreeNode[];
+const allNodes: TreeNode[] = ((treeDataRaw.nodes || []) as TreeNode[]).map(localizePassiveNode);
 const officialConnectors: [number, number][] = (treeDataRaw.connectors || []) as [number, number][];
 
 const hoveredNode = ref<TreeNode | null>(null);
 const tooltipPos = ref({ x: 0, y: 0 });
 const matchedNodeIds = ref(new Set<number>());
+watch(getTranslationLocale, () => { if (searchQuery.value) handleSearch(); });
 
 // 快速节点索引 Map
 const nodeMap = new Map<number, TreeNode>();

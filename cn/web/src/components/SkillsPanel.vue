@@ -316,15 +316,16 @@ import { Trash2, Zap, Plus, Star } from 'lucide-vue-next';
 import gemsRaw from '../../../generated/web-data/gems.json';
 import { useBuildStore } from '../stores/buildStore';
 import CalcsPanel from './CalcsPanel.vue';
+import { getTranslationLocale, localizeImportedGem } from '../utils/webTranslation';
 
 const store = useBuildStore();
 const selectedIndex = ref(0);
 const gemToAdd = ref('');
 const error = ref('');
 
-const allGems = (gemsRaw as any[]).filter(gem => typeof gem?.name === 'string');
-const activeGemOptions = allGems.filter(gem => !gem.isSupport).sort((left, right) => String(left.name_cn || left.name).localeCompare(String(right.name_cn || right.name), 'zh-CN'));
-const supportGemOptions = allGems.filter(gem => gem.isSupport).sort((left, right) => String(left.name_cn || left.name).localeCompare(String(right.name_cn || right.name), 'zh-CN'));
+const allGems = (gemsRaw as any[]).filter(gem => typeof gem?.name === 'string').map(localizeImportedGem);
+const activeGemOptions = computed(() => allGems.filter(gem => !gem.isSupport).sort((left, right) => String(left.name_cn).localeCompare(String(right.name_cn), getTranslationLocale())));
+const supportGemOptions = computed(() => allGems.filter(gem => gem.isSupport).sort((left, right) => String(left.name_cn).localeCompare(String(right.name_cn), getTranslationLocale())));
 
 const activeGroup = computed(() => {
   const list = store.socketGroups || [];

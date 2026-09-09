@@ -3,12 +3,13 @@ import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import test from 'node:test';
 import vm from 'node:vm';
+import { loadLocalizer } from '../helpers/web-localizer.mjs';
 
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
 const storePath = new URL('../../web/src/stores/buildStore.ts', import.meta.url);
 
-async function loadStore(fetch, { useRealPinia = false } = {}) {
+async function loadStore(fetch, { useRealPinia = false, localizer } = {}) {
   const source = await readFile(storePath, 'utf8');
   const javascript = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -40,7 +41,7 @@ async function loadStore(fetch, { useRealPinia = false } = {}) {
         ? { success: true, data: payload.data }
         : { success: false, error: payload?.error ?? { code: 'TEST_IMPORT_FAILED', message: 'test import failed' } },
     };
-    if (id === '../utils/webTranslation') return {
+    if (id === '../utils/webTranslation') return localizer ?? {
       localizeImportedBuild: identity,
       localizeImportedItem: identity,
       localizeImportedSocketGroups: identity,
@@ -58,6 +59,54 @@ async function loadStore(fetch, { useRealPinia = false } = {}) {
   store.__testStorage = storage;
   return store;
 }
+
+test('官方投影只处理原始字段，未显示的装备、珠宝和技能不求值译文', async () => {
+  const translation = await loadLocalizer();
+  let displayReads = 0;
+  const observe = value => {
+    for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(value))) {
+      if (descriptor.get) Object.defineProperty(value, key, { ...descriptor, get() {
+        displayReads++;
+        return descriptor.get.call(this);
+      } });
+    }
+  };
+  const localizer = { ...translation, localizeImportedBuild(value) {
+    const build = translation.localizeImportedBuild(value);
+    for (const item of new Set([...build.itemLibrary, ...Object.values(build.equippedItems), ...Object.values(build.socketedJewels)])) observe(item);
+    for (const group of build.socketGroups) { observe(group); group.gems.forEach(observe); }
+    return build;
+  } };
+  const store = await loadStore(() => { throw new Error('显示投影不应发起请求'); }, { useRealPinia: true, localizer });
+  const item = { id: 1, name: 'Sapphire', base: 'Sapphire', displayLines: ['+12 to maximum Life', 'Unknown Experimental Affix'], displayLineUnsupported: [false, true], raw: 'official-item' };
+  const raw = { itemLibrary: [item], equippedItems: { Amulet: { ...item, id: '1' }, Belt: { ...item, id: 2 } },
+    socketedJewels: { 100: { ...item, id: 3 } }, socketGroups: [{ label: 'Efficiency I', gems: [{ name: 'Efficiency I' }], isMain: true }], output: { Life: 12 } };
+  const before = JSON.stringify(raw);
+  store.applyOfficialProjection(raw, { version: 1, code: 'official-document' });
+  assert.equal(displayReads, 0, '应用投影及保存草稿不得触发任何显示 getter');
+  assert.deepEqual(Array.from(store.itemLibrary, item => item.id), [1, 2, 3]);
+  assert.equal(store.equippedItems.Amulet, store.itemLibrary[0]);
+  assert.equal(store.equippedJewels[100], store.itemLibrary[2]);
+  assert.equal(store.socketGroups[0].gems[0].name_cn, '效能 I');
+  assert.equal(store.itemLibrary[0].base_cn, '蓝玉');
+  assert.equal(store.itemLibrary[0].displayRows[1].unsupported, true);
+  const stored = store.__testStorage.get('pob_nextgen_build_state');
+  await translation.setTranslationLocale('zh-TW');
+  assert.equal(store.socketGroups[0].gems[0].name_cn, '效率 I');
+  assert.equal(store.itemLibrary[0].base_cn, '藍寶石');
+  assert.equal(store.itemLibrary[0].displayRows[1].raw, 'Unknown Experimental Affix');
+  assert.equal(store.itemLibrary[0].displayRows[1].unsupported, true);
+  assert.equal(store.__testStorage.get('pob_nextgen_build_state'), stored);
+  assert.equal(JSON.stringify(raw), before);
+
+  displayReads = 0;
+  const changed = { ...raw, itemLibrary: [{ ...item, displayLines: ['+24 to maximum Life'], displayLineUnsupported: [false] }], output: { Life: 24 } };
+  store.applyOfficialProjection(changed, { version: 2, code: 'next-official-document' });
+  assert.equal(displayReads, 0);
+  assert.equal(store.stats.Life, 24);
+  assert.equal(store.itemLibrary[0].displayRows[0].raw, '+24 to maximum Life');
+  assert.match(store.itemLibrary[0].lines_cn[0], /24/);
+});
 
 for (const outcome of ['success', 'failure']) test(`切换 BD 后拒绝旧修改的${outcome}响应，取消旧队列且不回滚新天赋`, async () => {
   for (let round = 0; round < 3; round++) {

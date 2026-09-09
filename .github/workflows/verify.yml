@@ -17,12 +17,12 @@ jobs:
           cache: npm
       - name: Install project dependencies
         run: npm ci
+      - name: Generate locked content
+        run: npm run generate:content
       - name: Verify content pipeline
         run: node --test cn/tests/pipeline/*.spec.mjs
       - name: Verify bridge manifest gate
         run: npm run test:m3
-      - name: Generate locked content
-        run: npm run generate:content
       - name: Typecheck web client
         run: npm run web:typecheck
       - name: Build web client

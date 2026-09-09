@@ -9,9 +9,9 @@
       <p v-else-if="notice" role="status" class="text-sm text-emerald-300">{{ notice }}</p>
       <button :disabled="!raw.trim() || busy || store.isCalculating" class="btn-primary flex items-center gap-2 text-xs disabled:opacity-40" @click="loadPreview"><Search :size="16" />{{ busy ? '处理中...' : '预览' }}</button>
       <section v-if="preview" class="space-y-3 border-t border-white/10 pt-3">
-        <h3 class="break-words text-sm text-poe-gold">{{ translateWebText(preview.name || preview.base || '') }}</h3>
+        <h3 class="break-words text-sm text-poe-gold">{{ translateWebItemName(preview.name || preview.base || '', { item: preview }) }}</h3>
         <div class="max-h-56 space-y-1 overflow-y-auto text-xs leading-relaxed text-gray-300">
-          <ItemDisplayLines :lines="preview.displayLines ?? []" :unsupported="preview.displayLineUnsupported" />
+          <ItemDisplayLines :lines="preview.displayLines ?? []" :unsupported="preview.displayLineUnsupported" :item="preview" />
         </div>
         <div v-if="preview.unparsedLines?.length" role="alert" class="space-y-1 border-t border-red-400/30 pt-3 text-xs text-red-300">
           <p>高亮词缀尚未被当前 PoB 核心完整支持，导入后不生效，不参与计算；原文会保留。</p>
@@ -35,7 +35,7 @@ import { computed, onUnmounted, ref, watch } from 'vue';
 import { Check, ClipboardPaste, Plus, Search } from 'lucide-vue-next';
 import { useBuildStore } from '../stores/buildStore';
 import { requestForBuild } from '../api/bridgeClient';
-import { translateWebText } from '../utils/webTranslation';
+import { translateWebText, translateWebItemName } from '../utils/webTranslation';
 import ItemDisplayLines from './ItemDisplayLines.vue';
 
 const store = useBuildStore();
