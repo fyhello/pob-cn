@@ -3338,6 +3338,44 @@ function Adapter:applyCalculationInputs(build, request)
 		if mode ~= 0 and mode ~= 1 and mode ~= 2 then
 			return nil, unsupportedCalculationInput("passiveNode.allocMode", "天赋分配模式必须为公用、武器组一或武器组二。")
 		end
+		if allocate and not node.alloc and node.ascendancyName then
+			local primary = spec.curAscendClass
+			local secondary = spec.curSecondaryAscendClass
+			if type(primary) ~= "table" or type(spec.curClass) ~= "table" or type(spec.curClass.classes) ~= "table" then
+				return nil, failure("POB_HEADLESS_API_UNAVAILABLE", "build.spec.curClass", "官方升华职业数据不可用。")
+			end
+			if (spec.curAscendClassId == 0 or node.ascendancyName ~= (primary.replace or spec.curAscendClassBaseName))
+				and not (secondary and node.ascendancyName == secondary.id) then
+				local targetAscendClassId
+				for id, ascendClass in pairs(spec.curClass.classes) do
+					if ascendClass.id == node.ascendancyName then targetAscendClassId = id; break end
+				end
+				if not targetAscendClassId then
+					return nil, unsupportedCalculationInput("passiveNode.nodeId", "该升华不属于当前基础职业；跨职业切换可能重置天赋树，当前不支持直接点击切换。")
+				end
+				if type(spec.SelectAscendClass) ~= "function" or type(spec.DeallocSingleNode) ~= "function" then
+					return nil, failure("POB_HEADLESS_API_UNAVAILABLE", "build.spec:SelectAscendClass", "官方升华切换接口不可用。")
+				end
+				-- 免费升华节点不会被路径重建自动剪枝，须先用官方方法清理旧升华。
+				-- 物品授予的节点仍交给核心维护，不能当作手动升华点删除。
+				spec.allocMode = mode
+				local switched, switchError = pcall(function()
+					local oldNodes = {}
+					for _, allocated in pairs(spec.allocNodes) do
+						if allocated.ascendancyName and allocated.ascendancyName == (primary.replace or spec.curAscendClassBaseName) and not allocated.isGrantedPassive then
+							oldNodes[#oldNodes + 1] = allocated
+						end
+					end
+					for _, allocated in ipairs(oldNodes) do spec:DeallocSingleNode(allocated) end
+					spec:SelectAscendClass(targetAscendClassId)
+				end)
+				if not switched then return nil, failure("POB_ASCENDANCY_CHANGE_FAILED", "build.spec:SelectAscendClass", tostring(switchError)) end
+				node = spec.nodes[nodeId]
+				if spec.curAscendClassId ~= targetAscendClassId or not node then
+					return nil, failure("POB_ASCENDANCY_CHANGE_FAILED", "build.spec:SelectAscendClass", "官方核心未完成目标升华切换。")
+				end
+			end
+		end
 		-- 这些限制位于官方树视图，不在 AllocNode 内；必须与官方点击入口一致。
 		local globalNode = node.type == "Keystone" or node.type == "Socket" or node.containJewelSocket
 		if globalNode then

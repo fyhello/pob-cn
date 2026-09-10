@@ -31,7 +31,7 @@ test('item tooltip renders the official structured tooltip projection through th
   assert.match(tooltip, /const header = item\?\.tooltip\?\.header/);
   assert.match(tooltip, /Array\.isArray\(item\?\.tooltip\?\.bodyLines\)/);
   assert.match(tooltip, /const sourceRows = Array\.isArray/);
-  assert.match(tooltip, /bodyLines: localizeWebItemRows\(sourceRows\.map/);
+  assert.match(tooltip, /bodyLines: presentItemRows\(localizeWebItemRows\(sourceRows\.map/);
   assert.match(tooltip, /v-for="\(line, index\) in parsed\.bodyLines"/);
   assert.match(tooltip, /function officialTooltipTitle\(item: any, title: unknown\): string/);
   assert.match(tooltip, /headerTitle: officialTooltipTitle\(item, header\?\.title \?\? item\.title \?\? item\.name\)/);

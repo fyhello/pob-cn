@@ -323,7 +323,7 @@
                 </div>
                 <div v-if="Array.isArray(previewItem.tooltip.bodyLines) && previewItem.tooltip.bodyLines.length" class="space-y-1 py-0.5 text-xs">
                   <div class="space-y-1 leading-relaxed text-[#8888ff]">
-                    <ItemDisplayLines :lines="previewItem.tooltip.bodyLines" :unsupported="previewItem.tooltip.bodyLineUnsupported" :item="previewItem" />
+                    <ItemDisplayLines :lines="previewItem.tooltip.bodyLines" :unsupported="previewItem.tooltip.bodyLineUnsupported" :item="previewItem" tooltip />
                   </div>
                 </div>
               </div>

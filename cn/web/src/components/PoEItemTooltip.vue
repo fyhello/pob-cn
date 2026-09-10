@@ -28,7 +28,8 @@
           v-for="(line, index) in parsed.bodyLines"
           :key="`${index}-${line}`"
           class="break-words whitespace-pre-wrap"
-          :class="index === 0 ? 'text-gray-300' : 'text-[#8888ff]'"
+          :class="line.presentationClass || (index === 0 ? 'text-gray-300' : 'text-[#8888ff]')"
+          :data-item-line-kind="line.kind"
         >
           <ItemModifierLine :text="line.translated" :unsupported="line.unsupported" />
         </div>
@@ -45,6 +46,7 @@ import { computed } from 'vue';
 import { localizeWebItemRows, translateWebItemName, translateWebText } from '../utils/webTranslation';
 import { useBuildStore } from '../stores/buildStore';
 import { useOfficialItemTooltip } from '../utils/useOfficialItemTooltip';
+import { presentItemRows } from '../utils/itemLinePresentation';
 import ItemModifierLine from './ItemModifierLine.vue';
 
 const props = defineProps<{
@@ -136,8 +138,8 @@ const parsed = computed(() => {
   return {
     headerTitle: officialTooltipTitle(item, header?.title ?? item.title ?? item.name),
     headerBase: translateWebItemName(header?.base ?? item.base ?? ''),
-    bodyLines: localizeWebItemRows(sourceRows.map((row: { line: string }) => row.line),
-      sourceRows.map((row: { unsupported: boolean }) => row.unsupported), { item, items: store.itemLibrary }),
+    bodyLines: presentItemRows(localizeWebItemRows(sourceRows.map((row: { line: string }) => row.line),
+      sourceRows.map((row: { unsupported: boolean }) => row.unsupported), { item, items: store.itemLibrary }), { item, tooltip: true }),
   };
 });
 </script>

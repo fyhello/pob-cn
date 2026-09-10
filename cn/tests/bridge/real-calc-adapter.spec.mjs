@@ -617,6 +617,70 @@ test('applies passive clicks through the official single-node APIs without rebui
   assert.equal(result, '1:1:0:2');
 });
 
+test('升华点击区分当前主升华、替换升华与第二升华，并保留物品授予节点', async () => {
+  const result = await runLua(`
+    local calls = { select = 0, alloc = 0 }
+    local old = { id = 1, alloc = true, ascendancyName = "Primary", isFreeAllocate = true }
+    local granted = { id = 2, alloc = true, ascendancyName = "Primary", isGrantedPassive = true }
+    local target = { id = 3, ascendancyName = "Target" }
+    local secondary = { id = 4, ascendancyName = "Secondary" }
+    local replacement = { id = 5, ascendancyName = "Replacement" }
+    local regular = { id = 6, alloc = true }
+    local primary = { id = "Primary" }
+    local spec = {
+      nodes = { old, granted, target, secondary, replacement, regular }, allocNodes = { old, granted, [6] = regular },
+      curClass = { classes = { [0] = { name = "None" }, primary, { id = "Target" } } },
+      curAscendClassId = 1, curAscendClass = primary, curAscendClassBaseName = "Primary",
+      curSecondaryAscendClass = { id = "Secondary" },
+    }
+    function spec:DeallocSingleNode(node) node.alloc = false; self.allocNodes[node.id] = nil end
+    function spec:DeallocNode(node) self:DeallocSingleNode(node) end
+    function spec:AllocNode(node)
+      calls.alloc = calls.alloc + 1
+      node.alloc = true; self.allocNodes[node.id] = node
+    end
+    function spec:SelectAscendClass(id)
+      calls.select = calls.select + 1
+      assert(not old.alloc and granted.alloc, "免费旧升华未清理或授予节点被删除")
+      self.curAscendClassId = id
+      self.curAscendClass = self.curClass.classes[id]
+      self.curAscendClassBaseName = self.curAscendClass.id
+    end
+    local build = { spec = spec }
+    local adapter = Adapter.new({ build = build })
+    local function click(id, allocate)
+      local success, error = adapter:applyCalculationInputs(build, { passiveNode = { nodeId = id, allocate = allocate } })
+      assert(success, error and error.error.message)
+    end
+    click(4, true)
+    primary.replace = "Replacement"
+    click(5, true)
+    click(5, false)
+    primary.replace = nil
+    assert(calls.select == 0 and secondary.alloc, "当前升华被错误切换")
+    click(3, true)
+    assert(calls.select == 1 and secondary.alloc and granted.alloc)
+    click(3, true)
+    assert(calls.select == 1, "重复分配不应重复切换")
+    click(3, false)
+    spec.curAscendClassId = 0
+    spec.curAscendClass = spec.curClass.classes[0]
+    spec.curAscendClassBaseName = nil
+    click(3, true)
+    assert(calls.select == 2, "未升华角色不能选择首个升华")
+    assert(regular.alloc and spec.allocNodes[6] == regular, "未升华角色的普通天赋被误清理")
+    click(3, false)
+    spec.curAscendClassId = 1
+    spec.curAscendClass = primary
+    spec.curAscendClassBaseName = "Primary"
+    spec.SelectAscendClass = nil
+    local success, error = adapter:applyCalculationInputs(build, { passiveNode = { nodeId = 3, allocate = true } })
+    assert(not success and error.error.code == "POB_HEADLESS_API_UNAVAILABLE")
+    return "ok"
+  `);
+  assert.equal(result, 'ok');
+});
+
 test('ignores legacy local item payloads so they cannot affect official calculation output', async () => {
   const result = await runLua(`
     local buildCalls = 0

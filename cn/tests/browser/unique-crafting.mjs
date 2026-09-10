@@ -10,6 +10,8 @@ import { BuildSessions } from '../../bridge/build-sessions.mjs';
 import { LibraryStore } from '../../bridge/library-store.mjs';
 import { createBridgeHttpServer } from '../../bridge/http-server.mjs';
 import { verifyTranslationDisplays } from './translation-displays.mjs';
+import { verifyUniqueCorruption } from './unique-corruption.mjs';
+import { verifyCorruptionDisplay, verifyNoDesktopHints, verifyStoredItemPresentation } from './item-presentation.mjs';
 
 const root = resolve(import.meta.dirname, '../../..');
 process.chdir(join(root, 'cn/web'));
@@ -121,6 +123,8 @@ try {
   const unchanged = await state(b);
   await open();
   assert.equal(await panel().getByLabel('官方传奇目录').locator('option').count(), 443);
+  const corruptionChecks = await verifyUniqueCorruption({ page: a, panel, choose, ready, state, evidence });
+  console.log('腐化浏览器验收：', JSON.stringify(corruptionChecks));
   for (const [id, expected, forbidden] of [
     ["Alpha's Howl, Armoured Cap", /自然滋养着强悍的灵魂/, /Nature respects|snow red|blood of the weak/],
     ['Amor Mandragora, Changeling Talisman', /艾兹麦魔符/, /Ezomyte|Weapon Range|Adds .* Physical Damage/],
@@ -128,6 +132,7 @@ try {
   ]) {
     await choose(id);
     const text = await panel().getByTestId('unique-preview').innerText();
+    await verifyNoDesktopHints(panel().getByTestId('unique-preview'));
     assert.match(text, expected); assert.doesNotMatch(text, forbidden);
     if (id.startsWith('Amor')) {
       assert.match(text, /武器范围：1\.2 米/);
@@ -193,15 +198,22 @@ try {
     await a.screenshot({ path: join(evidence, `传奇制作-${width}.png`), fullPage: true });
   }
   await a.setViewportSize({ width: 1440, height: 960 });
+  await panel().getByTestId('unique-corruption').getByRole('checkbox', { name: '腐化成品' }).check();
+  await ready();
+  await panel().getByTestId('unique-corruption').getByRole('slider', { name: /^腐化倍率 / }).first().evaluate(element => { element.value = '1'; element.dispatchEvent(new Event('input', { bubbles: true })); });
+  await ready();
+  await verifyCorruptionDisplay(panel().getByTestId('unique-preview'));
   await panel().getByLabel('保存目标').selectOption('equipment:Body Armour');
   assert.equal(await panel().getByRole('button', { name: '保存并穿戴', exact: true }).isDisabled(), true);
   await panel().getByRole('button', { name: '官方预览', exact: true }).click();
   const first = await save();
   assert.equal(first.items.length, 1);
   assert.equal(first.items[0].rarity, 'UNIQUE');
+  assert.match(first.items[0].raw, /\{corruptedRange:1\.22\}/);
   assert.equal((await state(b)).code, unchanged.code);
   await a.getByTitle('编辑传奇物品', { exact: true }).first().click();
   await ready();
+  assert.equal(await panel().getByTestId('unique-corruption').getByRole('checkbox', { name: '腐化成品' }).isDisabled(), true);
   assert.equal(await a.getByRole('button', { name: '普通制作', exact: true }).isDisabled(), true);
   await panel().getByText('品质', { exact: true }).locator('input').fill('11');
   await panel().getByText('品质', { exact: true }).locator('input').press('Tab');
@@ -220,6 +232,7 @@ try {
   await b.getByRole('button', { name: '装备与物品', exact: true }).click();
   const poolB = b.getByRole('region', { name: '公共物品池', exact: true });
   await poolB.getByRole('listitem').getByRole('button').first().click();
+  await verifyCorruptionDisplay(poolB);
   await poolB.getByRole('button', { name: '加入当前流派', exact: true }).click();
   const copied = await settle(b, unchanged.version);
   assert.equal(copied.items[0].raw, edited.items[0].raw);
@@ -227,6 +240,7 @@ try {
   await a.reload();
   await settle(a);
   assert.equal((await state(a)).items[0].raw, edited.items[0].raw);
+  const itemPresentationChecks = await verifyStoredItemPresentation({ a, b, state, evidence });
   for (const [tab, heading] of [['生存与防御', '全维度生存与防御计算大盘'], ['战斗状态配置', '战斗条件与状态']]) {
     await a.getByRole('button', { name: tab, exact: true }).click();
     await a.getByRole('heading', { name: heading }).waitFor();
@@ -276,6 +290,7 @@ try {
   await ordinaryPreview.click({ trial: true });
   await ordinaryPreview.click();
   await a.getByRole('button', { name: /保存到物品库/ }).click({ trial: true });
+  await verifyNoDesktopHints(a.locator('[data-item-line-kind]').locator('..').first());
   await assertLocaleIsolation('普通制作');
   await a.screenshot({ path: join(evidence, '普通制作-简中.png'), fullPage: true });
   let actualBuildDisplayCheck;
@@ -291,8 +306,8 @@ try {
     } finally { await displayPage.close(); }
   }
   assert.deepEqual(errors, []);
-  await writeFile(join(evidence, 'results.json'), JSON.stringify({ success: true, measurements, optionsRequests, calcRequests, languageChecks, actualBuildDisplayCheck, errors }, null, 2), 'utf8');
-  console.log(JSON.stringify({ success: true, measurements, optionsRequests, calcRequests, languageChecks, actualBuildDisplayCheck, errors }, null, 2));
+  await writeFile(join(evidence, 'results.json'), JSON.stringify({ success: true, measurements, corruptionChecks, itemPresentationChecks, optionsRequests, calcRequests, languageChecks, actualBuildDisplayCheck, errors }, null, 2), 'utf8');
+  console.log(JSON.stringify({ success: true, measurements, corruptionChecks, itemPresentationChecks, optionsRequests, calcRequests, languageChecks, actualBuildDisplayCheck, errors }, null, 2));
 } catch (error) {
   await a.screenshot({ path: join(evidence, '失败现场.png'), fullPage: true });
   throw error;

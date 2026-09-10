@@ -117,7 +117,7 @@ local function validateNumeric(value, cap, path)
 end
 
 function Unique.create(adapter, draft, itemsTab, source)
-	local fields = { kind = true, templateId = true, variants = true, ranges = true, rangeBasis = true, quality = true, socketCount = true, runes = true, catalyst = true, catalystQuality = true }
+	local fields = { kind = true, templateId = true, variants = true, ranges = true, rangeBasis = true, quality = true, socketCount = true, runes = true, catalyst = true, catalystQuality = true, corruption = true }
 	for key in pairs(draft) do
 		if not fields[key] then return nil, invalid("draft." .. tostring(key), "传奇制作不接受该字段") end
 	end
@@ -201,6 +201,17 @@ function Unique.create(adapter, draft, itemsTab, source)
 		caps.ranges, caps.rangeBasis = ranges, rangeBasis
 		caps.runeCapabilities = runeCaps
 		caps.runes = item.runes
+		-- 普通调值保留原行身份；腐化新增词条的范围与显式倍率由独立能力负责。
+		local originalEnchants = item.enchantModLines
+		caps.corruption = dofile('../cn/lua/unique-corruption.lua').apply(runtime, itemsTab, item, draft.corruption)
+		if caps.corruption.modsCanSet then
+			local ordinary = {}
+			for _, range in ipairs(caps.ranges) do
+				local index = tonumber(range.id:match('^enchantModLines:(%d+)$'))
+				if not index or originalEnchants[index].line:match('^Allocates .*') then ordinary[#ordinary + 1] = range end
+			end
+			caps.ranges = ordinary
+		end
 		return item, nil, runeCaps, caps
 	end)
 	if not ok then return nil, invalid("draft", "官方传奇编辑失败：" .. tostring(result)) end

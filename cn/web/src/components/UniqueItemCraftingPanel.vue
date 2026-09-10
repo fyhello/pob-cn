@@ -47,6 +47,7 @@
             <div class="flex items-center gap-3"><input :id="range.id" type="range" min="0" max="1" step="0.001" :value="rangeValue(range)" class="h-5 min-w-0 flex-1 accent-amber-400" @input="setRoll(range.id, $event)" /><input type="number" min="0" max="1" step="0.001" :value="rangeValue(range)" :aria-label="`词条范围 ${range.id}`" class="unique-input w-24" @change="setRoll(range.id, $event)" /></div>
           </div>
           <p v-if="sourceItemId && !options.ranges.length && !options.variants.length" class="text-xs text-gray-400">当前物品没有可调范围或变体元数据，原词缀保持不变。</p>
+          <UniqueCorruptionEditor v-if="options.corruption" :options="options.corruption" :draft="draft.corruption" :item="options.item" @change="setCorruption" />
           <label class="block space-y-1 border-t border-white/10 pt-3 text-xs">保存目标<select v-model="targetKey" class="unique-input"><option value="">仅保存到物品库</option><option v-for="slot in targets" :key="slot.key" :value="slot.key">{{ slot.label }}</option></select></label>
         </fieldset>
         <p v-if="error" role="alert" class="break-words rounded border border-rose-700/60 bg-rose-950/30 p-3 text-xs text-rose-200">{{ error }}</p>
@@ -62,7 +63,7 @@
         <pre v-if="showRaw && currentItem" class="max-h-[55vh] overflow-auto whitespace-pre-wrap break-words text-xs text-amber-100">{{ currentItem.raw }}</pre>
         <div v-else-if="currentItem?.tooltip?.header" class="rounded border border-amber-500/40 bg-black/50 p-3 text-xs" data-testid="unique-preview">
           <div class="border-b border-amber-500/30 pb-2 text-center"><div class="font-semibold text-amber-300">{{ translateWebItemName(currentItem.tooltip.header.title) }}</div><div class="mt-1 text-gray-300">{{ translateWebItemLine(currentItem.tooltip.header.base || '') }}</div></div>
-          <div class="space-y-1 pt-2 leading-relaxed text-indigo-200"><ItemDisplayLines :lines="currentItem.tooltip.bodyLines" :unsupported="currentItem.tooltip.bodyLineUnsupported" :item="currentItem" /></div>
+          <div class="space-y-1 pt-2 leading-relaxed text-indigo-200"><ItemDisplayLines :lines="currentItem.tooltip.bodyLines" :unsupported="currentItem.tooltip.bodyLineUnsupported" :item="currentItem" tooltip /></div>
         </div>
         <p v-else class="py-6 text-center text-xs text-gray-400">请选择传奇</p>
       </aside>
@@ -81,13 +82,15 @@ import { Clipboard, Save, Search } from 'lucide-vue-next';
 import { useBuildStore } from '../stores/buildStore';
 import { translateRuneName, translateVariantName, translateWebItemLine, translateWebItemName, translateWebItemType, translateWebText } from '../utils/webTranslation';
 import ItemDisplayLines from './ItemDisplayLines.vue';
+import UniqueCorruptionEditor from './UniqueCorruptionEditor.vue';
+import type { CorruptionDraft, CorruptionOptions } from '../types/uniqueCorruption';
 
 type Target = { kind: 'equipment'; itemSetId: number; slotName: string } | { kind: 'jewel'; specId: number; nodeId: number };
-type Draft = { kind: 'unique'; templateId?: string; variants?: Record<string, number>; ranges?: Array<{ id: string; roll: number }>; rangeBasis?: string; quality?: number; socketCount?: number; catalyst?: number; catalystQuality?: number; runes?: string[] };
+type Draft = { kind: 'unique'; templateId?: string; variants?: Record<string, number>; ranges?: Array<{ id: string; roll: number }>; rangeBasis?: string; quality?: number; socketCount?: number; catalyst?: number; catalystQuality?: number; runes?: string[]; corruption?: CorruptionDraft };
 type Numeric = { canSet: boolean; value?: number; min: number; max: number };
 type Range = { id: string; line: string; roll: number };
 type CatalogEntry = { id: string; name: string; baseName: string; type: string; source?: string; league?: string };
-type Options = { item: any; variants: Array<{ field: string; value: number }>; variantList: string[]; ranges: Range[]; rangeBasis: string; quality: Numeric; socketCount: Numeric; catalyst: { canSet: boolean; value: number; allowed: Array<{ id: number; name: string }>; quality: Numeric }; runes: string[]; runeCapabilities: { allowed: string[] }; validTargetSlots: { equipment: string[]; jewels: Array<{ nodeId: number; slotName: string }> } };
+type Options = { item: any; variants: Array<{ field: string; value: number }>; variantList: string[]; ranges: Range[]; rangeBasis: string; quality: Numeric; socketCount: Numeric; catalyst: { canSet: boolean; value: number; allowed: Array<{ id: number; name: string }>; quality: Numeric }; runes: string[]; runeCapabilities: { allowed: string[] }; validTargetSlots: { equipment: string[]; jewels: Array<{ nodeId: number; slotName: string }> }; corruption: CorruptionOptions };
 const props = defineProps<{ itemToEdit?: any; initialCategory?: string; initialTarget?: Target | null }>();
 const emit = defineEmits<{ close: []; created: [itemId: number] }>();
 const store = useBuildStore();
@@ -146,6 +149,7 @@ function variantChoices(field: string, current: number) {
 function clearRanges() { delete draft.value.ranges; delete draft.value.rangeBasis; }
 function setVariant(field: string, event: Event) {
   clearRanges();
+  delete draft.value.corruption;
   draft.value.variants = { ...variants.value, [field]: Number((event.target as HTMLSelectElement).value) };
   delete draft.value.runes;
 }
@@ -169,6 +173,9 @@ function setRoll(id: string, event: Event) {
   draft.value.rangeBasis = options.value.rangeBasis;
   draft.value.ranges = ranges;
 }
+function setCorruption(value: CorruptionDraft | undefined) {
+  if (value) draft.value.corruption = value; else delete draft.value.corruption;
+}
 async function refreshOptions() {
   if (disposed || (!sourceItemId.value && !draft.value.templateId)) return;
   const sequence = ++requestSequence;
@@ -177,9 +184,14 @@ async function refreshOptions() {
   const result = await store.getOfficialCraftOptions({ action: operation.value, sourceItemId: sourceItemId.value, draft: JSON.parse(JSON.stringify(draft.value)) });
   if (disposed || sequence !== requestSequence || key !== draftKey.value) return;
   optionsLoading.value = false;
-  if (!result.success || !result.data?.item?.tooltip) { error.value = result.error?.message || '官方传奇预览不可用'; return; }
+  if (!result.success || !result.data?.item?.tooltip || !result.data?.corruption) { error.value = result.error?.message || '官方传奇预览或腐化能力不可用，请检查当前服务版本'; return; }
   const value = result.data;
   options.value = { ...value, variants: Array.isArray(value.variants) ? value.variants : [], variantList: Array.isArray(value.variantList) ? value.variantList : [], ranges: Array.isArray(value.ranges) ? value.ranges : [], runes: Array.isArray(value.runes) ? value.runes : [], runeCapabilities: { ...value.runeCapabilities, allowed: Array.isArray(value.runeCapabilities?.allowed) ? value.runeCapabilities.allowed : [] }, validTargetSlots: { equipment: Array.isArray(value.validTargetSlots?.equipment) ? value.validTargetSlots.equipment : [], jewels: Array.isArray(value.validTargetSlots?.jewels) ? value.validTargetSlots.jewels : [] } } as Options;
+  const corruption = options.value.corruption;
+  corruption.selected = Array.isArray(corruption.selected) ? corruption.selected : [];
+  corruption.ranges = Array.isArray(corruption.ranges) ? corruption.ranges : [];
+  corruption.sources = Array.isArray(corruption.sources) ? corruption.sources : [];
+  for (const source of corruption.sources) source.mods = Array.isArray(source.mods) ? source.mods : [];
   if (targetKey.value && !targets.value.some(entry => entry.key === targetKey.value)) targetKey.value = '';
   if (initialTargetPending) {
     initialTargetPending = false;

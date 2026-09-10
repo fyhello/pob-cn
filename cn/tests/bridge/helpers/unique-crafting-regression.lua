@@ -49,6 +49,7 @@ local function documentState(xml)
 	return assert(common.xml.ComposeXML(root))
 end
 
+dofile('../cn/tests/bridge/helpers/unique-corruption-regression.lua')(adapter, create, options, semantic, ok, documentState)
 local catalog = ok(adapter:craftCatalog({ kind = 'unique' })).uniques
 local count, rolls, changingBases, multi = 0, 0, 0, 0
 local before = ok(adapter:exportXML()).xml

@@ -41,6 +41,11 @@
           <option class="bg-poe-panel text-white" value="Shadow">暗影</option>
           <option class="bg-poe-panel text-white" value="Druid">德鲁伊</option>
         </select>
+        <span v-if="store.canonicalBuild && store.ascendancyName && store.ascendancyName !== 'None'"
+          class="inline-flex items-center gap-1.5 whitespace-nowrap font-medium text-poe-gold" data-testid="character-ascendancy">
+          <span aria-hidden="true" class="text-gray-500">·</span>
+          <span>{{ translateWebText(store.ascendancyName) }}</span>
+        </span>
       </div>
 
       <!-- 等级设定 -->
@@ -97,6 +102,7 @@
 import { ref } from 'vue';
 import { useBuildStore } from '../stores/buildStore';
 import { useLibraryStore } from '../stores/libraryStore';
+import { translateWebText } from '../utils/webTranslation';
 import ImportExportModal from './ImportExportModal.vue';
 import { 
   Sparkles, Edit3, User, Network, Zap, Shield, 
